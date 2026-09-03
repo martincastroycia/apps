@@ -1,6 +1,6 @@
 {
-  "name": "Mis rutas — preventistas",
-  "short_name": "Mis rutas",
+  "name": "Ventas MCastro",
+  "short_name": "Ventas MC",
   "description": "Rutas, clientes y objetivos del día.",
   "start_url": "./index.html",
   "scope": "./",
