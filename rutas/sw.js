@@ -6,7 +6,7 @@ var VER = "218829dc11f0";
 var C_PROG = "rutas-prog-" + VER;
 var C_DATOS = "rutas-datos";
 
-var SHELL = ["./", "index.html", "estilo.css", "app.js", "runtime.js", "manifest.json", "icono-192.png", "icono-512.png"];
+var SHELL = ["./", "index.html", "estilo.css", "app.js", "runtime.js", "manifest.json", "icono-192.png", "icono-512.png", "icono-mask.png"];
 
 self.addEventListener("install", function(e){
   e.waitUntil(caches.open(C_PROG).then(function(c){
