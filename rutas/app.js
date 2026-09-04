@@ -8,7 +8,7 @@
      2) pregunta por v.json (48 bytes) si hay algo nuevo -> no gasta datos
      3) si hay, se baja el archivo nuevo y avisa con una barra verde        */
 
-var LS_COD = "rutas_cod", LS_KEY = "rutas_key", LS_GEN = "rutas_gen", LS_VER = "rutas_ver";
+var LS_COD = "rutas_cod", LS_KEY = "rutas_key", LS_GEN = "rutas_gen", LS_VER = "rutas_ver", LS_SEL = "rutas_sel";
 
 function $(id){ return document.getElementById(id); }
 function guardar(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -122,15 +122,16 @@ function arrancar(json){
 
 /* Hay datos nuevos: los bajamos ya (así el teléfono los tiene guardados) y
    recién ahí le avisamos. Si no, al recargar volvería a salir lo viejo. */
-async function traerNuevo(id, keyBytes, gen, ver, hayDatos){
+async function traerNuevo(id, keyBytes, gen, ver, sel, hayDatos){
   try{
     await bajarDatos(id, keyBytes, false);
     var txt = hayDatos ? ("Hay datos nuevos del " + linda(gen) + " — tocá acá para actualizar")
-                       : "Hay una versión nueva — tocá acá para actualizar";
+                       : "Hay información nueva — tocá acá para actualizar";
     barra("bNuevo", txt, "#1f6b3b", "#ffffff", function(){
-      /* la version se anota recien acá: si no toca el cartel, mañana le vuelve
-         a salir en vez de quedarse callado con el programa viejo */
+      /* se anotan recien acá: si no toca el cartel, mañana le vuelve a salir
+         en vez de quedarse callado con lo viejo */
       guardar(LS_VER, ver || "");
+      guardar(LS_SEL, sel || "");
       location.reload();
     });
   }catch(e){}
@@ -157,9 +158,13 @@ async function inicio(){
        cambiaba el programa y publicaba el mismo dia, la fecha no cambiaba y el
        telefono decia "no hay nada nuevo": se quedaba con el programa viejo para
        siempre. Ahora tambien mira v.ver, que cambia cuando cambia el programa. */
+    var sel = (v.s && v.s[p.id]) || "";
     var hayDatos = v.gen && v.gen !== leer(LS_GEN);
     var hayProg  = v.ver && v.ver !== leer(LS_VER);
-    if(hayDatos || hayProg) traerNuevo(p.id, keyBytes, v.gen, v.ver, hayDatos);
+    /* el sello es lo unico que cambia si Mariano toca las cuotas y publica de
+       nuevo el mismo dia: ni la fecha ni la version se mueven en ese caso. */
+    var hayMio   = sel && sel !== leer(LS_SEL);
+    if(hayDatos || hayProg || hayMio) traerNuevo(p.id, keyBytes, v.gen, v.ver, sel, hayDatos);
   }catch(e){
     if(!abrio){ mostrarAlta("No se pudo abrir. Fijate si tenés internet y probá de nuevo."); return; }
     barra("bSinSenal", "Sin señal — estás viendo lo del " + linda(leer(LS_GEN))
