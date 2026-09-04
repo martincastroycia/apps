@@ -9,8 +9,15 @@ var C_DATOS = "rutas-datos";
 var SHELL = ["./", "index.html", "estilo.css", "app.js", "runtime.js", "manifest.json", "icono-192.png", "icono-512.png", "icono-mask.png"];
 
 self.addEventListener("install", function(e){
+  /* cache:"reload" a proposito: con addAll pelado el navegador puede servir el
+     archivo viejo de su propio cache http y el telefono se queda con el programa
+     de antes aunque el service worker sea nuevo. */
   e.waitUntil(caches.open(C_PROG).then(function(c){
-    return c.addAll(SHELL);
+    return Promise.all(SHELL.map(function(u){
+      return fetch(u, {cache:"reload"}).then(function(r){
+        if(r && r.ok) return c.put(u, r);
+      }).catch(function(){});
+    }));
   }).then(function(){ return self.skipWaiting(); }));
 });
 
