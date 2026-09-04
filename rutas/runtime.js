@@ -87,6 +87,105 @@ function faltaHoyHtml(v){
  return '<div class="hoyfalta">Te faltan '+fmt(falta)+' y te quedan <b>'+n+'</b> '+pal+': <b>'+fmt(falta/n)+'</b> por día.</div>'; }
 function cmpMesHtml(v){var o=v.o||{};if(!o.ant&&!o.antDia)return ''; var nm=MESN[(o.antMes||1)-1]; if(o.antDia>0){var d=o.real-o.antDia,pc=Math.round((o.real/o.antDia-1)*100);  return '<div class="cmpmes">A esta altura de '+nm+' ibas <b>'+fmt(o.antDia)+'</b> · <b class="'+(d>=0?'moktxt':'mbadtxt')+'">'+(d>=0?'+':'')+pc+'%</b></div>';} var p2=o.ant>0?Math.round(o.real/o.ant*100):0; return '<div class="cmpmes">En '+nm+' terminaste con <b>'+fmt(o.ant)+'</b> · llevás el <b>'+p2+'%</b> de eso</div>';}
 var LOGO = 'data:image/png;base64,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';
+/* ---------- por que se cayo el cliente ----------
+   Va adentro del cliente atrasado. No dice "anda a verlo": dice por que. */
+function dejoHtml(c, v){
+  var l = (v.dj && v.dj[c.n]) || [];
+  if(!l.length) return '';
+  var d = dias(c.u);
+  var h = '<div class="dejo"><div class="dejotit">Dejó de llevar'
+        + (d !== null ? ' · hace ' + d + ' días que no compra' : '') + '</div>';
+  var porFam = {}, orden = [];
+  l.forEach(function(x){
+    var f = x[1] || 'Otros';
+    if(!porFam[f]){ porFam[f] = []; orden.push(f); }
+    porFam[f].push(x[0]);
+  });
+  orden.forEach(function(f){
+    h += '<div class="dejol"><b>' + esc(f) + ':</b> ' + porFam[f].map(esc).join(' · ') + '</div>';
+  });
+  return h + '<div class="dejopie">Esto es lo que te compraba y dejó. Con eso arrancá la charla.</div></div>';
+}
+/* ---------- como cerro el mes pasado ----------
+   Solo los primeros dias del mes. Despues estorba. */
+function cierreHtml(v){
+  if(!BL.cier || !v.cier) return '';
+  var z = v.cier, pc = z.meta ? Math.round(z.real / z.meta * 100) : 0;
+  var e = qest(z.real, z.meta, 1);
+  var h = '<div class="cierre"><div class="ciertit">Cómo cerraste ' + MESN[z.mes - 1] + '</div>'
+        + '<div class="cierbig ' + e[1] + '">' + fmt(z.real) + '</div>'
+        + '<div class="ciersub">de ' + fmt(z.meta) + ' de objetivo · <b class="' + e[1] + '">' + pc + '%</b></div>'
+        + qbar(z.real, z.meta, 1);
+  if(z.ant > 0){
+    var dif = z.real - z.ant, p2 = Math.round((z.real / z.ant - 1) * 100);
+    h += '<div class="ciercmp">Contra ' + MESN[z.mes - 1] + ' del año pasado (' + fmt(z.ant) + '): '
+       + '<b class="' + (dif >= 0 ? 'moktxt' : 'mbadtxt') + '">' + (dif >= 0 ? '+' : '') + p2 + '%</b>'
+       + '<div class="ciernota">En pesos, sin descontar la inflación: mirá también las cajas y los litros.</div></div>';
+  }
+  return h + '</div>';
+}
+/* ---------- el pedido ya armado ----------
+   Arranca con lo que se llevo la ultima vez, con las unidades. El vendedor
+   toca + y - y se lo copia. Lo que toca queda en ESTE telefono nomas. */
+function pedKey(n){ return 'rg_ped_' + (quien || 'x') + '_' + n; }
+function pedidoDe(c){
+  try{ var j = JSON.parse(lsGet(pedKey(c.n)) || 'null'); if(j) return j; }catch(e){}
+  var o = {};
+  ((c.uv && c.uv.a) || []).forEach(function(x){ o[x[0]] = Math.round(Number(x[1]) || 0); });
+  return o;
+}
+function guardaPedido(c, o){ try{ lsSet(pedKey(c.n), JSON.stringify(o)); }catch(e){} }
+function pedMas(n, art, d){
+  var c = null, D = quien ? elVend(quien) : null;
+  if(!D) return;
+  (D.dias ? DIAS.map(function(k){ return D.dias[k] || {c:[]}; }) : [D.cartera]).forEach(function(z){
+    (z.c || []).forEach(function(x){ if(String(x.n) === String(n)) c = x; });
+    (z.p || []).forEach(function(x){ if(String(x.n) === String(n)) c = x; });
+  });
+  if(!c) return;
+  var o = pedidoDe(c);
+  o[art] = Math.max(0, (Number(o[art]) || 0) + d);
+  guardaPedido(c, o);
+  var e = document.getElementById('ped_' + n + '_' + btoa(unescape(encodeURIComponent(art))).replace(/[^A-Za-z0-9]/g, ''));
+  if(e) e.textContent = o[art];
+}
+function pedidoHtml(c){
+  var a = (c.uv && c.uv.a) || [];
+  if(!BL.ped || !a.length) return '';
+  /* OJO: en 163 clientes la fecha de uv es POSTERIOR a la ultima compra.
+     Son los que estan en la cartera de dos vendedores: el otro le vendio y
+     la ficha de este se quedo con esa fecha. Mostrar ahi 'lo que llevo el
+     07/08' arriba de 'ultima compra 09/05' es una contradiccion en la cara
+     del vendedor. Con la fecha rara, no se muestra el pedido. */
+  if(c.uv.f && c.u && c.uv.f > c.u) return '';
+  var o = pedidoDe(c);
+  var h = '<div class="pedbox"><div class="pedtit">Pedido para hoy</div>'
+        + '<div class="pednota">Arranca con lo que llevó el ' + fcorta(c.uv.f) + '. Tocá + o − y después copialo.</div>';
+  a.forEach(function(x){
+    var id = 'ped_' + c.n + '_' + btoa(unescape(encodeURIComponent(x[0]))).replace(/[^A-Za-z0-9]/g, '');
+    h += '<div class="pedl"><span class="pedn">' + esc(x[0]) + '</span>'
+       + '<span class="pedc"><button onclick="pedMas(\'' + c.n + '\',\'' + esc(x[0]).replace(/'/g, "\\'") + '\',-1)">−</button>'
+       + '<b id="' + id + '">' + (Number(o[x[0]]) || 0) + '</b>'
+       + '<button onclick="pedMas(\'' + c.n + '\',\'' + esc(x[0]).replace(/'/g, "\\'") + '\',1)">+</button></span></div>';
+  });
+  return h + '<button class="pedcop" onclick="copiarPedido(\'' + c.n + '\')">Copiar el pedido</button></div>';
+}
+function copiarPedido(n){
+  var D = quien ? elVend(quien) : null, c = null;
+  if(!D) return;
+  (D.dias ? DIAS.map(function(k){ return D.dias[k] || {c:[]}; }) : [D.cartera]).forEach(function(z){
+    (z.c || []).forEach(function(x){ if(String(x.n) === String(n)) c = x; });
+  });
+  if(!c) return;
+  var o = pedidoDe(c), t = (c.c || '') + ' — pedido ' + fcorta(hoyIso()) + '\n';
+  var hubo = 0;
+  ((c.uv && c.uv.a) || []).forEach(function(x){
+    var u = Number(o[x[0]]) || 0;
+    if(u > 0){ t += '• ' + x[0] + ' x ' + u + '\n'; hubo++; }
+  });
+  if(!hubo){ alert('El pedido quedó en cero.'); return; }
+  copiar(t);
+}
 function pintar(){
   if(PAN && (VISTA==='pan' || VISTA==='tv' || !G.vs || !G.vs.length)){ pintarPanel(); return; }
   try{ document.body.className = ''; document.body.style.background = ''; }catch(e){}
@@ -120,6 +219,7 @@ function pintar(){
   var ofr = oe[0]==='mok' ? 'Vas bien.' : oe[0]==='mwarn' ? 'Vas un poco abajo.' : 'Vas atrasado.';
   var oc = oe[0]==='mok' ? 'objok' : oe[0]==='mwarn' ? 'objwarn' : 'objbad';
   if(BL.obj) h += '<div class="obj ' + oc + '">'   + '<div class="objtop"><span class="objtit">Objetivo de ' + MESN[v.o.mes-1] + '</span>'   + '<span class="objpct ' + oe[1] + '">' + pct + '%</span></div>'   + '<div class="rango">' + fmt(v.o.real) + ' de ' + fmt(v.o.meta) + '</div>'   + '<div class="barra"><div class="barin ' + oe[0] + '" style="width:' + Math.min(pct,100) + '%"></div>'   + '<div class="raya" style="left:' + Math.round(v.o.frac*100) + '%"></div></div>'   + '<div class="rango"><span class="objest ' + oe[1] + '">' + ofr + '</span> La rayita marca dónde tendrías que ir hoy (' + Math.round(v.o.frac*100) + '%).</div>'   + faltaHoyHtml(v) + cmpMesHtml(v) + '</div>';
+  h += cierreHtml(v);
   if(BL.cmp) h += cmphtml(v);
   if(BL.met) h += qhtml(v);
   if(BL.rk) h += rkhtml(v);
@@ -178,6 +278,8 @@ function pintar(){
     h += '<div class="lin">Compra por mes: <strong>' + fmt(c.p) + '</strong></div>';
     h += '<div class="lin">Última compra: <span class="' + (tarde?'rojo':'') + '">' + fcorta(c.u) + (d!==null?' (hace ' + d + ' días)':'') + '</span></div>';
     if(c.f.length) h += '<div class="lin">Ofrecerle: ' + c.f.map(function(f){ return '<span class="chip">' + esc(f) + '</span>'; }).join('') + '</div>';
+    h += dejoHtml(c, v);
+    h += pedidoHtml(c);
     h += reposicionHtml(c);
     if(c.rp.length) h += '<div class="repo">Reponer: ' + c.rp.map(function(y){ return esc(y[0]) + ' ' + fmt(y[1]); }).join(' · ') + '</div>';
     h += uvhtml(c) + bhtml(c) + cohtml(c);
