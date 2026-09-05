@@ -35,11 +35,27 @@ function agendaFecha(n,f){ var a=agenda(quien); if(!a[n])a[n]={}; a[n].f=f; guar
 function agendaRefecha(n,f){ var a=agenda(quien); if(!a[n])a[n]={}; a[n].r=f; if(f)a[n].e='reagendado'; guardaAgenda(quien,a); pintar(); }
 function agendaEstado(n,e){ var a=agenda(quien); if(!a[n])a[n]={}; a[n].e=e; guardaAgenda(quien,a); pintar(); }
 function elVend(vid){ for(var i=0;i<G.vs.length;i++) if(String(G.vs[i].id)===String(vid)) return G.vs[i]; return null; }
-function qshort(n){n=Number(n)||0;if(Math.abs(n)>=1000000)return '$ '+(n/1000000).toLocaleString('es-AR',{maximumFractionDigits:1})+' M';if(Math.abs(n)>=1000)return '$ '+Math.round(n/1000).toLocaleString('es-AR')+' mil';return '$ '+Math.round(n).toLocaleString('es-AR');}
+function qshort(n){n=Number(n)||0;if(Math.abs(n)>=999500)return '$ '+(n/1000000).toLocaleString('es-AR',{maximumFractionDigits:1})+' M';if(Math.abs(n)>=1000)return '$ '+Math.round(n/1000).toLocaleString('es-AR')+' mil';return '$ '+Math.round(n).toLocaleString('es-AR');}
 function qlit(n){return (Math.round((Number(n)||0)*10)/10).toLocaleString('es-AR',{maximumFractionDigits:1})+' L';}
 function qest(real,meta,frac){var p=meta?real/meta:0;if(p>=frac*.90)return ['mok','moktxt'];if(p>=frac*.70)return ['mwarn','mwarntxt'];return ['mbad','mbadtxt'];}
 function qbar(real,meta,frac){var p=meta?Math.round(real/meta*100):0,e=qest(real,meta,frac),h=Math.min(99,Math.round(frac*100));return '<div class="mbar"><i class="'+e[0]+'" style="width:'+Math.min(100,Math.max(0,p))+'%"></i><em style="left:'+h+'%"></em></div>';}
 function qvol(n,k){n=Number(n)||0;return k==='CELUSAL'?(Math.round(n*10)/10).toLocaleString('es-AR',{maximumFractionDigits:1})+' t':Math.round(n).toLocaleString('es-AR')+' cj';}
+function msgSem(id){ var t=String(id||''), s=0; for(var i=0;i<t.length;i++) s+=t.charCodeAt(i)*(i+3); return s; }
+function msgHab(){
+  var d = new Date();
+  if(d.getDay() === 0) d = new Date(d.getTime() - 86400000);
+  var t = Math.round((Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()) - Date.UTC(2026,0,1))/86400000);
+  if(t < 0) t = 0;
+  var dom = t >= 3 ? Math.floor((t-3)/7)+1 : 0;
+  return t - dom;
+}
+function msgIdx(n, sem){ if(!n) return 0; var k = (msgHab() + sem) % n; return k < 0 ? k + n : k; }
+function msgHoy(v){
+  if(!BL.msg || !v || !v.msg || !v.msg.length) return '';
+  var t = v.msg[msgIdx(v.msg.length, msgSem(v.id))];
+  if(!t) return '';
+  return '<div class="mmsg"><span class="mmsgi">☀</span><div class="mmsgt">' + esc(t) + '</div></div>';
+}
 function rkhtml(v){if(!v.rf||!v.rf.length)return '';var h='<div class="rkf"><h3>Cómo vas contra tus compañeros</h3>'; v.rf.forEach(function(r){h+='<div class="rkl"><div class="rkn">'+esc(r.nom)+'</div>';  if(!r.cli){h+='<div class="rkp">Todavía no vendiste esta línea este mes. Ya la están vendiendo '+r.n+' de tus compañeros.</div>';}  else{h+='<div class="rkp">Cobertura: le vendiste a <b>'+r.cli+'</b> de tus '+r.cart+' clientes ('+r.cob+'%) · vas <b class="'+(r.pc<=3?'rkg':'')+'">'+r.pc+'° de '+r.n+'</b>';  h+=(r.pv?' · en volumen '+r.pv+'°':'')+'</div>';}  if(r.ob){var cu=Math.round(r.cli/r.ob*100),ok=r.cli>=(r.obh||r.ob);h+='<div class="rkp">Objetivo del mes: <b>'+r.ob+'</b> clientes · vas <b class="'+(ok?'rkg':'')+'">'+cu+'%</b>'+(r.cli>=r.ob?' · cumplido':' · te faltan <b>'+(r.ob-r.cli)+'</b>'+(r.obh&&r.obh<r.ob?' (a hoy deberías ir en '+r.obh+')':''))+'</div>';}  if(r.riv&&r.fa)h+='<div class="rks">'+(r.fa>1?'Te faltan <b>'+r.fa+'</b> clientes':'Te falta <b>1</b> cliente')+' para pasar a '+esc(String(r.riv).replace(/\.$/,''))+(r.sug&&r.sug.length?'. Empezá por: '+r.sug.map(esc).join(', '):'')+'</div>';  else if(r.sug&&r.sug.length&&r.pc>1)h+='<div class="rks">Todavía no le compraron: '+r.sug.map(esc).join(', ')+'</div>';  h+='</div>'});return h+'</div>'}
 function ritvhtml(v){if(!BL.rit||!v.rit)return '';var r=v.rit,up=r.pc>=0; var h='<div class="rkf"><h3>Cómo venís este mes</h3><div class="rkl">'; h+='<div class="rkp">Venías a <b>'+fmt(r.i1)+' por día</b> ('+r.c1+' clientes) y en los últimos días vas a <b>'+fmt(r.i2)+'</b> ('+r.c2+' clientes) · <b class="'+(up?'rkg':'')+'" style="color:'+(up?'#1a7f4b':'#c0392b')+'">'+(up?'+':'')+r.pc+'%</b></div>'; h+='<div class="rks">Es contra vos mismo, no contra tus compañeros. Último día cargado: '+fcorta(r.ult)+'</div>'; return h+'</div></div>'}
 function caevhtml(v){if(!BL.cae||!v.cae||!v.cae.length)return ''; var h='<div class="rkf"><h3>Tus clientes que están comprando menos que el año pasado</h3>'; if(v.cmp2){var c=v.cmp2,ok=c.pc>=0;  h+='<div class="rkl"><div class="rkp">Con los <b>'+c.n+' clientes que seguís atendiendo</b> vas <b style="color:'+(ok?'#1a7f4b':'#c0392b')+'">'+(ok?'+':'')+c.pc+'%</b> contra '+c.ant+' ('+fmt(c.b)+' contra '+fmt(c.a)+')';  h+=(c.nv?' · y abriste <b>'+c.nv+'</b> clientes nuevos por '+fmt(c.np):'')+'</div></div>';} v.cae.forEach(function(x){  h+='<div class="rkl"><div class="rkn">'+esc(x[0])+'</div><div class="rkp">El año pasado '+fmt(x[1])+' · este año <b>'+fmt(x[2])+'</b> · <b style="color:#c0392b">'+x[3]+'%</b></div></div>';}); return h+'<div class="rks">Cada uno de estos es un llamado para hacer.</div></div>'}
@@ -206,6 +222,7 @@ function pintar(){
   h += '<div class="enc"><div class="encTxt"><h1>' + esc(v.nom) + ' — ' + titSec + '</h1></div>'     + '<img class="logo" src="' + LOGO + '" alt=""></div>';
   h += '<div class="sub">Datos al ' + fcorta(G.gen) + ' · ' + (D.c.length + D.p.length + D.x.length) + ' clientes</div>';
   h += ppestanas();
+  h += msgHoy(v);
   if(PAN && PAN.cta) h += '<div class="pwrap" style="padding-bottom:0">' + ppanCuenta() + '</div>';
   if(G.rec) h += '<div class="recado"><b>Aviso:</b> ' + esc(G.rec) + '</div>';
   if(viejoDias !== null && viejoDias > 2) h += '<div class="viejo">⚠ Estos datos son del ' + fcorta(G.gen) + '. Abrí la app con señal y se actualiza sola.</div>';
@@ -345,9 +362,13 @@ var PAN = G.pan || null;
 var VISTA = lsGet('rg_vista_' + (G.pre || 'x')) || '';
 if(!VISTA) VISTA = (PAN && (!G.vs || !G.vs.length)) ? 'pan' : 'yo';
 var TVI = 0;
+var TVC = 0;
 var VERIMP = lsGet('rg_verimp') !== '0';
 function verVista(x){ VISTA = x; lsSet('rg_vista_' + (G.pre || 'x'), x); pintar(); window.scrollTo(0,0); }
-function tvIr(i){ var n = PAN.vs.length; TVI = ((i % n) + n) % n; pintar(); window.scrollTo(0,0); }
+function tvTot(){ return 1 + PAN.vs.length + (pcaiTodos().length ? 1 : 0); }
+function tvIr(i){ var n = tvTot(); TVI = ((i % n) + n) % n; TVC = 0; pintar(); window.scrollTo(0,0); }
+function tvCai(i){ TVC = i; pintar(); window.scrollTo(0,0); }
+function tvCaiIr(){ TVI = PAN.vs.length + 1; TVC = 0; verVista('tv'); }
 function pmil(n){ return Math.round(Number(n)||0).toLocaleString('es-AR'); }
 function plit(n){ n = Number(n)||0; return (Math.round(n*10)/10).toLocaleString('es-AR',{maximumFractionDigits:1}); }
 function pvol(n,k){ return k==='CELUSAL' ? (Math.round(n*10)/10).toLocaleString('es-AR',{maximumFractionDigits:1})+' t' : pmil(n)+' cj'; }
@@ -661,10 +682,12 @@ function ppanResto(){
    es el total del grupo ni la comparacion de plata entre companeros. ---- */
 function verImp(x){ VERIMP = x; lsSet('rg_verimp', x ? '1' : '0'); pintar(); }
 function ptv(){
-  var n = PAN.vs.length, x = PAN.vs[TVI], b = x.b;
+  if(TVI === 0) return ptvPortada();
+  if(TVI > PAN.vs.length) return ptvCaidos();
+  var n = PAN.vs.length, x = PAN.vs[TVI-1], b = x.b;
   var h = '<div class="ptv"><div class="ptvtop"><button class="ptvb" onclick="tvIr(' + (TVI-1) + ')">&#8592;</button>'
         + '<div class="ptvnom">' + esc(x.nom) + '</div><button class="ptvb" onclick="tvIr(' + (TVI+1) + ')">&#8594;</button></div>'
-        + '<div class="ptvsub">' + (TVI+1) + ' de ' + n + ' · ' + MESN[(PAN.mes||1)-1]
+        + '<div class="ptvsub">' + TVI + ' de ' + n + ' · ' + MESN[(PAN.mes||1)-1]
         + ' · <button class="ptvimp" onclick="verImp(' + (VERIMP ? 'false' : 'true') + ')">'
         + (VERIMP ? 'ocultar los importes' : 'mostrar los importes') + '</button></div>';
   if(VERIMP && x.meta){
@@ -688,12 +711,97 @@ function ptv(){
      + '<span class="ptvch">' + x.per + ' perdidos</span></div></div>';
   if(x.cai && x.cai.length){
     h += '<div class="ptvc"><div class="ptvt">A QUIÉN HAY QUE IR A BUSCAR</div><div class="ptvl">';
-    x.cai.slice(0,12).forEach(function(z){ h += '<div class="ptvli"><span>' + esc(z[0]) + '</span><b>' + z[2] + ' d</b></div>'; });
+    x.cai.slice(0,12).forEach(function(z){ h += '<div class="ptvli"><span>' + esc(z[0]) + (z[4] ? ' <i style="font-style:normal;color:#9db6d4;font-size:.75em">última ' + fcorta(z[4]) + '</i>' : '') + '</span><b>' + (z[1] ? qshort(z[1]) + '/mes · ' : '') + z[2] + ' d</b></div>'; });
     h += '</div></div>';
   }
   h += '<div class="ptvnav">';
-  for(var i=0;i<n;i++) h += '<button class="ptvn' + (i===TVI?' act':'') + '" onclick="tvIr(' + i + ')">' + (i+1) + '</button>';
+  h += '<button class="ptvn' + (TVI===0?' act':'') + '" onclick="tvIr(0)">⌂</button>';
+  for(var i=1;i<=n;i++) h += '<button class="ptvn' + (i===TVI?' act':'') + '" onclick="tvIr(' + i + ')">' + i + '</button>';
+  if(pcaiTodos().length) h += '<button class="ptvn ptvcaib' + (TVI>n?' act':'') + '" onclick="tvIr(' + (n+1) + ')">caídos</button>';
   h += '</div><button class="ptvsal" onclick="verVista(\'pan\')">Salir del modo pantalla</button></div>';
+  return h;
+}
+function pfsem(f){ if(!f) return ''; var d=new Date(f+'T12:00:00');
+  return ['domingo','lunes','martes','mi\u00e9rcoles','jueves','viernes','s\u00e1bado'][d.getDay()]+' '+parseInt(f.slice(8,10),10)+'/'+parseInt(f.slice(5,7),10); }
+function pbuelin(){ return (PAN.msg || []).slice(1); }
+function pbueidx(){ var L = pbuelin(); return L.length ? msgIdx(L.length, msgSem('sup' + (G.pre || ''))) : -1; }
+function ppanPortada(){
+  var B = PAN.bue; if(!B || !B.i) return '';
+  var L = pbuelin(), k = pbueidx();
+  var h = '<div class="pcard pbue"><div class="pbuet">La buena noticia</div>'
+        + '<div class="pbueb">' + qshort(B.i) + '</div>'
+        + '<div class="psb">es lo que hizo ' + (PAN.tipo === 'duenio' ? 'la empresa' : 'el grupo')
+        + ' en los últimos ' + B.n + ' días de venta, con <b>' + pmil(B.cl) + '</b> clientes atendidos</div>';
+  L.forEach(function(t, i){ if(i !== k) h += '<div class="pbuel">· ' + esc(t) + '</div>'; });
+  return h + '</div>';
+}
+function ppanMsg(){
+  var L = pbuelin(), k = pbueidx();
+  if(k < 0 || !L[k]) return '';
+  return '<div class="mmsg"><span class="mmsgi">☀</span><div class="mmsgt">' + esc(L[k]) + '</div></div>';
+}
+function pcaiTodos(){
+  if(PAN._cai) return PAN._cai;
+  var out = [];
+  PAN.vs.forEach(function(x){ (x.cai || []).forEach(function(z){
+    out.push({c:z[0], p:Number(z[1])||0, d:Number(z[2])||0, f:z[4]||'', v:x.nom, fa:z[3]||[]});
+  }); });
+  out.sort(function(a,b){ return (b.p - a.p) || (b.d - a.d); });
+  PAN._cai = out;
+  return out;
+}
+function ppanCaidos(){
+  var L = pcaiTodos(); if(!L.length) return '';
+  var plata = 0; L.forEach(function(z){ plata += z.p; });
+  var h = '<div class="pcard prjc"><div class="pct">Clientes ca\u00eddos de todo el grupo</div>'
+        + '<div class="phint">' + L.length + ' clientes que dejaron de comprar. Juntos compraban <b>' + qshort(plata) + ' por mes</b>. Del que m\u00e1s pesa al que menos.</div>'
+        + '<button class="pbtn" onclick="tvCaiIr()">Verlos en la pantalla grande</button></div>';
+  h += '<div class="pcard"><div class="pct">La lista completa</div>';
+  L.forEach(function(z, i){
+    h += '<div class="pcai"><span class="pcaipos">' + (i+1) + '</span>'
+       + '<span class="pcain">' + esc(z.c) + ' <i>\u00b7 ' + esc(z.v) + '</i></span>'
+       + '<span class="pcaiv mbadtxt">' + (z.p ? qshort(z.p) + '/mes' : '') + '</span></div>'
+       + '<div class="pcaid">hace <b>' + z.d + ' d\u00edas</b> \u00b7 \u00faltima compra ' + fcorta(z.f) + (z.fa.length ? ' \u00b7 llevaba ' + z.fa.map(esc).join(', ') : '') + '</div>';
+  });
+  return h + '</div>';
+}
+function ptvCaidos(){
+  var L = pcaiTodos(), pag = 10, tot = Math.ceil(L.length / pag) || 1;
+  if(TVC >= tot) TVC = 0; if(TVC < 0) TVC = tot - 1;
+  var plata = 0; L.forEach(function(z){ plata += z.p; });
+  var h = '<div class="ptv"><div class="ptvtop"><button class="ptvb" onclick="tvIr(' + (TVI-1) + ')">&#8592;</button>'
+        + '<div class="ptvnom">A qui\u00e9n hay que ir a buscar</div><button class="ptvb" onclick="tvIr(' + (TVI+1) + ')">&#8594;</button></div>'
+        + '<div class="ptvsub">' + L.length + ' clientes ca\u00eddos \u00b7 compraban ' + qshort(plata) + ' por mes \u00b7 p\u00e1gina ' + (TVC+1) + ' de ' + tot + '</div>';
+  h += '<div class="ptvc">';
+  L.slice(TVC*pag, TVC*pag + pag).forEach(function(z, i){
+    h += '<div class="ptvcail"><span class="ptvcaiv">' + (TVC*pag + i + 1) + '</span>'
+       + '<span class="ptvcain">' + esc(z.c) + '<br><i>' + esc(z.v) + ' \u00b7 \u00faltima compra ' + fcorta(z.f) + '</i></span>'
+       + '<span class="ptvcaid">' + z.d + ' d</span>'
+       + '<span class="ptvcaiv">' + (z.p ? qshort(z.p) + '/mes' : '') + '</span></div>';
+  });
+  h += '</div>';
+  if(tot > 1) h += '<div class="ptvnav"><button class="ptvgo" onclick="tvCai(' + (TVC-1) + ')">\u2190 anteriores</button>'
+     + '<button class="ptvgo" onclick="tvCai(' + (TVC+1) + ')">siguientes \u2192</button></div>';
+  h += '<button class="ptvsal" onclick="verVista(\'pan\')">Salir del modo pantalla</button></div>';
+  return h;
+}
+function ptvPortada(){
+  var B = PAN.bue;
+  var h = '<div class="ptv"><div class="ptvtop"><button class="ptvb" onclick="tvIr(' + (TVI-1) + ')">&#8592;</button>'
+        + '<div class="ptvnom">' + esc(PAN.tit) + '</div><button class="ptvb" onclick="tvIr(' + (TVI+1) + ')">&#8594;</button></div>'
+        + '<div class="ptvsub">' + MESN[(PAN.mes||1)-1] + ' \u00b7 datos al ' + fcorta(PAN.gen) + '</div>';
+  h += '<div class="ptvport">';
+  if(B && B.i){
+    h += '<div class="ptvportt">Lo que hizo ' + (PAN.tipo === 'duenio' ? 'la empresa' : 'el grupo') + '</div>'
+       + '<div class="ptvportb">' + qshort(B.i) + '</div>'
+       + '<div class="ptvports">en los \u00faltimos ' + B.n + ' d\u00edas de venta, con ' + pmil(B.cl) + ' clientes atendidos</div>';
+    pbuelin().slice(0,4).forEach(function(t){ h += '<div class="ptvportl">' + esc(t) + '</div>'; });
+  } else {
+    h += '<div class="ptvportt">Arrancamos</div><div class="ptvports">Todav\u00eda no hay venta cargada de estos d\u00edas.</div>';
+  }
+  h += '</div>';
+  h += '<div class="ptvnav"><button class="ptvgo" onclick="tvIr(1)">Empezar con los vendedores \u2192</button></div>';
+  h += '<button class="ptvsal" onclick="verVista(\'pan\')">Salir del modo pantalla</button></div>';
   return h;
 }
 function ppestanas(){
@@ -715,8 +823,11 @@ function pintarPanel(){
   h += ppestanas();
   h += '<div class="pwrap">';
   if(G.rec) h += '<div class="recado"><b>Aviso:</b> '+esc(G.rec)+'</div>';
+  h += ppanMsg();
+  h += ppanPortada();
   if(PAN.tipo === 'branca'){
     h += ppanBranca();
+    h += ppanCaidos();
   } else {
     var n = PAN.vs.length;
     h += ppanTotal(PAN.tipo === 'duenio' ? 'Facturación de la empresa' : 'Facturación del grupo', n + ' vendedores');
@@ -737,6 +848,7 @@ function pintarPanel(){
          + '<div class="phint">Sacado artículo por artículo. Es dato exacto.</div>'
          + pcols(PAN.lem, function(v){ return pmil(v/1000)+'k'; }, 'pc21') + '</div>';
     }
+    h += ppanCaidos();
     h += ppanAlertas();
   }
   h += escBarra() + '</div>';
