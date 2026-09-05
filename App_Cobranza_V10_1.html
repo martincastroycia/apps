@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Cobranza — Vendedor 10</title>
+<style>
+  :root{--az:#1f2530;--na:#d96c2c;--ver:#0a7c3a;--rojo:#b91c1c;--tra:#1d4ed8;--bord:#cdd4dc;--gris:#64748b;}
+  *{box-sizing:border-box}
+  body{font-family:system-ui,'Segoe UI',Arial,sans-serif;margin:0;background:#eef1f5;color:#12212e;font-size:16px;padding-bottom:30px}
+  header{position:sticky;top:0;z-index:10;background:var(--az);color:#fff;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  header .t{font-size:20px;font-weight:800}
+  header .fe{font-size:13px;color:#c8d0d8;margin-top:1px}
+  header .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;font-size:13px}
+  header .chip{background:#2e3949;border-radius:20px;padding:5px 11px}
+  header .chip b{color:#fff} header .chip.ver b{color:#7ee2a8}
+  .hint{background:#fff7e6;border:1px solid #f0c667;border-radius:10px;padding:10px 12px;margin:12px;font-size:13.5px;color:#5a4a20}
+  .alta{background:#fff;border:1px solid var(--bord);border-radius:13px;margin:12px;padding:13px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+  .alta h2{font-size:15px;font-weight:800;color:var(--az);margin:0 0 10px}
+  .campo{margin-bottom:9px}
+  .campo label{display:block;font-size:12.5px;color:var(--gris);font-weight:700;margin-bottom:3px}
+  .campo select,.campo input{width:100%;padding:12px;border:1px solid var(--bord);border-radius:10px;font-size:16px;background:#fff}
+  .campo input.m{text-align:right;font-size:19px;font-weight:700}
+  .dos{display:flex;gap:9px}.dos .campo{flex:1}
+  .fotoBtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border:2px dashed var(--tra);background:#eef3ff;color:var(--tra);border-radius:10px;font-size:15px;font-weight:700;cursor:pointer}
+  .fotoBtn input{display:none}
+  .thumb{margin-top:8px;width:70px;height:70px;border-radius:8px;object-fit:cover;border:1px solid var(--bord)}
+  .add{margin-top:11px;width:100%;padding:15px;border:none;border-radius:11px;background:var(--ver);color:#fff;font-size:17px;font-weight:800;cursor:pointer}
+  .add:disabled{opacity:.6}
+  #estado{margin:0 12px;font-size:14px;font-weight:700;text-align:center;min-height:20px}
+  h3{font-size:14px;font-weight:800;color:var(--az);margin:16px 14px 8px;text-transform:uppercase}
+  .lista{padding:0 12px}
+  .vac{color:var(--gris);font-size:14px;text-align:center;padding:16px}
+  .cobro{background:#fff;border:1px solid var(--bord);border-left:6px solid var(--ver);border-radius:12px;padding:11px 12px;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .cobro .cli{font-weight:800;font-size:16px}.cobro .meta{font-size:12.5px;color:var(--gris);margin-top:2px}
+  .cobro .imp{font-size:18px;font-weight:800;white-space:nowrap}
+  .ok{color:var(--ver);font-size:12px;font-weight:700}
+  .tot{background:#fff;border:2px solid var(--az);border-radius:12px;margin:6px 12px;padding:12px 13px}
+  .tot .big{display:flex;justify-content:space-between;font-size:19px;font-weight:800;color:var(--az)}
+  .aviso-cx{margin:12px;padding:10px 12px;border-radius:10px;font-size:13.5px;display:none}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+</head>
+<body>
+<header>
+  <div class="t">Cobranza — Vendedor 10</div>
+  <div class="fe" id="hFe">205</div>
+  <div class="chips">
+    <span class="chip ver">Cobrado hoy <b id="cTot">$0</b></span>
+    <span class="chip">Cobros <b id="cCant">0</b></span>
+  </div>
+</header>
+
+<div id="cxErr" class="aviso-cx" style="background:#fdecec;border:1px solid #e6bcbc;color:#b91c1c"></div>
+
+<div class="hint">Cargá <b>solo las transferencias</b>. Elegí el cliente, poné el <b>importe exacto</b>, la fecha y sacá/anexá la <b>foto</b> del comprobante. Tocá <b>Guardar cobro</b> y se manda solo a la oficina. No hace falta WhatsApp.</div>
+
+<div class="alta">
+  <h2>Agregar cobro</h2>
+  <div class="campo"><label>Cliente</label><select id="fCli"></select></div>
+  <div class="dos">
+    <div class="campo"><label>Importe (el real de la foto)</label><input class="m" id="fImp" inputmode="decimal" placeholder="0"></div>
+    <div class="campo"><label>Fecha</label><input type="date" id="fFe"></div>
+  </div>
+  <label class="fotoBtn">📎 Anexar foto del comprobante<input type="file" id="fFoto" accept="image/*"></label>
+  <img id="thumb" class="thumb" style="display:none">
+  <button class="add" id="bGuardar">✔ Guardar cobro</button>
+</div>
+<div id="estado"></div>
+
+<div class="tot"><div class="big"><span>TOTAL COBRADO HOY</span><span id="tTot">$0</span></div></div>
+
+<h3>Cobros de hoy</h3>
+<div class="lista" id="lista"><div class="vac">Todavía no cargaste ningún cobro.</div></div>
+
+<script>
+'use strict';
+var CLIENTES=[{"nombre":"AVICOLA ANDREA","saldo":0.64},{"nombre":"CAÑETE MARCELO","saldo":488489.33},{"nombre":"CONGREGACION DE HERMANAS","saldo":211698.37},{"nombre":"DANIEL GOMEZ","saldo":100205.83},{"nombre":"DON BARON SRL","saldo":708643.74},{"nombre":"EL REY DE LA MILANESA","saldo":174.87},{"nombre":"ESCMASSA SAS","saldo":549992.68},{"nombre":"ESTABLECIMIENTO DON ANTONIO","saldo":42465.74},{"nombre":"FERNANDEZ MARCELINO","saldo":60901.44},{"nombre":"FERNANDEZ MARIELA","saldo":387416.59},{"nombre":"GINECMA SAS","saldo":1424919.7},{"nombre":"GONZALEZ RICARDO","saldo":1198727.41},{"nombre":"GRUPO ARGENTO SRL","saldo":2400000},{"nombre":"GUIJA SRL","saldo":171523.41},{"nombre":"KANJER SERGIO","saldo":88577.86},{"nombre":"KIOSCO VINCENT","saldo":236769.86},{"nombre":"LEIVA OMAR","saldo":588327.82},{"nombre":"LIN SHAOYUN","saldo":0.68},{"nombre":"LIN ZHAOYING","saldo":15.44},{"nombre":"LOPEZ RAUL","saldo":20.4},{"nombre":"MAIDANA LUIS ALBERTO","saldo":570006.41},{"nombre":"MAZON SILVIA","saldo":204865.61},{"nombre":"MENDOZA ROBERTO","saldo":345511.76},{"nombre":"MINUTO MIGUEL","saldo":815109.48},{"nombre":"MONACCI JOSE","saldo":0.75},{"nombre":"NAVARRO ERIKA MICAELA","saldo":283050.45},{"nombre":"NUÑEZ MARINA","saldo":347228.65},{"nombre":"PINTO MARINA","saldo":756096.55},{"nombre":"ROQUERA MAXIMA","saldo":5430},{"nombre":"SANCHEZ DANIEL HERNAN","saldo":775566.2},{"nombre":"YUNG WAI","saldo":648099.03}];
+var VNUM=10, VETIQ='205';
+var firebaseConfig={apiKey:"AIzaSyDXqLbTAA9TCkUgMJpKrDxkvDMNBzmjTIQ",authDomain:"castro-cobranzas.firebaseapp.com",projectId:"castro-cobranzas",storageBucket:"castro-cobranzas.firebasestorage.app",messagingSenderId:"30596915316",appId:"1:30596915316:web:7a4b57f28342b1e3a3b121"};
+var db,st,LISTOS=[],fotoFile=null;
+function $(id){return document.getElementById(id);}
+function money(n){n=Math.round(n||0);return '$'+n.toLocaleString('es-AR');}
+function numAR(v){v=String(v==null?'':v).replace(/[^\d.,-]/g,'');if(!v)return 0;var ld=v.lastIndexOf('.'),lc=v.lastIndexOf(',');if(ld>=0&&lc>=0){if(lc>ld)v=v.replace(/\./g,'').replace(',','.');else v=v.replace(/,/g,'');}else if(lc>=0){v=v.replace(',','.');}var n=parseFloat(v);return isNaN(n)?0:n;}
+function hoyISO(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+try{ firebase.initializeApp(firebaseConfig); db=firebase.firestore(); st=firebase.storage(); }
+catch(e){ var c=$('cxErr'); c.style.display='block'; c.textContent='No se pudo conectar con el buzón. Revisá internet y volvé a abrir. ('+e.message+')'; }
+
+$('hFe').textContent=hoyISO().split('-').reverse().join('/')+' · '+VETIQ;
+$('fCli').innerHTML='<option value="">— elegí cliente —</option>'+CLIENTES.map(function(c,i){return '<option value="'+i+'">'+c.nombre+' — debe '+money(c.saldo)+'</option>';}).join('');
+$('fFe').value=hoyISO();
+
+$('fFoto').onchange=function(){ fotoFile=this.files[0]||null; var t=$('thumb'); if(fotoFile){ t.src=URL.createObjectURL(fotoFile); t.style.display='block'; } else t.style.display='none'; };
+
+function pintar(){
+  var L=$('lista');
+  if(!LISTOS.length){ L.innerHTML='<div class="vac">Todavía no cargaste ningún cobro.</div>'; }
+  else L.innerHTML=LISTOS.map(function(o){ return '<div class="cobro"><div><div class="cli">'+o.cli+'</div><div class="meta">'+o.fe.split('-').reverse().join('/')+(o.foto?' · 📷 con foto':' · sin foto')+' · <span class="ok">✔ guardado</span></div></div><div class="imp">'+money(o.imp)+'</div></div>'; }).join('');
+  var tot=LISTOS.reduce(function(a,o){return a+o.imp;},0);
+  $('cTot').textContent=money(tot); $('tTot').textContent=money(tot); $('cCant').textContent=LISTOS.length;
+}
+
+$('bGuardar').onclick=async function(){
+  if(!db){ alert('No hay conexión con el buzón. Revisá internet.'); return; }
+  var vi=$('fCli').value; if(vi===''){ alert('Elegí el cliente.'); return; }
+  var imp=numAR($('fImp').value); if(imp<=0){ alert('Poné el importe de la transferencia.'); return; }
+  var cli=CLIENTES[+vi].nombre, fe=$('fFe').value||hoyISO();
+  var btn=$('bGuardar'), est=$('estado');
+  btn.disabled=true; est.style.color='#5a4a20'; est.textContent='Guardando…';
+  var fotoURL=null, fotoPath=null, fotoErr=false;
+  try{
+    if(fotoFile){
+      try{
+        fotoPath='comprobantes/V'+VNUM+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,7)+'.jpg';
+        var ref=st.ref(fotoPath);
+        var task=ref.put(fotoFile);
+        var _to;
+        // tope de 25 segundos: si la foto no sube (Storage sin activar, mala señal), no se cuelga — guardamos el dato igual
+        await Promise.race([ task, new Promise(function(_,rej){ _to=setTimeout(function(){ try{task.cancel();}catch(e){} rej(new Error('timeout foto')); }, 25000); }) ]);
+        clearTimeout(_to);
+        fotoURL=await ref.getDownloadURL();
+      }catch(ef){ fotoErr=true; fotoPath=null; fotoURL=null; }   // la foto es secundaria: si falla o tarda, igual guardamos el dato
+    }
+    await db.collection('cobranzas').add({
+      v:VNUM, vend:'Vendedor '+VNUM, etiq:VETIQ, cli:cli, imp:Math.round(imp*100)/100, fe:fe,
+      fotoURL:fotoURL, fotoPath:fotoPath, nf:(fotoURL?1:0), estado:'nuevo',
+      ts: firebase.firestore.FieldValue.serverTimestamp(), fecha_carga:new Date().toISOString()
+    });
+    LISTOS.unshift({cli:cli, imp:imp, fe:fe, foto:!!fotoURL}); pintar();
+    est.style.color='#0a7c3a'; est.textContent='✔ Cobro guardado en la oficina'+(fotoErr?' (la foto no subió, mandala por WhatsApp)':'');
+    $('fCli').value=''; $('fImp').value=''; $('fFe').value=hoyISO(); fotoFile=null; $('fFoto').value=''; $('thumb').style.display='none';
+  }catch(e){
+    est.style.color='#b91c1c'; est.textContent='No se pudo guardar. Revisá internet y probá de nuevo. ('+e.message+')';
+  }
+  btn.disabled=false;
+};
+pintar();
+</script>
+</body></html>
