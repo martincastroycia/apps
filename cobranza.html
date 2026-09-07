@@ -79,6 +79,7 @@
 </header>
 
 <div id="cxErr" class="aviso-cx" style="background:#fdecec;border:1px solid #e6bcbc;color:#b91c1c"></div>
+<div id="cola" class="aviso-cx"></div>
 
 <div class="hint">Cargá <b>solo las transferencias</b>. Elegí el cliente, poné el <b>importe exacto</b>, la fecha y sacá/anexá la <b>foto</b> del comprobante. Tocá <b>Guardar cobro</b> y se manda solo a la oficina. No hace falta WhatsApp.</div>
 
@@ -103,7 +104,7 @@
 <script>
 'use strict';
 /* ====== BLOQUES CIFRADOS (uno por vendedor). Lo pone el programa al generar. ====== */
-var BLOQUES = [{"v":4,"b":"AbxMmlew3eDPt0e6w/VfgSa6PdOBDJlOYvSYpbHw8vFHJAMjvRvhRmhm6Z8ayq4mHWr0VrZKhIdhMVwcthED5AuKrkFPInIfQYXPAozCvoHldoJZmLaEueWOtqfF6zgAq82XqIglEHORNbqml9W8krzrgAc56BjObnACIJxzk6gCvz32d3oTSwR2mYbMX9j9DvNGqhLEDHPlQ5tL/VomzR5MfMbwQrKCPgyQIV9vPPoFwMEXeawGGpL/tR9RoO3zJLPAtA+UCTeledokvgDm1884aV8XUCN3hPjMEro5XCvhzFaYBahJbdEv2ygMyrYpR/gT46cm4FW2+mmqxdK6QSdrD4Tpxf/Nq1LE68BSx8WYToytZrwsgRT0X1F0fd6cD7ogwlpxGc/v9ENOPYFcJ2PBduf456oMQpIseEplBarkyOO/JRQ8zVwQSnP+BffT7o6CRFJ0a4AuDiYpsDnzvFqMxM7cr085x3WtoLb2jPe6NJukjekp1BORHkAZbPaKAkGH1Os/uw+fvJEPwAXK0o/Nhe8JFvY//TCaUHy0McIdhhxFhQB2mtHeYRYwZMbUg/37k9aKd+X8dN+iRFJCfD2FneKDJqLA7ZknEVpEjZmEpVvvwVyQkfeqJ0uKZoRpDl8U2XZjvMQV+4lMug=="},{"v":6,"b":"AQVMJTlbn0AVaQS+2no9OsZG+tVxs/tDbLS1lZ2gujES11RIW4Pzoen95IivhbjPwiuzckHRq0nZ3RFjkKm/HlOlYfNZCmPKzT2a2EwU6reh0vOUpxtjHhfCovEMtNpglRuErJnB6miK/XqNreZumny1WwCvdAIbd4H86k7N6UECtg9c2WNdgY81DK/yPzT26Ia/DNIr2RyXykWWsMaykjdP1F+ZKr9KRRhn02gtPMhlV/JDdf4Xd39kDEd4EMU24HyfM6R2qbIaxlxhJbsCv0E91l6sgPrDW5BKoSQbaZwS1FFooT6ZBR5shkjm8CzVS3Ko8lyF8OYuZDYDvWTgdFrkSYi61yRWhuUjAuu9EjjOKDoP2p5DsiaAZwmO/vO9ZU+vLAoGLvXeQuZnl2FyzvHcNEvdIVg956ptEoEkp8v1oe7U1ejhjZlxpg50VWfArDInbMkSz460nNDN5jRiko3Ht8gu/721R2R29MhcLuFe5WWu+WJDgmcfNUvfLAK8PZ1vxoUHyqZLb9CXbn4DVSFJyuoU6DVwaDjorNqCbeBOhb/qWpHK52hkntCP7Kah2Oen40Q5mk/g7s5Kqrcv9T8QEx1o7C0J69htRaQ7ZtoFh9LF6QuVGkW+4s8gmjqWJ9Y1zNCg"},{"v":7,"b":"AVYPUyB+NTQjEAOHki5m+hQ4mCpvB2vgztfDopsaCjTT7ED/7QwmwwR1NtDcwEiyugxznO6Zzr/dX7/HIfd0PN63DthlS5C0+QPIw9tlZvD0aBJywQIdmjNJGLM5PbBErtWBm6ZhLRWaDArmSmIdc6xsBVcWwTSbyEyxglKLIlebWzPKx/nychJYRxH9J5jI06dxunq5hPUcc30N7omO0Y4wBA1MLccNcwItpzgAuCKOcOItag9mu4M6UNNmSJxo++9IZC4T9HzUjvwwp1aavU6CegK2tW/Nv6mEgGxWPcsuclEWayItt6HOWT/u1da7NBUAYZPr4YO3EggZRgfucfY4mm2IlHuwhEe/ts/yqo8gMaKdrpA1+zrAQIfFpkdwemy2jUUwzDu83gmsDswmxJIG+4beMZ6lkHVKJkY4r8WUymLSqN0StWvE0V3ged4YSP3aawGF3GMB2GrsSul6S0oJKbBFiOq+PikKzsb5cVxdQiaepQ2wJg0m662MI4o5Ynm0K5+TKNB1Tf0owAmbsmrlovcaeLmFaygEyY+D9LCrdt2WBg+VL7prMlfMe9DTqmtXdy8slgvdAAA225qtqBAA0oeXnXOBwgBFMZ2BONDen7WY2xAIxlxYK7ZUo2boewiwA0Atg+5wDE/LDhKBqP9UcJszg0uO1dOLDVF+NnTDuo9rQ7IF"},{"v":8,"b":"AZTKorJO6hH9vw2bxv9XQOusqN7Orl+DpM4FHr6y+/O+u88pFTWiuDzGL+UK59aEUJR6gZBG+D4iZWareQfu8J4Do97Rh4EDCNF2VYMsfCNW1BVrDFBv0SxmM61qQP6N4z9N7QbWrnYEr/vFpUaP6b8PFNhDwS3iCpcL14FRlX6qpNR2ZSAn6HkFAsl1edqVAP7MJSE/zhCUpUU/EbuokXQnXBwAJLq32hfJitiSBjYdQlRb5i5rWRF5gOMc/dDAXWBqod+y8AwIBd/U6coWEfw8Duz8y3CBtIIJ2cTLOv+tS1c++F6bVzH9gK3tee14V4d6usvBHEWfk/6SiRHlrgF6mitG8xERhyuSDMbpn6da2W8zw9+uNx4JUoxQsfNY/0hLoGhdUacydaXzNqEDc5D3T/OegVax0qbzoho3/cqcxlxCmNKg07wKFVEJ18m2ufaY0l6wQNCV4cuqN/YElRsfGStKbQJ7hVLk/0AX3auMgi0Oh47NNi9xZFRAVFqe1AahSDbkaRVW1o9r+flOXcZPKQMv0H3G4/HgE3KR/t8luFCBMW1kHp1mF88asuJOU7nTgjqftBdrwgQcEuT45rLzl8l8ScB0PrmGxMVcDlaOzDy8LJ7tOwpMcr7OuPUaQGxHMpl52togBUshONC58DxfZb0guoJh0kCkHf587Jd4F8cPUzNnm/XzJCBdxeuAaoi6qFb/OjGTi2FIZGDEN6KqvqSmNGCJZGcuGiNGOib4mJ8FiVwa41vVMHClVk2mcg46PeZJ4mnCHCn+SAA4PihaQor2gvinSr8LP9lVCCG+RMRRXtI5YsEWsWl9AhNvYqki/NVOl12P/l6ZchOM7s86GJg="},{"v":10,"b":"ATmxHFAjbcKk2nlNQW00oHLCau99smXLqAkykXyri5eb1i7TVBC+lyM1ER5/P4oTSYm7w1ZV2auC640dV/r5lCr/k89l1oZjgph7PRm0UpWpQtIblIQS5chC02sQbc8+Fp3STplOKMT9QliLrMuvmKTgi+4vk4TL/qF943zqXUVfw65geP8mmAPDyuQT77RhV7ouvj7jElxQ01JkYf3hoj+Y3z1/43307SZE5Or1/e8dvu5bN3zGDLvpu8FmpGN/6qW9YBeIHnIaNV883sh4e2SDO3mZ9aVmBrift0KmIpGtJR8cHgOqSSUOCFgXybDrgRorr7JFyx+hQlcWLxKTOR52KZy1Mc318XB1Bc1rvnGBm91y4O9yKPExZV+/E/wsgMvJTmi6/TLFO5xRVTvnMHmUDjkUy1oiI7S5B1OAZN/Ax4b20OllVsfwyrKQyPRpVmXQOgLs+T/0ROFDiXnm05YenshyjBj7YjyZUZIUJ1xJAV1s35JbnhUcIfOobt1yxqJ8Ow07nTtah2MYbiG+vPoXD6qXx42jLVE42gzFji3lU7nn9e1L7kofzmvfELIiPMDGQS575im09hN4+M3VirMXUseSMu5x4xFVuOtcr4kvX2DJo+I0y80JtNfJKTlVo64/IK787LZFr5HyLPGWP/+grbB0Ivb1jEsWt2r3pfvF8TSNXGqe8qeDb/Tpn+KdS/Kw6CDbraXZm1y4juZLBsImYQoOhISpKDv/nV3IPCESQUkkdamzOgpSC/w9dINoq1RVsOmjabv0jvFzARRHidgmoPtoSoPd2jEgjWNTkvzM1pfEpdF/k5rlNrRZhpn2MTmJ5gzl21e1whP40Yk6+9nXToz6"},{"v":12,"b":"AShlUrD+N8HFpF73/NTkwR2oE2hIO8YeaQczOz9k77Vj8+QIw5kDn8+L5py7eRKnPfaC0OgN271d1IFd55cxIUZ7aO4ZAaiONm4zHZAdVXgy3Fsy3loLR99rDlFyzmV76P4uzxGQgUOfqPm/rEbA3I6P3+GorpdLdVTWJ7eDOf3BZQXTOLDPpcGeUMQdCE//mLJUmZZuja3mACIGJKr/qhzSWPZHraYJuZ8y7IQItl2sphH8unSHtI4ThFmvkcNxlIc56JFYPQF/h+w76FtRTFcBX5BhVzjyjAxX/w4RcgW3p1jg0P2IXXimg6xqxx9rJuo0Aar6KiRASZQ="},{"v":14,"b":"AbfaHkfE97j3h3segOQYupGE/DwYRwBLFs6xeuyKfQe+9tdgx5H2cvZsWfSKj3qaWWIhSYpEK3/n00Q295NR5D3HgggPnnpJpwj68kDRhjNFIDnRJYwl4cTj8RmYeb5vWZ2RkOSEanIDaMBdqcdglzwDANdY2sRLISvfo5IQklO3bT3l11aFfyG1rIDuFGKigdDwpg1HvIzTSd8GppeHITeFHPMpzEu22pv42zGn8+Zd2XDg2TKYI+14vWVoqZ0rK4YjK9FgCEg1D0OlMmOv9NC0B1Ql4+y8Td/F05FZQFfVrvBmsoRVOKpwSSdXrF4OOdhv5UKdvKCI+2A0DrqBfPgiRA9UPX6jY3fOX/o52pezt23v0znrUk+ZdG27HmBcGlNlC2ftXhQilKQEvDm8SUHQQu6dVGB3JJvxZL9um0HLV3aSuJuxOWkmajw0tTKqLNo3GnCBfYXVmtZGoniacpi2eh6WFxtdPmPBA2nB4F1utFqfXbssHAcUsltTSkDEruEY6U/OdXcOanvpQ6hw9+svDhBa6ecVreIIAXuo/3JDCpBRAlTtyoUGdyJFSEdt5akZRqqf6dLbA1wbU5xnTFq3PNaJka9mDoDaJTks95EOBlgnFESE12503I6qN4Hqc7vDu70LUpHI97O7oxqZifR09NHBmYVm6yNLjS9TVd45NywgoAp8Sli/9A6v5Bkkxc7v9RsBH2rwi1RfqbxQowpx8T/WOSBUrLnW7gW3ZZWvXF79xCpJpw9U32RFyJ23EEHwbKRqUX5loU+W3fVVUH+OEud3tTTWDX0hDkl1"},{"v":105,"b":"AeJ0tBvQSqYE7Jn8G/0bLC7Cg+6KXhhFwKGZL9/C53JMxa0ODwOMI3LNpJ6XfnQHgWY+ZFDqhN0zCEBw3Z3VPo/LDQBI9ztmQQme6gXvHuM4lFW8+VRpIrx6PXx/AWnsiN4hKDktOE0kXDH0aFa7bEH8q06BVfAY/HcORv4ioMgfzYv9zv3sK5O8i7XGjCiUM8fjXt5Jgv0mWK5QNwF/zC1Ijv3++wW4dHCAShGSBwUTzm1LwKY8b6sJrXBWhcnWBURri1D8EtgzY64K4HpbzlS9DqVd3XfbuF4FLEb8ijJSox2xwyDuY2MoMCPwrZfJlosXY3QIINRqS/zTFu0Vhtrr/K2ddu56OnTY7pM0EZIyOUmDDToLpS3HoR05RAs33DYJgU6xSsMByYmVBybDYzQEsFJLPrNqmmBNGL/R1OIxfwkXJhG0IMJCd6jILi8+qrRNZiUsjN9sa6Cdc4JMuDVYlNTnIcptsqFiCljcfdk3Io0NCOBpDXO4GyVu0nCazwYZMkujKhnuyx1cog8sYb6n30LtTzmiHTVMhFHZrDkUTr3chx/NjbkmhjOUkUGxPXbJi7vMnCP+AdJpxAxPN12tvkyaViYx1JMMgVExqprEeB7myuM="},{"v":106,"b":"AecEvJvsY7aGF+nTmvWnHzH+ia02XmbYge49t1Dyc5h6hUUSqGqbmGV3jMR4y1QGJ/lQkfo8R3zctHXgIbdbXTUuXeJKce3H9Zi+7JBLk9l5njJYqlEODhwCR3F4Z4pozA6+rh8JJCVZxDogVYHX0wom5jUKeor0K0kK8HeEqlJArobr3BQOI4E5O9YGXU371cXYwTaFQvafCDI0SgmFwjgMltWnOAX8KiPgdyA/SEWsA3A2EwANGaQknoTky4L3+2jrSO6hiUzRHob+ufQ9hEGsqwjbjcZubXj6n8UIM722rsYc+U2TjLM9CwuYuA+CCQ0opdeszzxrFO1WsI2N+qeQtKZGxM0HOhFO8d9pMuhgxz7AykreHj0kwC6unRrq0ETppJs3/3GnQcnvUlef6XWnlqGT5PAt82rmeWwIl22RdpRIvWUuSJRSU+ASHYWtaY6vbIvDxaAPhoeyiTsNHjCeqx4rRl3Gyjw0ShtHf0ady1hsIDyKcxpZc+Rz3RUhEkPvOolPFtEZE9yhRu9Iu6C0YTm2CIuHvwZjlSqsmVgVNKGBRqzmE/uQ296dgpS4OhgbiqH6ajZTTVJCPER+pBhSBIQLkKKK167/rpcqi2D54X1cdJba7pRQO1J78/AjOQc+4zNTLKlgGVObZSXz15fu65h+cszXMiBni2FjsN4J2x6sGdducSqVMzP+ExUI+uO+audWzgvUO5e6sZtUDiA="},{"v":107,"b":"AdL+PfaYDE5AxYCWqJWbtSE0Nw7rEDNSd7fMWhlaho1Xzw26Jw91e8eEQ51wagkDDgnfv8GUfO5qf+MtmFvuecbVeqONWEh9SdKJGcNDjG7Q4PE31Vu+dvmyptHI6XiByYR3+WGyt3Q/WEXA4K4675yWEEGywmqFMrpWKKydLuMqtGPQBnsSgTbonhHIWyWA5JB71JIbQqfqE/iS16RSRaeYUPWlRXeN02CS0KM7WfHSgBFuqKwvCJs+BxqMzYG+z/QMB77l/7PbDhxxPpUMvdZwTXgaxn8M5AKSxXhjOf8q5FS6ksI7DF4yNuCC0rP3nXZFbu3nmVJNkaGiIhxx5mEgYTlXMSCoFCEWH+4jyDfwKR1yL0NFtRtUbVo1pBGeuqlV2OfUArSQhLT45NmocH1WaZlgj7L9OqZN7q9ywUIDxtHuX/Dgt6M8iFs2rQ78Oi8Ke7BYPS4VkyYXrLP0SMMAbFWtyVpBXJxbPAJZe6Fa3obfc/oCekMqTUrUygOJugTSrgaA3+CVLLnloy/pbUrYSxUmQrpYjoXzLxwBQT9w8EpiRhRjD73Afu/NTrVbKj9kSV+TzHeQ93onVyj4Wi8afe/ICV6I/Kp39HF19oZY0fXJy8vxfJvER/Y/kln2kvp150KKU1iu71OidPGUr3eRjzel6/gIpii/Rc2fhEzwrBQa8zr6ZLunWJFTkwb44FHUYoJoChJG3mhseqcCjHbNPDgxPdUWw/QCHyTIxD/txP4EdQ=="},{"v":206,"b":"AbmWRsTy54EM5zB0dTRcB7rF9cmXCztoDfudVc0ZqWnNbZCYCvAnfylTt5bbR4NE9J5bOtbunx8SndwJ3SPT0NiOUwCBN5XOVrEAqFqntxsvO78DF73OvN21w6kanxirrl66BmPgMlwH+fzjt/tvViHUK9H/z5vD8piesudBEj3y0tCXutn10XI9WAdwiQP5AVJpG9tOUmZLkT3g5QRogUTlft5eanE6I3X0GBTbHMpgbmqycc7vFMFX9ADWOF3r7v0wt2yODFDAGjpTxZ7jtY+8bQ=="},{"v":300,"b":"AV9prIwbl0NMRvG5L7occ0zvArv2jRM/aYQAhoUeU82vjZnRT96rDvynZbmp3aSccc9WVZUN6RrSgXzhxR1pAd3TpUuEmOOF3Km2qYMPwsuDWDsN9q7Rro2yhdt85vlAkl8lzBbsOFDc6nZ/yYJ5peVNAM1NfAGASgPoBoXOnWc6O2XTYsZxPpy6is0aD1mwqzDK12Eex6WE1B1z6pnuvpc+uD7UkbDUmqH5Ir9VfgmkWMvd5OyUCQhwrU4dLKL9/q3iO/BhPjrBcjirH+OAZqDzludyvfiCfN91w6Vprn/o9adqtz/5kDkBuM5f86Hnh10S7Y+MF/d7PXTgkQdgKwgwwQ6/Tmk+5L/+4LQjZbI9vcwjQFFIbl1Rlu2E0onDAerLDJ0r5GRERDK2fXH9YkUd7BgogDPxET3ywsgMJ0aWL67Q4Cz17j34OtI="},{"v":302,"b":"ATq6v5YE8deTsxGPGvVv4N/NFDx4shiis14Kb/r2XRnDFmWe0hBqsB3mSZcuj58tMF4snZbDFwXUnnvAAMelsR0UnXsvmM8mLLQ5GKAE5TrQBpkLe6PDTY7jrasRTNY6owgCk3B6T9lp7FfbrUX4xiM++14xsiDaV54pf5OzSXlh5hRJDWChm1K8PC6ZH60qcMYA2wRjgxbBBkZ5/G0m4CKO2UAkpW/+c86dso27sXgJFkFDcvKVjNQeLnAFreP3BnzGLXhlx6+zPApdvASjTdAXgX7hqLqn5xAU/NrnfNBtabxeb0BMvJmIF9hW4HUxmghZYPLvXlRhIdNiPUCEBX3EUXfLrUNohjJdxIyu84oA3mGjCQyauKwCgs0/74Hkzi/ERwLaokV7/lAD06vwbTZWNpIq1JxJ004AyK2njQLXnXLdyWCsloqaAw0KrUfeWRWOA7R0JAT+RxLal1J2PZIaFZhx3fVWtowAc0nDk6xEpum9C0Y="},{"v":303,"b":"AVFY8zV0YClDXx2gA6P40nU4fzp059cGR3OK9j9STPAGudWk3/sLZBCAFGYLRFcsOvmTebLQldevbQy04hTs1+7QZ5EalsIdjvOJJwbUQrT3P2xKEFLpulQxyWA0xflq7H9xj6O8w6vifRJ6hpHVE61b3KcPHTdB3Q04x1x0cQWIZbOAUuAeIRet/+POd+Gikj760W2k4I5lGNM0sLGIfBUbpuihXZavQr2vKzudETcqI0Q1dv+mhk2JFYAITA+oYMSQULM5y0KlbyB+xGjz/V6Mnrzm3k4z1EhlQnXOM9ixkd5Q4pdmBzKvUfY2vr4D1g/0LQ7wj+MhQM1kvqbVzKwDwWGCwI3nNmbfKU1iDyZy8KQc5/yLIbpSuihfw+GnP4PRR53qqXOSL9l9/OLtCLaz1NujU9XzURufhHZkHW4PvmiWvobB20ZdMd0wvCCsI5D2lbqrETx8tjw2PvhZ1ktYwzR7Tkd79ZI4r66kk1JHZwM+sByI5wxA1XottVPEd2iJqLpc+XyxL0VJC7/kSbcmDiGFQdiEshvdrGvO/4Z4RLCUPzBeKhQb7XsY4ZUG02PDaabqrFYcNnNs83w8UK7E9+xGcTFu2H8XNzWM9hDohYzojGt1drc18uKLa1wHPZgJFjk6PcTRAb8bjy4b1+F1Diw36ubx8dbdDFIowcpHbGyiorG5Xm1TXbVnKsgaXMGoElqd90bLV7odqRodObYOp+sz5tZFIHsoYPi4VP8kidofuuj+7jk2Wo0N3qrOBGvCKh0aKU9Z8q8aVeukcFDZtYk+Rr3P6gWNF55z/+w6FMoTzd22ibbfVCjSCmeRqJ8LKPJlX7v5Ig2XE1jHAoJzZLjK1XCjsE2/EqLmiamcUILkq9n62X8YNDbLG0Acqld+4aQ4buCh8U5OUtJbacmHEHNB7YpNo0sxgDQ9x2w4NjA5qbumkPOw3OCJWg=="},{"v":306,"b":"AT3qz74mFSq5iVgsFUeKLG/M6I+tjc8p8rk1eNYt3Odrp7LnVIz1Wq72SKNyMb7fFDaLG1oFXoFaJfqd2Jjah+A/fjuqA7DANk2ofK9xKXkfBrTuerRFwffWQv0yoXqWemxEWY14QiC0J4sj0J7h0yL1EHD3Ly3M8LFlhmYxl2snYpArm8PzdYUIyJSD+bTg7tD5d1CuTtcZSMsReixio9S8Z6/jZFRl13lf/8swtE3xA2SqfkNr+uXfRaibUUMUCUlkWZ/XmR//l6LsXcW+MDCz/x7414YY1wP3jVMmW55la65UeijkXtE/1aQMOMD+meFLcTjv5LuOjZTSEsjFl/miIiznqJkAfKN2auFc3a+Rq5r7v+NFwbOo4aABEqOrKhcrc+YdFrgbvkxj8s4gDjYrhqcpAeLujf28TpktH5rIDcdaDvYE56X83fkRw+qrzo1VpHyrxC9Jp8nhnCrRDW+5rfurV/MVbTe4J1rqXb6tdNf8Ogc="},{"v":308,"b":"AaGCJwi+imsL5sA8q/hGpDCipTyhoXflMtVqaMlnJpq+u1wXna8jfEjjRqQQj0Vp0C7pq+kvlK6ANYGthVLeK6/5Fuk3Q49cIsw+wZwCCcvUt3mUuwtJGZEoCCwiW1jeqd47eziqGR7v6YYl2Iw0Sc5fzhrnXzTkgSmx37fzfdl4ZqERoO7FJTqvTPJc7a8IcdzB2RiDNrEABaocfo2QpgxamPTjnZ5JvXEXXNx9l9VB3xE+nre81hhiBfoKXWaap0IJ0QSBzUPMl12A5+mLVQ5Ldkn5qM9OLPEkC351vi9zOt/rSUpv9AFzyip2bwgnVHHyToCyavq0xFTlNv086HYozBgLuCcC/cp7JVurSnV2Oi15ZZMXov+E8y9OEhWeUhVIw9pqBYgqLIt+h+BkPW5FBtLUhrNLrwx5CcNSUzfaieiFT9l2Xd92gxyjgLWj3OEMCnt0jH+xQvfiogSc1PlvKwzto01ayNO2sHWdtXIwgAyiS5W0dfehZMZSl+XkbqCa1JOGyaFNekrt5CFE7mEWqRAkT/8UEC5ssOrB7sf5ti/5Rij/7MFmS54jsgxZOANY/NFr0X7o/5Q7kfUcNldxWEngIewRn7lwn7myCREecG7BBfzc+Q+v7abnwUIhCOmMV/CtDFCeS4pOMyhQFGWxK6JmvJPrlfF/C90mSNXBBsCaYvxvFHyINJOsqh2QXmSw2KqxWXN1W2nO+IZwiE2KHVD0icar8xstkYo8rzAhBsVSOEbr0sneZP6IT6UrdTafEglkPHy6RJFW6iyzdwnC9EBbUfv97pwSumRV0EwAd97e3wgZmhv7VhSA+uTSxDXMOanSxFJuhuTJxTRqppYMkq8uymT6s+FMNJSJ6WqFZcJjsjUgCif2kLZnASleDPEqHk+9V4+kwxWpAJlRaOu9B+NtRNT3JJV5VnnNSWrlS1m5uypF7j5fDxfbJlAQsYGi6O2nRjnwB7Q7rs9GAq0/4fHaWHJLdKtm5bVfiDU1XMmRxMllL8HvXeYMAmxluBBbg5zUUJfFv9B86dy/om/5UAcJudErL/f5yi+qJZeaA02w4idwoPdLjVmSD7xFVafwpYRHuaeUu5+AeimWn/U5kvR2RWawBYJ7urfi23uTtzivw9Bm"}];
+var BLOQUES = [{"v":4,"b":"AbxMmlew3eDPt0e6w/VfgSa6PdOBDJlOYvSYpbHw8vFHJAMjvRvhRmhm6Z8ayq4mHWr0VrZKhIdhMVwcthED5AuKrkFPInIfQYXPAozCvoHldoJZmLaEueWOtqfF6zgAq82XqIglEHORNbqml9W8krzrgAc56BjObnACIJxzk6gCvz32d3oTSwR2mYbMX9j9DvNGqhLEDHPlQ5tL/VomzR5MfMbwQrKCPgyQIV9vPPoFwMEXeawGGpL/tR9RoO3zJLPAtA+UCTeledokvgDm1884aV8XUCN3hPjMEro5XCvhzFaYBahJbdEv2ygMyrYpR/gT46cm4FW2+mmqxdK6QSdrD4Tpxf/Nq1LE68BSx8WYToytZrwsgRT0X1F0fd6cD7ogwlpxGc/v9ENOPYFcJ2PBduf456oMQpIseEplBarkyOO/JRQ8zVwQSnP+BffT7o6CRFJ0a4AuDiYpsDnzvFqMxM7cr085x3WtoLb2jPe6NJukjekp1BORHkAZbPaKAkGH1Os/uw+fvJEPwAXK0o/Nhe8JFvY//TCaUHy0McIdhhxFhQB2mtHeYRYwZMbUg/37k9aKd+X8dN+iRFJCfD2FneKDJqLA7ZknEVpEjZmEpVvvwVyQkfeqJ0uKZoRpDl8U2XZjvMQV+4lMug=="},{"v":6,"b":"AY3cJ3aACPOaXkwWKAPxm8YK384c4okMmG8o10OdU6WN47NEjLckC60I4D+urCGlJ+fuwz53q7RMHkz04mcylOxJoqcKdwoYc0OpLqsEtwNBxsMAxQ27gmwUCgpeX6S3huNhI8c6db8U96ZrE/Jsxg4oXG56vmZ6wY/H06b2xmG/Tt8860f1KwxniajUaUzWEbL666KhzfJkXPQBfNs5y//SnsRKQ8fr9ey3NA/i7KDKbAdyu6Ma3ZOWxNbAm3PztwOjUZPjb5WK51F9l7vT4yjRogBPocgH03j+FGcm/e5mTxmkw2A5PnEXIU3KH7Rql9CHxtU8ZFw9YiLh0K1pFzrpgQgM9fVTZ1IE6Qx3iRwa1MTnALPfGQeMXUzU1wqgJB++vadb0RBsVrF+1nYtfVaY4g8ssRGPvVo7bSPEIfmMfPuW3jO+0+GuY7ll+YnviZNFOks8eTC/9mP7RvGj2XinT2XW0+3mPBVIEHzIbLkTZdKbBC30I8U1eP38bVTP/cyM8S9TmRsxCGgwCSABPTskaLm65DALPCbPoDMWQ11lAlFFq5hORvMCUrE4tATexL/slWRlk0LTdjfHQCRkY6NujQYfzudiqNxdL4EQ9VBrRLNy"},{"v":7,"b":"AT8AaBoFVUOJlkw090kuFy0wEHFEerIUx6U4GKT36ZUHx/WVBphWeyy8BD6nQiiyz4XAbWZM505OBfk6iRi0gagwO/U3m0f27vuRf43E5DrvfjK3XFf2Z9sQtpCbZyzlK/V6VBEq8E+6WwM1P7i4rnlivFJuw0y5y4FnWeepPx4KAZM12pk4JhE8XCJZMu7s5FQkMBRSupHDFrYWi7/yYViAGN7znZ6ikjB/J9T7jg7HxQ9O2vunrhLZ73KrQ5BwvNd89EXwXERuBbhpnhJOJzUkP9Os5j2rAAhqGWXI4nGxR6Ib6aZjjht1nSWOgdvA4t6ncsy70ic12nDK/LZY2VozGj3/knndztYG3vTbPxz0DX8HzNDQJsFpcCW07nK6/pRSQqhBfSf4eQTaoX/zyTlL3Cy3aQzkM/oDj3wpnOOI7A4JdCZpoauFm9Pr4PHhIpiljxTRI8LQKcxD3BV89ZNcl2c1qszX3Cc2LcnmvU5cmzwqIV8mV2WRe1BBTRA3rGTPLioZwCuB/MbEeWKF1yj1Oycj1B/RNtfbf4idDF4WoDOk6zddjTGDZpYSqW/82uttzgtY6gT4olBKzvgoIb2bOiHxgNoZSkXVxFH4S0dRWxs3I4kLyh34siBERks/5qnhmQ=="},{"v":8,"b":"AU7imLdQQVMSJCBTDVy4fS5XR2cSZ2kCl9sZdOGKH+m+GXnv6zCcR+Mcg7/jEFivloMJz3ZZjRXSVe7TSqlKbScLFEU965XcPjZlkvOEJ1t2hMfRcBo17A85Lae/tGMq8MlifA+wN7hTZd8PI4w5MPJZMp4eSQeFQbEniw9blWgHDFHXXAUY0Ki87SNlK4Lc3qVL/FaVk31ZuTAd+0LiwOz0+0vTAjYfxzuYwfskCPEaHcraWavFwQXcsot5l2jNaQFiXwhPAjAqVHplsPntItbZN43rtWu63Fzl5VmyQ0sodmCac6VQU8igLSo4xTKYSvQMmWnDWHJ3Ao+uuRCXyGO49NTfZo2SaKiagbeTg4U02/U2UeW8Y8YmpbPMt5hVLmoV6wHoxbQqsXYIHJnIVe0Duc6vFkl6CStxYOsuB9GEGJmZtCT+8i74ugwassE8uXnwm8UF1PATSgbAXWiG3bCXfqW8vV3Nxq24Xlr3Mkt3kh5VzHRayrs6ey6UuIIz3ItTpNwhseKkQ8LwdGKgPW4HHaJzWechg7VJtklbmPCyGelXfiEVFuILTlbGx1DM+CyGHhNmcmDeq1gQ5XEWyjFP8xn0qSXpWeJESucFM/rc3DgwZGEsPguVWfeJ+R6DwVxOSgLi6gVUCweMhyuLbaE+MdIK9ZhoX1khN7+0wbwid9Fb1ltxGNHSdDI+/GEJ7JwcctVgPHIDGeymxcnYbBAqcwCthCT5ZtVniqJDtVGBwjxjWGAJZV49RmaZXRlgpNMjYMwfCDS9hIFTyMWBTZgoiYs7ThM="},{"v":10,"b":"AYo0Sc+AnPmclztHctTCqS5kMgSzRGCGHlfpKVr4weukZMENT9dwnfaoJC9FT3furt91u/J/d8vNL5QhQoiCqJHncBC4p5oEQxMlPQdQnbNKnFMuE1zeTyRH0lQsLIO4zXXAXOmZvynmErLaKg5KKZfs4fi0B88Fah3C1VPmi3ObPjmLbzfv1BcrEDcgL/HCPWkbqkSCK90vRrYAX/6DakMlM0jR0E+874je49rKvsQr0LdqCgqWfmkwH4QEQVtiIZ4E8AjlorH9I/xa4c3PFBjJpRF8wWrcBwyv6r2ukQXUiN5oE4PBI87UKr7zBGQrp3pAOW7hx0yPw9k1KiDbvrFsPWd7fziPBG9xbBPFi07SLykJoobDtH/mGKKs1PV5Ce62sWCqZ41eImozX7ZXZ0G2njmBNwXos7BT0+vtOkSy0vKv2RZZnG7mHqaQO+Sg4Z7YdbZ/aGhMOvF+7/eterIC7J/S2FHkzQ6jTG/czuVTOWswc8H0++z4mvDtDce3kX40MrH55rmlv8dh6OCVjarlc4t2CTFedpNmmYChV5IQxB7q9eA38XbdiCIfGA9YHpv7jh/FBOkp8GGnfQWXemIQYxxsIF9jVtTINkDjgfXVF9yqYC+56lZxKDAC+Bt0kiKCyPk6pDEwXlWnKSHUeWDsXpkgBcFG6bDc05mYKCV+RMtxi1EWbsT/aGEoHSqXg/9NhQcTgbFq2zeH6xx8lQz7J0j1W/giX1wUyCjB2QJ1J5zhTNKzZVMp+WiRnVoo1U1Qhiqk9feGQ0xgLi+RCUxvw4kPm4Qec6kA/tjD5899g2TRpInXWFeKR/13gjKb21gu7TcWLlwRjzYXKGxVhsENtfnj"},{"v":12,"b":"AShlUrD+N8HFpF73/NTkwR2oE2hIO8YeaQczOz9k77Vj8+QIw5kDn8+L5py7eRKnPfaC0OgN271d1IFd55cxIUZ7aO4ZAaiONm4zHZAdVXgy3Fsy3loLR99rDlFyzmV76P4uzxGQgUOfqPm/rEbA3I6P3+GorpdLdVTWJ7eDOf3BZQXTOLDPpcGeUMQdCE//mLJUmZZuja3mACIGJKr/qhzSWPZHraYJuZ8y7IQItl2sphH8unSHtI4ThFmvkcNxlIc56JFYPQF/h+w76FtRTFcBX5BhVzjyjAxX/w4RcgW3p1jg0P2IXXimg6xqxx9rJuo0Aar6KiRASZQ="},{"v":14,"b":"AR9Ciwn2O5zn2SOwxPHO+05Ut/q/TZgP5/yr/GirLib1NUjdwepc5UxT69QS3q6HXOvH7OtszCy+SXHHC8pwxYf2XO3dmi9ROKWTVqz8pCi2VEIW3aDtukexyLwd/63BgGPNC5CFiBrnKwc5HWLx3f1v0gBZ77RhW44TNVuqIKSlvIo6URH0TNfiZPbWWZsRsnwM+XDrteEqRChFGUcnNvT3ImkH1rxI642yDSnNL/FOeucmvz/ErOhqJ+qVp1GBdy1fL0OzAjaPZsankZwxHVPmXMsqWVK2mOYaKpQv8amHL14sdMvyWH3PkDXsR8D0P2sC51za0lmnQb4d3HgPoR+Rg9ZB8wH5enVD840eLFt/43NMXeCGDnOLOCnQ+k79H0V/Yo73KGFU8Mg1Iqn35YAiFc+DC3X3fH59xQcZLPFeMLxihjnAQcvUjhkPRA+sZ4xSXvKkGut8L5FjKz4hA4/22hS0zahUVWMvDpjUCm5EwVA8xKjUBi5wagnfwc9yDH9Gr2WpvW7OvltAo4D5Q1CvjJBmZFqg0o0lltqvo6Obv88M0rn5CFEN4lrXnhqNbGUQ63uiJIngEEhGCUMagpVVA+8izDFopqC17JvVfncG8ffArXxH2NcGdEZFTh0x2SIldmmeCm0wGBcQxpTVulLrLXJ3yDrkq1IJJKcwlwKWvb4tgIWlGPwYrzpTBZpI1VjfJ1ZiYbDKNSonEuLv/uNoivVrKsjzCD5k0dQR2ZRGQx0brArlEPcVOKHsYbUP2R5mPEq/Fn5fFjDFjoMYAmRnlgwrpWgY1P5KtZ+p"},{"v":105,"b":"AaeEZbIKRgSYhVm1HDMvzzVvBl9mYGYVG+opHu+YGNyHmP4BgrntuerGnfGBK7XaP4NHxGp5dysgdYGAnqT24Afs1HgmuIYamm4Y2U6b70QlKm3qNq6JM0jdvBIq12PwdEyF0r/2bQSEc63OKX6yIoPUviA+TuxeRGb/1I412tRIKh83qm279k0vgmMjzggR7Uoys4m6GPFkPZJDKi4hnZe2e6CVMvCrSeKBFWZ/c00vfd68JaPhEdX0ELcISv1PExr2+siTfwHlHbMKol1MT72EC9saKdtjB1iJ1/l/OUR5Evywk2A946V/rvgLjvKQ0MDkdqYbrhdr7yU1LlieCy5SAmoeyTyhL6xQXPDZv/mEMYqXmNMkqSiAqW8GSbfeTCI5ATqtam67Hp9eqZWWDcLoFP/1muTCuEwGBCOzAtBF0DmV944Ry0DHXjp2Bh/ZBmhGR+8dM/OAwMWZDRLpHfqMLM9Aw4cZhg7d5MOCfPZ9Qu0ncgfDBL8C8eGo7pwprbmp5hqKUanHZmwNPyVkFpyGDXYtw610ypsDuwpjPPDn1NISC1eY+sGlEjjieiDvbcS95KCsRUgPgCV9m6y9uf9N9rsiTvhxUlpMDgUOkEc="},{"v":106,"b":"AecEvJvsY7aGF+nTmvWnHzH+ia02XmbYge49t1Dyc5h6hUUSqGqbmGV3jMR4y1QGJ/lQkfo8R3zctHXgIbdbXTUuXeJKce3H9Zi+7JBLk9l5njJYqlEODhwCR3F4Z4pozA6+rh8JJCVZxDogVYHX0wom5jUKeor0K0kK8HeEqlJArobr3BQOI4E5O9YGXU371cXYwTaFQvafCDI0SgmFwjgMltWnOAX8KiPgdyA/SEWsA3A2EwANGaQknoTky4L3+2jrSO6hiUzRHob+ufQ9hEGsqwjbjcZubXj6n8UIM722rsYc+U2TjLM9CwuYuA+CCQ0opdeszzxrFO1WsI2N+qeQtKZGxM0HOhFO8d9pMuhgxz7AykreHj0kwC6unRrq0ETppJs3/3GnQcnvUlef6XWnlqGT5PAt82rmeWwIl22RdpRIvWUuSJRSU+ASHYWtaY6vbIvDxaAPhoeyiTsNHjCeqx4rRl3Gyjw0ShtHf0ady1hsIDyKcxpZc+Rz3RUhEkPvOolPFtEZE9yhRu9Iu6C0YTm2CIuHvwZjlSqsmVgVNKGBRqzmE/uQ296dgpS4OhgbiqH6ajZTTVJCPER+pBhSBIQLkKKK167/rpcqi2D54X1cdJba7pRQO1J78/AjOQc+4zNTLKlgGVObZSXz15fu65h+cszXMiBni2FjsN4J2x6sGdducSqVMzP+ExUI+uO+audWzgvUO5e6sZtUDiA="},{"v":107,"b":"AZ9+b2OS9csbwGoSqmom/qJpXpbFngAOGtrLOCM1kAFtwKXC4nmhfcsJNwiMKUPL3RUQuPKwXK2RRO53RULezL1U7WVdKy56sKRTKcU5Js0JaPOBYQO3CKetwdcHDwwUTWV/g/i04bb62E/AGjXz4Z33fTO443r8W+ZeEzU+GZjrIkOq/e/11+ggSVaMIdZfS+OBruvOYCfWzsCYaWsq8NBxaUXQn3zeQkzHcpxLWX3xf5Wfh5HZgKByBJowTYEpgYkJmRost0soNg/ONmjRFlRlo9YK3U5iDZxboRjAQcQiRj2300imxLplx5tiWgNHCSx99AJWTK7RWo7eCXdc3GivFbX4AmmY6Is5wga/Nd8nGEQtiHZHlQoXG314KVPF4h6Y8iKUIcGcLNKPPi0afIqCYhcztawCFKNrwid7jFeQSCU984sfXz87/ARZ+hMAGmIEOEwxtXeIUWJnr3tTdDYfKlU/u3UaQLMtRKBG63qM90C4V70CJXn7XAeovP3qUIqaE91PUpH/XDtRUxwtwXMs/lkY7WTlI/eu2uV7frPSBzzklgoyepG6Yj72GrbeGE46g097sSWyQjL4wcKfkz4Ep8HKq9HsfKh7rU5tv1YznbQfGj8TDOGKXdz/BCmZPf/62TS/Sn2LFTP0JwopLMy9bZcVpyPk0xOoy9uauviDgpq4u+n4mfmcFf817xDgl23i6/NqnbB1aQpLhjuo15o7wwFi"},{"v":206,"b":"AbmWRsTy54EM5zB0dTRcB7rF9cmXCztoDfudVc0ZqWnNbZCYCvAnfylTt5bbR4NE9J5bOtbunx8SndwJ3SPT0NiOUwCBN5XOVrEAqFqntxsvO78DF73OvN21w6kanxirrl66BmPgMlwH+fzjt/tvViHUK9H/z5vD8piesudBEj3y0tCXutn10XI9WAdwiQP5AVJpG9tOUmZLkT3g5QRogUTlft5eanE6I3X0GBTbHMpgbmqycc7vFMFX9ADWOF3r7v0wt2yODFDAGjpTxZ7jtY+8bQ=="},{"v":300,"b":"AV9prIwbl0NMRvG5L7occ0zvArv2jRM/aYQAhoUeU82vjZnRT96rDvynZbmp3aSccc9WVZUN6RrSgXzhxR1pAd3TpUuEmOOF3Km2qYMPwsuDWDsN9q7Rro2yhdt85vlAkl8lzBbsOFDc6nZ/yYJ5peVNAM1NfAGASgPoBoXOnWc6O2XTYsZxPpy6is0aD1mwqzDK12Eex6WE1B1z6pnuvpc+uD7UkbDUmqH5Ir9VfgmkWMvd5OyUCQhwrU4dLKL9/q3iO/BhPjrBcjirH+OAZqDzludyvfiCfN91w6Vprn/o9adqtz/5kDkBuM5f86Hnh10S7Y+MF/d7PXTgkQdgKwgwwQ6/Tmk+5L/+4LQjZbI9vcwjQFFIbl1Rlu2E0onDAerLDJ0r5GRERDK2fXH9YkUd7BgogDPxET3ywsgMJ0aWL67Q4Cz17j34OtI="},{"v":302,"b":"ATq6v5YE8deTsxGPGvVv4N/NFDx4shiis14Kb/r2XRnDFmWe0hBqsB3mSZcuj58tMF4snZbDFwXUnnvAAMelsR0UnXsvmM8mLLQ5GKAE5TrQBpkLe6PDTY7jrasRTNY6owgCk3B6T9lp7FfbrUX4xiM++14xsiDaV54pf5OzSXlh5hRJDWChm1K8PC6ZH60qcMYA2wRjgxbBBkZ5/G0m4CKO2UAkpW/+c86dso27sXgJFkFDcvKVjNQeLnAFreP3BnzGLXhlx6+zPApdvASjTdAXgX7hqLqn5xAU/NrnfNBtabxeb0BMvJmIF9hW4HUxmghZYPLvXlRhIdNiPUCEBX3EUXfLrUNohjJdxIyu84oA3mGjCQyauKwCgs0/74Hkzi/ERwLaokV7/lAD06vwbTZWNpIq1JxJ004AyK2njQLXnXLdyWCsloqaAw0KrUfeWRWOA7R0JAT+RxLal1J2PZIaFZhx3fVWtowAc0nDk6xEpum9C0Y="},{"v":303,"b":"AVFY8zV0YClDXx2gA6P40nU4fzp059cGR3OK9j9STPAGudWk3/sLZBCAFGYLRFcsOvmTebLQldevbQy04hTs1+7QZ5EalsIdjvOJJwbUQrT3P2xKEFLpulQxyWA0xflq7H9xj6O8w6vifRJ6hpHVE61b3KcPHTdB3Q04x1x0cQWIZbOAUuAeIRet/+POd+Gikj760W2k4I5lGNM0sLGIfBUbpuihXZavQr2vKzudETcqI0Q1dv+mhk2JFYAITA+oYMSQULM5y0KlbyB+xGjz/V6Mnrzm3k4z1EhlQnXOM9ixkd5Q4pdmBzKvUfY2vr4D1g/0LQ7wj+MhQM1kvqbVzKwDwWGCwI3nNmbfKU1iDyZy8KQc5/yLIbpSuihfw+GnP4PRR53qqXOSL9l9/OLtCLaz1NujU9XzURufhHZkHW4PvmiWvobB20ZdMd0wvCCsI5D2lbqrETx8tjw2PvhZ1ktYwzR7Tkd79ZI4r66kk1JHZwM+sByI5wxA1XottVPEd2iJqLpc+XyxL0VJC7/kSbcmDiGFQdiEshvdrGvO/4Z4RLCUPzBeKhQb7XsY4ZUG02PDaabqrFYcNnNs83w8UK7E9+xGcTFu2H8XNzWM9hDohYzojGt1drc18uKLa1wHPZgJFjk6PcTRAb8bjy4b1+F1Diw36ubx8dbdDFIowcpHbGyiorG5Xm1TXbVnKsgaXMGoElqd90bLV7odqRodObYOp+sz5tZFIHsoYPi4VP8kidofuuj+7jk2Wo0N3qrOBGvCKh0aKU9Z8q8aVeukcFDZtYk+Rr3P6gWNF55z/+w6FMoTzd22ibbfVCjSCmeRqJ8LKPJlX7v5Ig2XE1jHAoJzZLjK1XCjsE2/EqLmiamcUILkq9n62X8YNDbLG0Acqld+4aQ4buCh8U5OUtJbacmHEHNB7YpNo0sxgDQ9x2w4NjA5qbumkPOw3OCJWg=="},{"v":306,"b":"AXRMqAfhBkPmFpUi2CNXxltsH/WSg29uLdy0z6Z/CZYVQsArRXSaCxFrZAVdmGI7UVjqZfznnurtrLNtNM/Co77VpebJ+BUFFR31iyKnE7fbIcsL8qgVtAvD7ETrb3YCoAQFYgmaUn9vbkH2U66l6lt5QP8GzDhtzoCXRbbhp8+DBlUOoV/iA9b1fmFMszhcaZqkmQoKMyPCygETe0Q4TovvehXXCXRfloHiwkou6/fiMU2SbUT4X2D5vPM9AJwBB35bVAptBC9Lyqk/IREfVsW1/TMvf48g/3/Tz+myO7qCRFqGAiANRbqRf04IMyCmFIDlKZ0i2A0K8XO6VA0OEq5iqFsnM2z7RShrOVeQOh1heg+G1/oPf/sx0ssRiKkgEr0nvXhnjwpR6fybDHdlTNGvsqX23XlLSd1pnUPSIzXGFXHUqS3kIt3w8TiU2Y9FCHHpQCXZp/7grybNdn/rkqydmA=="},{"v":308,"b":"AaGCJwi+imsL5sA8q/hGpDCipTyhoXflMtVqaMlnJpq+u1wXna8jfEjjRqQQj0Vp0C7pq+kvlK6ANYGthVLeK6/5Fuk3Q49cIsw+wZwCCcvUt3mUuwtJGZEoCCwiW1jeqd47eziqGR7v6YYl2Iw0Sc5fzhrnXzTkgSmx37fzfdl4ZqERoO7FJTqvTPJc7a8IcdzB2RiDNrEABaocfo2QpgxamPTjnZ5JvXEXXNx9l9VB3xE+nre81hhiBfoKXWaap0IJ0QSBzUPMl12A5+mLVQ5Ldkn5qM9OLPEkC351vi9zOt/rSUpv9AFzyip2bwgnVHHyToCyavq0xFTlNv086HYozBgLuCcC/cp7JVurSnV2Oi15ZZMXov+E8y9OEhWeUhVIw9pqBYgqLIt+h+BkPW5FBtLUhrNLrwx5CcNSUzfaieiFT9l2Xd92gxyjgLWj3OEMCnt0jH+xQvfiogSc1PlvKwzto01ayNO2sHWdtXIwgAyiS5W0dfehZMZSl+XkbqCa1JOGyaFNekrt5CFE7mEWqRAkT/8UEC5ssOrB7sf5ti/5Rij/7MFmS54jsgxZOANY/NFr0X7o/5Q7kfUcNldxWEngIewRn7lwn7myCREecG7BBfzc+Q+v7abnwUIhCOmMV/CtDFCeS4pOMyhQFGWxK6JmvJPrlfF/C90mSNXBBsCaYvxvFHyINJOsqh2QXmSw2KqxWXN1W2nO+IZwiE2KHVD0icar8xstkYo8rzAhBsVSOEbr0sneZP6IT6UrdTafEglkPHy6RJFW6iyzdwnC9EBbUfv97pwSumRV0EwAd97e3wgZmhv7VhSA+uTSxDXMOanSxFJuhuTJxTRqppYMkq8uymT6s+FMNJSJ6WqFZcJjsjUgCif2kLZnASleDPEqHk+9V4+kwxWpAJlRaOu9B+NtRNT3JJV5VnnNSWrlS1m5uypF7j5fDxfbJlAQsYGi6O2nRjnwB7Q7rs9GAq0/4fHaWHJLdKtm5bVfiDU1XMmRxMllL8HvXeYMAmxluBBbg5zUUJfFv9B86dy/om/5UAcJudErL/f5yi+qJZeaA02w4idwoPdLjVmSD7xFVafwpYRHuaeUu5+AeimWn/U5kvR2RWawBYJ7urfi23uTtzivw9Bm"}];
 var SAL = 'castro-cobranza:';
 var firebaseConfig={apiKey:"AIzaSyDXqLbTAA9TCkUgMJpKrDxkvDMNBzmjTIQ",authDomain:"castro-cobranzas.firebaseapp.com",projectId:"castro-cobranzas",storageBucket:"castro-cobranzas.firebasestorage.app",messagingSenderId:"30596915316",appId:"1:30596915316:web:7a4b57f28342b1e3a3b121"};
 var db,st,LISTOS=[],fotoFile=null,AUTHP=null;
@@ -168,9 +169,9 @@ function arrancarApp(){
   $('hFe').textContent=hoyISO().split('-').reverse().join('/')+(VETIQ?(' · '+VETIQ):'');
   $('fCli').innerHTML='<option value="">— elegí cliente —</option>'+CLIENTES.map(function(c,i){return '<option value="'+i+'">'+c.nombre+(c.saldo!=null?(' — debe '+money(c.saldo)):'')+'</option>';}).join('');
   $('fFe').value=hoyISO();
-  try{ firebase.initializeApp(firebaseConfig); db=firebase.firestore(); st=firebase.storage(); sesion().catch(function(){}); }
-  catch(e){ var c=$('cxErr'); c.style.display='block'; c.textContent='No se pudo conectar con la oficina. Revisá internet. ('+e.message+')'; }
+  if(!conectarFB()){ var c=$('cxErr'); c.style.display='block'; c.textContent='No se pudo conectar con la oficina todavía. Igual podés cargar cobros: quedan guardados en el teléfono y se mandan solos cuando haya señal.'; }
   pintar();
+  colaLeer().then(function(){ pintar(); pintarCola(); flush(); }).catch(function(){ pintarCola(); });
 }
 $('pEntrar').onclick=async function(){
   var b=$('pEntrar'), e=$('pErr'); e.textContent=''; b.disabled=true; b.textContent='Abriendo…';
@@ -195,46 +196,180 @@ $('pOtro').onclick=function(){ try{ localStorage.removeItem('castro_cob_cod'); }
   catch(e){ $('pErr').textContent='Tu código ya no sirve. Pedí el nuevo a la oficina.'; $('pOtro').style.display='block'; }
 })();
 
+/* ====== v68: COLA OFFLINE + FOTO LIVIANA ======================================
+   Antes: si no habia señal, el cobro NO se guardaba y se perdia (solo un cartel rojo).
+   Ahora: el cobro se guarda SIEMPRE en el telefono (IndexedDB) apenas toca Guardar,
+   con foto y todo, y se manda solo cuando vuelve la señal. Cartel amarillo bien
+   visible con cuantos estan esperando. Nunca se pierde un cobro por falta de señal.
+   ANTI-DUPLICADO: cada cobro va con un ID FIJO (el mismo de la cola) usando .doc(id).set(),
+   asi un reintento escribe SIEMPRE el mismo documento; nunca se duplica en la oficina.
+   FOTO: se achica a 1400px / JPEG 0.62 antes de subir (de ~2,5MB a ~200KB): sube mucho
+   mas rapido con señal mala y no llena el Storage. */
+var COLA=[], FLUSHING=false, IDB=null, SINIDB=false, COLAMSG='', COLATIPO='';
+function conectarFB(){
+  if(db) return true;
+  try{ if(typeof firebase==='undefined') return false;
+       try{ firebase.app(); }catch(e){ firebase.initializeApp(firebaseConfig); }
+       db=firebase.firestore(); st=firebase.storage(); sesion().catch(function(){}); return true;
+  }catch(e){ return false; }
+}
+function idbAbrir(){
+  return new Promise(function(res,rej){
+    if(IDB) return res(IDB);
+    if(typeof indexedDB==='undefined') return rej(new Error('sin indexedDB'));
+    var r=indexedDB.open('castro_cob',1);
+    r.onupgradeneeded=function(){ var d=r.result; if(!d.objectStoreNames.contains('pend')) d.createObjectStore('pend',{keyPath:'id'}); };
+    r.onsuccess=function(){ IDB=r.result; res(IDB); };
+    r.onerror=function(){ rej(r.error||new Error('idb')); };
+  });
+}
+function idbTx(modo,fn){
+  return idbAbrir().then(function(d){ return new Promise(function(res,rej){
+    var tx=d.transaction('pend',modo), st2=tx.objectStore('pend'), req=fn(st2);
+    tx.oncomplete=function(){ res(req&&('result' in req)?req.result:null); };
+    tx.onerror=function(){ rej(tx.error||new Error('tx')); };
+    tx.onabort=function(){ rej(tx.error||new Error('abort')); };
+  }); });
+}
+function colaLeer(){ return idbTx('readonly',function(s2){ return s2.getAll(); }).then(function(r){ COLA=(r||[]).sort(function(a,b){ return (a.ts||0)-(b.ts||0); }); return COLA; }).catch(function(e){ SINIDB=true; COLA=[]; return COLA; }); }
+function colaGuardar(o){ return idbTx('readwrite',function(s2){ return s2.put(o); }).then(colaLeer); }
+function colaSacar(id){ return idbTx('readwrite',function(s2){ return s2.delete(id); }).then(colaLeer); }
+function nuevoId(){ return 'V'+VNUM+'_'+Date.now()+'_'+Math.random().toString(36).slice(2,8); }
+function conTope(pr,ms,que){ var t; return Promise.race([ Promise.resolve(pr).then(function(v){ clearTimeout(t); return v; }, function(e){ clearTimeout(t); throw e; }),
+  new Promise(function(_,rej){ t=setTimeout(function(){ rej(new Error('tardo demasiado ('+que+')')); }, ms); }) ]); }
+/* achica la foto en el telefono: mismo comprobante, 12 veces menos peso */
+function achicarFoto(file){
+  return new Promise(function(res){
+    try{
+      if(!file || !/^image\//.test(file.type||'')) return res(file);
+      var url=URL.createObjectURL(file), img=new Image();
+      img.onload=function(){
+        try{
+          var MAX=1400, w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+          if(!w||!h){ URL.revokeObjectURL(url); return res(file); }
+          var esc=Math.min(1, MAX/Math.max(w,h)), cw=Math.max(1,Math.round(w*esc)), ch=Math.max(1,Math.round(h*esc));
+          var cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+          cv.getContext('2d').drawImage(img,0,0,cw,ch);
+          cv.toBlob(function(b){ URL.revokeObjectURL(url); res((b&&b.size&&b.size<file.size)?b:file); },'image/jpeg',0.62);
+        }catch(e){ URL.revokeObjectURL(url); res(file); }
+      };
+      img.onerror=function(){ URL.revokeObjectURL(url); res(file); };
+      img.src=url;
+    }catch(e){ res(file); }
+  });
+}
+function pintarCola(){
+  var c=$('cola'); if(!c) return;
+  if(COLA.length){
+    c.style.display='block'; c.style.background='#fff7e6'; c.style.border='1px solid #f0c667'; c.style.color='#5a4a20';
+    c.innerHTML='<b>⏳ '+COLA.length+' cobro'+(COLA.length>1?'s':'')+' esperando señal.</b> Están guardados en el teléfono, no se pierden: se mandan solos apenas vuelva la señal.'
+      + (FLUSHING?' <i>Mandando…</i>':' <button id="bReint" style="margin-left:8px;padding:5px 10px;border-radius:8px;border:1px solid #c9a34a;background:#fff;font-weight:700">Reintentar ahora</button>')
+      + (COLAMSG?'<div style="margin-top:5px;font-size:12.5px">'+COLAMSG+'</div>':'');
+    var b=$('bReint'); if(b) b.onclick=function(){ COLAMSG=''; flush(); };
+  } else if(COLATIPO==='ok'){
+    c.style.display='block'; c.style.background='#eaf6ee'; c.style.border='1px solid #bfe6cd'; c.style.color='#0a5a2a';
+    c.innerHTML='<b>✔ Todo mandado a la oficina.</b> No queda ningún cobro esperando.';
+  } else { c.style.display='none'; c.innerHTML=''; }
+}
+async function flush(){
+  if(FLUSHING) return;
+  await colaLeer();
+  if(!COLA.length){ pintarCola(); return; }
+  if(!conectarFB()){ COLAMSG='Todavía sin conexión con la oficina.'; pintarCola(); return; }
+  if(typeof navigator!=='undefined' && navigator.onLine===false){ COLAMSG='El teléfono está sin internet.'; pintarCola(); return; }
+  FLUSHING=true; COLAMSG=''; pintarCola();
+  try{
+    await conTope(sesion(), 20000, 'entrar');
+    var lista=COLA.slice();
+    for(var i=0;i<lista.length;i++){
+      var o=lista[i];
+      o.intentos=(o.intentos||0)+1;
+      try{ await colaGuardar(o); }catch(e){}
+      var fotoURL=null, fotoPath=null, fotoErr=false;
+      if(o.foto){
+        try{
+          fotoPath='comprobantes/V'+VNUM+'/'+o.id+'.jpg';
+          var ref=st.ref(fotoPath); var task=ref.put(o.foto);
+          await conTope(task, 25000, 'foto').catch(function(e){ try{ task.cancel(); }catch(x){} throw e; });
+          fotoURL=await conTope(ref.getDownloadURL(), 15000, 'foto');
+        }catch(ef){ fotoErr=true; fotoPath=null; fotoURL=null; }
+      }
+      var carga=JSON.stringify({v:VNUM, vend:VNOM, etiq:VETIQ, cli:o.cli, imp:o.imp, fe:o.fe, nf:(fotoURL?1:0)});
+      var b64=await cifrar(carga, CODIGO, String(VNUM));
+      try{
+        await conTope(db.collection('cobranzas').doc(o.id).set({
+          v:VNUM, b:b64, nf:(fotoURL?1:0), fotoURL:fotoURL, fotoPath:fotoPath, estado:'nuevo',
+          ts: firebase.firestore.FieldValue.serverTimestamp(), fecha_carga:new Date().toISOString()
+        }), 30000, 'mandar');
+      }catch(em){
+        var cod=String((em&&(em.code||em.message))||'');
+        // si YA habia entrado en un intento anterior, el ID fijo hace que esto sea un "update"
+        // y las reglas lo rechazan: eso significa QUE YA LLEGO, no que fallo. Solo a partir del 2do intento.
+        if(o.intentos>1 && /permission|denied/i.test(cod)){ /* ya estaba en la oficina */ }
+        else throw em;
+      }
+      await colaSacar(o.id);
+      LISTOS.unshift({cli:o.cli, imp:o.imp, fe:o.fe, foto:!!fotoURL, fotoErr:fotoErr});
+      pintar(); pintarCola();
+    }
+    COLATIPO='ok';
+    setTimeout(function(){ if(!COLA.length){ COLATIPO=''; pintarCola(); } }, 8000);
+  }catch(e){
+    COLAMSG='No salió todavía: '+(e&&e.message||e)+'. Se reintenta solo.';
+  }
+  FLUSHING=false; await colaLeer(); pintar(); pintarCola();
+}
+try{ window.addEventListener('online', function(){ COLAMSG=''; flush(); }); }catch(e){}
+setInterval(function(){ if(COLA.length && !FLUSHING) flush(); }, 30000);
+
 /* ====== carga de cobros (igual que la versión probada) ====== */
 $('fFoto').onchange=function(){ fotoFile=this.files[0]||null; var t=$('thumb'); if(fotoFile){ t.src=URL.createObjectURL(fotoFile); t.style.display='block'; } else t.style.display='none'; };
 function pintar(){
   var L=$('lista');
-  if(!LISTOS.length){ L.innerHTML='<div class="vac">Todavía no cargaste ningún cobro.</div>'; }
-  else L.innerHTML=LISTOS.map(function(o){ return '<div class="cobro"><div><div class="cli">'+o.cli+'</div><div class="meta">'+o.fe.split('-').reverse().join('/')+(o.foto?' · 📷 con foto':' · sin foto')+' · <span class="ok">✔ guardado</span></div></div><div class="imp">'+money(o.imp)+'</div></div>'; }).join('');
-  var tot=LISTOS.reduce(function(a,o){return a+o.imp;},0);
-  $('cTot').textContent=money(tot); $('tTot').textContent=money(tot); $('cCant').textContent=LISTOS.length;
+  // v68: primero los que ESPERAN señal (ambar), despues los ya mandados (verde)
+  var hEsp=COLA.map(function(o){ return '<div class="cobro" style="background:#fff7e6"><div><div class="cli">'+o.cli+'</div><div class="meta">'+String(o.fe).split('-').reverse().join('/')+(o.foto?' · 📷 con foto':' · sin foto')+' · <b style="color:#8a6d1f">⏳ esperando señal</b></div></div><div class="imp">'+money(o.imp)+'</div></div>'; }).join('');
+  var hOk=LISTOS.map(function(o){ return '<div class="cobro"><div><div class="cli">'+o.cli+'</div><div class="meta">'+String(o.fe).split('-').reverse().join('/')+(o.foto?' · 📷 con foto':(o.fotoErr?' · ⚠ la foto no subió, mandala por WhatsApp':' · sin foto'))+' · <span class="ok">✔ mandado a la oficina</span></div></div><div class="imp">'+money(o.imp)+'</div></div>'; }).join('');
+  if(!hEsp && !hOk){ L.innerHTML='<div class="vac">Todavía no cargaste ningún cobro.</div>'; }
+  else L.innerHTML=hEsp+hOk;
+  var tot=LISTOS.reduce(function(a,o){return a+o.imp;},0) + COLA.reduce(function(a,o){return a+o.imp;},0);
+  var n=LISTOS.length+COLA.length;
+  $('cTot').textContent=money(tot); $('tTot').textContent=money(tot); $('cCant').textContent=n;
 }
 $('bGuardar').onclick=async function(){
-  if(!db){ alert('No hay conexión con la oficina. Revisá internet.'); return; }
   var vi=$('fCli').value; if(vi===''){ alert('Elegí el cliente.'); return; }
   var imp=numAR($('fImp').value); if(imp<=0){ alert('Poné el importe de la transferencia.'); return; }
   var cli=CLIENTES[+vi].nombre, fe=$('fFe').value||hoyISO();
   var btn=$('bGuardar'), est=$('estado');
   btn.disabled=true; est.style.color='#5a4a20'; est.textContent='Guardando…';
-  var fotoURL=null, fotoPath=null, fotoErr=false;
   try{
-    await sesion();   // v61: sin sesion el buzon rechaza (reglas)
-    if(fotoFile){
-      try{
-        fotoPath='comprobantes/V'+VNUM+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,7)+'.jpg';
-        var ref=st.ref(fotoPath); var task=ref.put(fotoFile); var _to;
-        await Promise.race([ task, new Promise(function(_,rej){ _to=setTimeout(function(){ try{task.cancel();}catch(e){} rej(new Error('timeout foto')); }, 25000); }) ]);
-        clearTimeout(_to);
-        fotoURL=await ref.getDownloadURL();
-      }catch(ef){ fotoErr=true; fotoPath=null; fotoURL=null; }
+    // v68: se achica la foto y el cobro se guarda PRIMERO en el telefono. Nunca se pierde.
+    var fchica=null;
+    if(fotoFile){ try{ fchica=await achicarFoto(fotoFile); }catch(e){ fchica=fotoFile; } }
+    if(SINIDB){
+      // el telefono no deja usar la cola: camino de siempre (directo), como antes
+      if(!conectarFB()) throw new Error('sin conexión');
+      await sesion();
+      var fURL=null, fPath=null, fErr=false;
+      if(fchica){ try{ fPath='comprobantes/V'+VNUM+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,7)+'.jpg';
+          var rf=st.ref(fPath); var tk=rf.put(fchica);
+          await conTope(tk,25000,'foto').catch(function(e){ try{tk.cancel();}catch(x){} throw e; });
+          fURL=await conTope(rf.getDownloadURL(),15000,'foto');
+        }catch(ef){ fErr=true; fPath=null; fURL=null; } }
+      var cg=JSON.stringify({v:VNUM, vend:VNOM, etiq:VETIQ, cli:cli, imp:Math.round(imp*100)/100, fe:fe, nf:(fURL?1:0)});
+      var bb=await cifrar(cg, CODIGO, String(VNUM));
+      await db.collection('cobranzas').add({ v:VNUM, b:bb, nf:(fURL?1:0), fotoURL:fURL, fotoPath:fPath, estado:'nuevo',
+        ts: firebase.firestore.FieldValue.serverTimestamp(), fecha_carga:new Date().toISOString() });
+      LISTOS.unshift({cli:cli, imp:Math.round(imp*100)/100, fe:fe, foto:!!fURL, fotoErr:fErr});
+      est.style.color='#0a7c3a'; est.textContent='✔ Cobro mandado a la oficina'+(fErr?' (la foto no subió, mandala por WhatsApp)':'');
+    } else {
+      await colaGuardar({ id:nuevoId(), cli:cli, imp:Math.round(imp*100)/100, fe:fe, foto:fchica||null, ts:Date.now(), intentos:0 });
+      est.style.color='#0a7c3a'; est.textContent='✔ Cobro guardado. Se manda a la oficina solo.';
     }
-    // v61: el contenido (cliente, importe, fecha) va CIFRADO con el codigo del vendedor. En la nube no se lee.
-    var carga=JSON.stringify({v:VNUM, vend:VNOM, etiq:VETIQ, cli:cli, imp:Math.round(imp*100)/100, fe:fe, nf:(fotoURL?1:0)});
-    var b64=await cifrar(carga, CODIGO, String(VNUM));
-    await db.collection('cobranzas').add({
-      v:VNUM, b:b64, nf:(fotoURL?1:0), fotoURL:fotoURL, fotoPath:fotoPath, estado:'nuevo',
-      ts: firebase.firestore.FieldValue.serverTimestamp(), fecha_carga:new Date().toISOString()
-    });
-    LISTOS.unshift({cli:cli, imp:imp, fe:fe, foto:!!fotoURL}); pintar();
-    est.style.color='#0a7c3a'; est.textContent='✔ Cobro guardado en la oficina'+(fotoErr?' (la foto no subió, mandala por WhatsApp)':'');
     $('fCli').value=''; $('fImp').value=''; $('fFe').value=hoyISO(); fotoFile=null; $('fFoto').value=''; $('thumb').style.display='none';
+    pintar(); pintarCola();
+    if(!SINIDB) flush();
   }catch(e){
-    est.style.color='#b91c1c'; est.textContent='No se pudo guardar. Revisá internet y probá de nuevo. ('+e.message+')';
+    est.style.color='#b91c1c'; est.textContent='No se pudo guardar. Revisá internet y probá de nuevo. ('+(e&&e.message||e)+')';
   }
   btn.disabled=false;
 };
