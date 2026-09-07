@@ -83,6 +83,7 @@
 
 <div class="hint">Cargá <b>solo las transferencias</b>. Elegí el cliente, poné el <b>importe exacto</b>, la fecha y sacá/anexá la <b>foto</b> del comprobante. Tocá <b>Guardar cobro</b> y se manda solo a la oficina. No hace falta WhatsApp.</div>
 
+<div id="listaEst" style="margin:0 12px 8px;font-size:12.5px;color:#5b6b7c"></div>
 <div class="alta">
   <h2>Agregar cobro</h2>
   <div class="campo"><label>Cliente</label><select id="fCli"></select></div>
@@ -163,6 +164,51 @@ function sesion(){
   AUTHP=(async function(){ try{ if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously(); }catch(e){ AUTHP=null; throw e; } })();
   return AUTHP;
 }
+/* ====== v70: LISTA DE CLIENTES AL DIA ==========================================
+   Antes la lista con la deuda quedaba congelada dentro del archivo: para actualizarla habia que
+   regenerar la app y volver a subirla a GitHub. Ahora la oficina publica la lista de cada vendedor
+   en 'listas/V<num>' cifrada con SU codigo, y la app la baja sola al abrir.
+   Orden: (1) la guardada en el telefono (instantanea, sirve sin señal) -> (2) la de la nube.
+   Si no hay ninguna, queda la del archivo. NUNCA se rompe: cualquier falla deja la que ya tenia. */
+var LISTAFE='';
+function listaKey(){ return 'castro_cob_lista_'+VNUM; }
+function listaEst(){
+  var e=$('listaEst'); if(!e) return;
+  e.innerHTML = CLIENTES.length + ' cliente' + (CLIENTES.length===1?'':'s')
+    + (LISTAFE ? ' · deuda al <b>'+String(LISTAFE).split('-').reverse().join('/')+'</b>'
+               : ' · <span style="color:#b45309">lista del archivo</span>');
+}
+function listaPoner(d, fe){
+  if(!d || !Array.isArray(d.cli) || !d.cli.length) return false;
+  CLIENTES = d.cli; if(d.nom) VNOM=d.nom; if(d.etiq!=null) VETIQ=d.etiq;
+  LISTAFE = fe||'';
+  var sel=$('fCli'); if(sel){ var v=sel.value;
+    sel.innerHTML='<option value="">— elegí cliente —</option>'+CLIENTES.map(function(c,i){ return '<option value="'+i+'">'+c.nombre+(c.saldo!=null?(' — debe '+money(c.saldo)):'')+'</option>'; }).join('');
+    if(v && CLIENTES[+v]) sel.value=v; }
+  listaEst(); return true;
+}
+async function listaDelTelefono(){
+  try{ var raw=localStorage.getItem(listaKey()); if(!raw) return false;
+    var g=JSON.parse(raw); if(!g||!g.b) return false;
+    var txt=await descifrar(b64bytes(g.b), CODIGO, String(VNUM));
+    var d=JSON.parse(txt); if(String(d.v)!==String(VNUM)) return false;
+    return listaPoner(d, g.fe||'');
+  }catch(e){ return false; }
+}
+async function listaDeLaNube(){
+  try{
+    if(!conectarFB()) return false;
+    await sesion();
+    var doc=await conTope(db.collection('listas').doc('V'+VNUM).get(), 20000, 'lista');
+    if(!doc || !doc.exists) return false;
+    var o=doc.data()||{}; if(!o.b) return false;
+    var txt=await descifrar(b64bytes(String(o.b)), CODIGO, String(VNUM));
+    var d=JSON.parse(txt); if(String(d.v)!==String(VNUM)) return false;
+    if(!listaPoner(d, o.fecha||'')) return false;
+    try{ localStorage.setItem(listaKey(), JSON.stringify({b:String(o.b), fe:o.fecha||''})); }catch(e){}
+    return true;
+  }catch(e){ return false; }
+}
 function arrancarApp(){
   $('puerta').style.display='none';
   $('hTit').textContent='Cobranza — '+VNOM;
@@ -172,6 +218,8 @@ function arrancarApp(){
   if(!conectarFB()){ var c=$('cxErr'); c.style.display='block'; c.textContent='No se pudo conectar con la oficina todavía. Igual podés cargar cobros: quedan guardados en el teléfono y se mandan solos cuando haya señal.'; }
   pintar();
   colaLeer().then(function(){ pintar(); pintarCola(); flush(); }).catch(function(){ pintarCola(); });
+  listaEst();
+  listaDelTelefono().then(function(){ return listaDeLaNube(); }).catch(function(){});
 }
 $('pEntrar').onclick=async function(){
   var b=$('pEntrar'), e=$('pErr'); e.textContent=''; b.disabled=true; b.textContent='Abriendo…';
