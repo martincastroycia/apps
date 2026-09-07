@@ -1,0 +1,243 @@
+
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Cobranza — Martín Castro y Cía.</title>
+<style>
+  :root{--az:#0D1F3A;--azm:#0E5A9B;--na:#d96c2c;--ver:#0a7c3a;--rojo:#b91c1c;--tra:#1d4ed8;--bord:#cdd4dc;--gris:#64748b;}
+  *{box-sizing:border-box}
+  body{font-family:system-ui,'Segoe UI',Arial,sans-serif;margin:0;background:#eef1f5;color:#12212e;font-size:16px;padding-bottom:30px}
+  header{position:sticky;top:0;z-index:10;background:var(--az);color:#fff;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+  header .t{font-size:20px;font-weight:800}
+  header .fe{font-size:13px;color:#c8d0d8;margin-top:1px}
+  header .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px;font-size:13px}
+  header .chip{background:#22406b;border-radius:20px;padding:5px 11px}
+  header .chip b{color:#fff} header .chip.ver b{color:#7ee2a8}
+  .hint{background:#fff7e6;border:1px solid #f0c667;border-radius:10px;padding:10px 12px;margin:12px;font-size:13.5px;color:#5a4a20}
+  .alta{background:#fff;border:1px solid var(--bord);border-radius:13px;margin:12px;padding:13px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+  .alta h2{font-size:15px;font-weight:800;color:var(--az);margin:0 0 10px}
+  .campo{margin-bottom:9px}
+  .campo label{display:block;font-size:12.5px;color:var(--gris);font-weight:700;margin-bottom:3px}
+  .campo select,.campo input{width:100%;padding:12px;border:1px solid var(--bord);border-radius:10px;font-size:16px;background:#fff}
+  .campo input.m{text-align:right;font-size:19px;font-weight:700}
+  .dos{display:flex;gap:9px}.dos .campo{flex:1}
+  .fotoBtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;border:2px dashed var(--tra);background:#eef3ff;color:var(--tra);border-radius:10px;font-size:15px;font-weight:700;cursor:pointer}
+  .fotoBtn input{display:none}
+  .thumb{margin-top:8px;width:70px;height:70px;border-radius:8px;object-fit:cover;border:1px solid var(--bord)}
+  .add{margin-top:11px;width:100%;padding:15px;border:none;border-radius:11px;background:var(--ver);color:#fff;font-size:17px;font-weight:800;cursor:pointer}
+  .add:disabled{opacity:.6}
+  #estado{margin:0 12px;font-size:14px;font-weight:700;text-align:center;min-height:20px}
+  h3{font-size:14px;font-weight:800;color:var(--az);margin:16px 14px 8px;text-transform:uppercase}
+  .lista{padding:0 12px}
+  .vac{color:var(--gris);font-size:14px;text-align:center;padding:16px}
+  .cobro{background:#fff;border:1px solid var(--bord);border-left:6px solid var(--ver);border-radius:12px;padding:11px 12px;margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .cobro .cli{font-weight:800;font-size:16px}.cobro .meta{font-size:12.5px;color:var(--gris);margin-top:2px}
+  .cobro .imp{font-size:18px;font-weight:800;white-space:nowrap}
+  .ok{color:var(--ver);font-size:12px;font-weight:700}
+  .tot{background:#fff;border:2px solid var(--az);border-radius:12px;margin:6px 12px;padding:12px 13px}
+  .tot .big{display:flex;justify-content:space-between;font-size:19px;font-weight:800;color:var(--az)}
+  .aviso-cx{margin:12px;padding:10px 12px;border-radius:10px;font-size:13.5px;display:none}
+  /* ----- pantalla del codigo ----- */
+  #puerta{position:fixed;inset:0;background:var(--az);color:#fff;z-index:50;display:flex;align-items:center;justify-content:center;padding:22px}
+  #puerta .caja{width:100%;max-width:360px;text-align:center}
+  #puerta .logo{font-size:44px;margin-bottom:6px}
+  #puerta h1{font-size:22px;margin:0 0 4px;font-weight:800}
+  #puerta p{font-size:14px;color:#c8d0d8;margin:0 0 18px;line-height:1.5}
+  #puerta input{width:100%;padding:15px;border-radius:12px;border:2px solid #2b4a75;background:#fff;color:#12212e;font-size:20px;font-weight:800;text-align:center;letter-spacing:2px;text-transform:uppercase}
+  #puerta button{width:100%;margin-top:12px;padding:15px;border:none;border-radius:12px;background:var(--ver);color:#fff;font-size:17px;font-weight:800;cursor:pointer}
+  #puerta button:disabled{opacity:.6}
+  #pErr{margin-top:12px;font-size:14px;font-weight:700;color:#ffb4ac;min-height:20px}
+  #pOtro{margin-top:16px;font-size:13px;color:#9fb3cc;text-decoration:underline;cursor:pointer;display:none}
+  .salir{font-size:12px;color:#c8d0d8;text-decoration:underline;cursor:pointer;margin-top:6px;display:inline-block}
+</style>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+</head>
+<body>
+
+<div id="puerta">
+  <div class="caja">
+    <div class="logo">🔑</div>
+    <h1>Cobranza</h1>
+    <p>Escribí tu <b>código</b> para entrar.<br>Se pide una sola vez en este teléfono.</p>
+    <input id="pCod" inputmode="text" autocapitalize="characters" autocomplete="off" placeholder="EJ: 10-ABCD2345">
+    <button id="pEntrar">Entrar</button>
+    <div id="pErr"></div>
+    <div id="pOtro">Usar otro código</div>
+  </div>
+</div>
+
+<header>
+  <div class="t" id="hTit">Cobranza</div>
+  <div class="fe" id="hFe"></div>
+  <div class="chips">
+    <span class="chip ver">Cobrado hoy <b id="cTot">$0</b></span>
+    <span class="chip">Cobros <b id="cCant">0</b></span>
+  </div>
+  <span class="salir" id="bSalir">salir</span>
+</header>
+
+<div id="cxErr" class="aviso-cx" style="background:#fdecec;border:1px solid #e6bcbc;color:#b91c1c"></div>
+
+<div class="hint">Cargá <b>solo las transferencias</b>. Elegí el cliente, poné el <b>importe exacto</b>, la fecha y sacá/anexá la <b>foto</b> del comprobante. Tocá <b>Guardar cobro</b> y se manda solo a la oficina. No hace falta WhatsApp.</div>
+
+<div class="alta">
+  <h2>Agregar cobro</h2>
+  <div class="campo"><label>Cliente</label><select id="fCli"></select></div>
+  <div class="dos">
+    <div class="campo"><label>Importe (el real de la foto)</label><input class="m" id="fImp" inputmode="decimal" placeholder="0"></div>
+    <div class="campo"><label>Fecha</label><input type="date" id="fFe"></div>
+  </div>
+  <label class="fotoBtn">📎 Anexar foto del comprobante<input type="file" id="fFoto" accept="image/*"></label>
+  <img id="thumb" class="thumb" style="display:none">
+  <button class="add" id="bGuardar">✔ Guardar cobro</button>
+</div>
+<div id="estado"></div>
+
+<div class="tot"><div class="big"><span>TOTAL COBRADO HOY</span><span id="tTot">$0</span></div></div>
+
+<h3>Cobros de hoy</h3>
+<div class="lista" id="lista"><div class="vac">Todavía no cargaste ningún cobro.</div></div>
+
+<script>
+'use strict';
+/* ====== BLOQUES CIFRADOS (uno por vendedor). Lo pone el programa al generar. ====== */
+var BLOQUES = [{"v":4,"b":"AbxMmlew3eDPt0e6w/VfgSa6PdOBDJlOYvSYpbHw8vFHJAMjvRvhRmhm6Z8ayq4mHWr0VrZKhIdhMVwcthED5AuKrkFPInIfQYXPAozCvoHldoJZmLaEueWOtqfF6zgAq82XqIglEHORNbqml9W8krzrgAc56BjObnACIJxzk6gCvz32d3oTSwR2mYbMX9j9DvNGqhLEDHPlQ5tL/VomzR5MfMbwQrKCPgyQIV9vPPoFwMEXeawGGpL/tR9RoO3zJLPAtA+UCTeledokvgDm1884aV8XUCN3hPjMEro5XCvhzFaYBahJbdEv2ygMyrYpR/gT46cm4FW2+mmqxdK6QSdrD4Tpxf/Nq1LE68BSx8WYToytZrwsgRT0X1F0fd6cD7ogwlpxGc/v9ENOPYFcJ2PBduf456oMQpIseEplBarkyOO/JRQ8zVwQSnP+BffT7o6CRFJ0a4AuDiYpsDnzvFqMxM7cr085x3WtoLb2jPe6NJukjekp1BORHkAZbPaKAkGH1Os/uw+fvJEPwAXK0o/Nhe8JFvY//TCaUHy0McIdhhxFhQB2mtHeYRYwZMbUg/37k9aKd+X8dN+iRFJCfD2FneKDJqLA7ZknEVpEjZmEpVvvwVyQkfeqJ0uKZoRpDl8U2XZjvMQV+4lMug=="},{"v":6,"b":"AQVMJTlbn0AVaQS+2no9OsZG+tVxs/tDbLS1lZ2gujES11RIW4Pzoen95IivhbjPwiuzckHRq0nZ3RFjkKm/HlOlYfNZCmPKzT2a2EwU6reh0vOUpxtjHhfCovEMtNpglRuErJnB6miK/XqNreZumny1WwCvdAIbd4H86k7N6UECtg9c2WNdgY81DK/yPzT26Ia/DNIr2RyXykWWsMaykjdP1F+ZKr9KRRhn02gtPMhlV/JDdf4Xd39kDEd4EMU24HyfM6R2qbIaxlxhJbsCv0E91l6sgPrDW5BKoSQbaZwS1FFooT6ZBR5shkjm8CzVS3Ko8lyF8OYuZDYDvWTgdFrkSYi61yRWhuUjAuu9EjjOKDoP2p5DsiaAZwmO/vO9ZU+vLAoGLvXeQuZnl2FyzvHcNEvdIVg956ptEoEkp8v1oe7U1ejhjZlxpg50VWfArDInbMkSz460nNDN5jRiko3Ht8gu/721R2R29MhcLuFe5WWu+WJDgmcfNUvfLAK8PZ1vxoUHyqZLb9CXbn4DVSFJyuoU6DVwaDjorNqCbeBOhb/qWpHK52hkntCP7Kah2Oen40Q5mk/g7s5Kqrcv9T8QEx1o7C0J69htRaQ7ZtoFh9LF6QuVGkW+4s8gmjqWJ9Y1zNCg"},{"v":7,"b":"AVYPUyB+NTQjEAOHki5m+hQ4mCpvB2vgztfDopsaCjTT7ED/7QwmwwR1NtDcwEiyugxznO6Zzr/dX7/HIfd0PN63DthlS5C0+QPIw9tlZvD0aBJywQIdmjNJGLM5PbBErtWBm6ZhLRWaDArmSmIdc6xsBVcWwTSbyEyxglKLIlebWzPKx/nychJYRxH9J5jI06dxunq5hPUcc30N7omO0Y4wBA1MLccNcwItpzgAuCKOcOItag9mu4M6UNNmSJxo++9IZC4T9HzUjvwwp1aavU6CegK2tW/Nv6mEgGxWPcsuclEWayItt6HOWT/u1da7NBUAYZPr4YO3EggZRgfucfY4mm2IlHuwhEe/ts/yqo8gMaKdrpA1+zrAQIfFpkdwemy2jUUwzDu83gmsDswmxJIG+4beMZ6lkHVKJkY4r8WUymLSqN0StWvE0V3ged4YSP3aawGF3GMB2GrsSul6S0oJKbBFiOq+PikKzsb5cVxdQiaepQ2wJg0m662MI4o5Ynm0K5+TKNB1Tf0owAmbsmrlovcaeLmFaygEyY+D9LCrdt2WBg+VL7prMlfMe9DTqmtXdy8slgvdAAA225qtqBAA0oeXnXOBwgBFMZ2BONDen7WY2xAIxlxYK7ZUo2boewiwA0Atg+5wDE/LDhKBqP9UcJszg0uO1dOLDVF+NnTDuo9rQ7IF"},{"v":8,"b":"AZTKorJO6hH9vw2bxv9XQOusqN7Orl+DpM4FHr6y+/O+u88pFTWiuDzGL+UK59aEUJR6gZBG+D4iZWareQfu8J4Do97Rh4EDCNF2VYMsfCNW1BVrDFBv0SxmM61qQP6N4z9N7QbWrnYEr/vFpUaP6b8PFNhDwS3iCpcL14FRlX6qpNR2ZSAn6HkFAsl1edqVAP7MJSE/zhCUpUU/EbuokXQnXBwAJLq32hfJitiSBjYdQlRb5i5rWRF5gOMc/dDAXWBqod+y8AwIBd/U6coWEfw8Duz8y3CBtIIJ2cTLOv+tS1c++F6bVzH9gK3tee14V4d6usvBHEWfk/6SiRHlrgF6mitG8xERhyuSDMbpn6da2W8zw9+uNx4JUoxQsfNY/0hLoGhdUacydaXzNqEDc5D3T/OegVax0qbzoho3/cqcxlxCmNKg07wKFVEJ18m2ufaY0l6wQNCV4cuqN/YElRsfGStKbQJ7hVLk/0AX3auMgi0Oh47NNi9xZFRAVFqe1AahSDbkaRVW1o9r+flOXcZPKQMv0H3G4/HgE3KR/t8luFCBMW1kHp1mF88asuJOU7nTgjqftBdrwgQcEuT45rLzl8l8ScB0PrmGxMVcDlaOzDy8LJ7tOwpMcr7OuPUaQGxHMpl52togBUshONC58DxfZb0guoJh0kCkHf587Jd4F8cPUzNnm/XzJCBdxeuAaoi6qFb/OjGTi2FIZGDEN6KqvqSmNGCJZGcuGiNGOib4mJ8FiVwa41vVMHClVk2mcg46PeZJ4mnCHCn+SAA4PihaQor2gvinSr8LP9lVCCG+RMRRXtI5YsEWsWl9AhNvYqki/NVOl12P/l6ZchOM7s86GJg="},{"v":10,"b":"ATmxHFAjbcKk2nlNQW00oHLCau99smXLqAkykXyri5eb1i7TVBC+lyM1ER5/P4oTSYm7w1ZV2auC640dV/r5lCr/k89l1oZjgph7PRm0UpWpQtIblIQS5chC02sQbc8+Fp3STplOKMT9QliLrMuvmKTgi+4vk4TL/qF943zqXUVfw65geP8mmAPDyuQT77RhV7ouvj7jElxQ01JkYf3hoj+Y3z1/43307SZE5Or1/e8dvu5bN3zGDLvpu8FmpGN/6qW9YBeIHnIaNV883sh4e2SDO3mZ9aVmBrift0KmIpGtJR8cHgOqSSUOCFgXybDrgRorr7JFyx+hQlcWLxKTOR52KZy1Mc318XB1Bc1rvnGBm91y4O9yKPExZV+/E/wsgMvJTmi6/TLFO5xRVTvnMHmUDjkUy1oiI7S5B1OAZN/Ax4b20OllVsfwyrKQyPRpVmXQOgLs+T/0ROFDiXnm05YenshyjBj7YjyZUZIUJ1xJAV1s35JbnhUcIfOobt1yxqJ8Ow07nTtah2MYbiG+vPoXD6qXx42jLVE42gzFji3lU7nn9e1L7kofzmvfELIiPMDGQS575im09hN4+M3VirMXUseSMu5x4xFVuOtcr4kvX2DJo+I0y80JtNfJKTlVo64/IK787LZFr5HyLPGWP/+grbB0Ivb1jEsWt2r3pfvF8TSNXGqe8qeDb/Tpn+KdS/Kw6CDbraXZm1y4juZLBsImYQoOhISpKDv/nV3IPCESQUkkdamzOgpSC/w9dINoq1RVsOmjabv0jvFzARRHidgmoPtoSoPd2jEgjWNTkvzM1pfEpdF/k5rlNrRZhpn2MTmJ5gzl21e1whP40Yk6+9nXToz6"},{"v":12,"b":"AShlUrD+N8HFpF73/NTkwR2oE2hIO8YeaQczOz9k77Vj8+QIw5kDn8+L5py7eRKnPfaC0OgN271d1IFd55cxIUZ7aO4ZAaiONm4zHZAdVXgy3Fsy3loLR99rDlFyzmV76P4uzxGQgUOfqPm/rEbA3I6P3+GorpdLdVTWJ7eDOf3BZQXTOLDPpcGeUMQdCE//mLJUmZZuja3mACIGJKr/qhzSWPZHraYJuZ8y7IQItl2sphH8unSHtI4ThFmvkcNxlIc56JFYPQF/h+w76FtRTFcBX5BhVzjyjAxX/w4RcgW3p1jg0P2IXXimg6xqxx9rJuo0Aar6KiRASZQ="},{"v":14,"b":"AbfaHkfE97j3h3segOQYupGE/DwYRwBLFs6xeuyKfQe+9tdgx5H2cvZsWfSKj3qaWWIhSYpEK3/n00Q295NR5D3HgggPnnpJpwj68kDRhjNFIDnRJYwl4cTj8RmYeb5vWZ2RkOSEanIDaMBdqcdglzwDANdY2sRLISvfo5IQklO3bT3l11aFfyG1rIDuFGKigdDwpg1HvIzTSd8GppeHITeFHPMpzEu22pv42zGn8+Zd2XDg2TKYI+14vWVoqZ0rK4YjK9FgCEg1D0OlMmOv9NC0B1Ql4+y8Td/F05FZQFfVrvBmsoRVOKpwSSdXrF4OOdhv5UKdvKCI+2A0DrqBfPgiRA9UPX6jY3fOX/o52pezt23v0znrUk+ZdG27HmBcGlNlC2ftXhQilKQEvDm8SUHQQu6dVGB3JJvxZL9um0HLV3aSuJuxOWkmajw0tTKqLNo3GnCBfYXVmtZGoniacpi2eh6WFxtdPmPBA2nB4F1utFqfXbssHAcUsltTSkDEruEY6U/OdXcOanvpQ6hw9+svDhBa6ecVreIIAXuo/3JDCpBRAlTtyoUGdyJFSEdt5akZRqqf6dLbA1wbU5xnTFq3PNaJka9mDoDaJTks95EOBlgnFESE12503I6qN4Hqc7vDu70LUpHI97O7oxqZifR09NHBmYVm6yNLjS9TVd45NywgoAp8Sli/9A6v5Bkkxc7v9RsBH2rwi1RfqbxQowpx8T/WOSBUrLnW7gW3ZZWvXF79xCpJpw9U32RFyJ23EEHwbKRqUX5loU+W3fVVUH+OEud3tTTWDX0hDkl1"},{"v":105,"b":"AeJ0tBvQSqYE7Jn8G/0bLC7Cg+6KXhhFwKGZL9/C53JMxa0ODwOMI3LNpJ6XfnQHgWY+ZFDqhN0zCEBw3Z3VPo/LDQBI9ztmQQme6gXvHuM4lFW8+VRpIrx6PXx/AWnsiN4hKDktOE0kXDH0aFa7bEH8q06BVfAY/HcORv4ioMgfzYv9zv3sK5O8i7XGjCiUM8fjXt5Jgv0mWK5QNwF/zC1Ijv3++wW4dHCAShGSBwUTzm1LwKY8b6sJrXBWhcnWBURri1D8EtgzY64K4HpbzlS9DqVd3XfbuF4FLEb8ijJSox2xwyDuY2MoMCPwrZfJlosXY3QIINRqS/zTFu0Vhtrr/K2ddu56OnTY7pM0EZIyOUmDDToLpS3HoR05RAs33DYJgU6xSsMByYmVBybDYzQEsFJLPrNqmmBNGL/R1OIxfwkXJhG0IMJCd6jILi8+qrRNZiUsjN9sa6Cdc4JMuDVYlNTnIcptsqFiCljcfdk3Io0NCOBpDXO4GyVu0nCazwYZMkujKhnuyx1cog8sYb6n30LtTzmiHTVMhFHZrDkUTr3chx/NjbkmhjOUkUGxPXbJi7vMnCP+AdJpxAxPN12tvkyaViYx1JMMgVExqprEeB7myuM="},{"v":106,"b":"AecEvJvsY7aGF+nTmvWnHzH+ia02XmbYge49t1Dyc5h6hUUSqGqbmGV3jMR4y1QGJ/lQkfo8R3zctHXgIbdbXTUuXeJKce3H9Zi+7JBLk9l5njJYqlEODhwCR3F4Z4pozA6+rh8JJCVZxDogVYHX0wom5jUKeor0K0kK8HeEqlJArobr3BQOI4E5O9YGXU371cXYwTaFQvafCDI0SgmFwjgMltWnOAX8KiPgdyA/SEWsA3A2EwANGaQknoTky4L3+2jrSO6hiUzRHob+ufQ9hEGsqwjbjcZubXj6n8UIM722rsYc+U2TjLM9CwuYuA+CCQ0opdeszzxrFO1WsI2N+qeQtKZGxM0HOhFO8d9pMuhgxz7AykreHj0kwC6unRrq0ETppJs3/3GnQcnvUlef6XWnlqGT5PAt82rmeWwIl22RdpRIvWUuSJRSU+ASHYWtaY6vbIvDxaAPhoeyiTsNHjCeqx4rRl3Gyjw0ShtHf0ady1hsIDyKcxpZc+Rz3RUhEkPvOolPFtEZE9yhRu9Iu6C0YTm2CIuHvwZjlSqsmVgVNKGBRqzmE/uQ296dgpS4OhgbiqH6ajZTTVJCPER+pBhSBIQLkKKK167/rpcqi2D54X1cdJba7pRQO1J78/AjOQc+4zNTLKlgGVObZSXz15fu65h+cszXMiBni2FjsN4J2x6sGdducSqVMzP+ExUI+uO+audWzgvUO5e6sZtUDiA="},{"v":107,"b":"AdL+PfaYDE5AxYCWqJWbtSE0Nw7rEDNSd7fMWhlaho1Xzw26Jw91e8eEQ51wagkDDgnfv8GUfO5qf+MtmFvuecbVeqONWEh9SdKJGcNDjG7Q4PE31Vu+dvmyptHI6XiByYR3+WGyt3Q/WEXA4K4675yWEEGywmqFMrpWKKydLuMqtGPQBnsSgTbonhHIWyWA5JB71JIbQqfqE/iS16RSRaeYUPWlRXeN02CS0KM7WfHSgBFuqKwvCJs+BxqMzYG+z/QMB77l/7PbDhxxPpUMvdZwTXgaxn8M5AKSxXhjOf8q5FS6ksI7DF4yNuCC0rP3nXZFbu3nmVJNkaGiIhxx5mEgYTlXMSCoFCEWH+4jyDfwKR1yL0NFtRtUbVo1pBGeuqlV2OfUArSQhLT45NmocH1WaZlgj7L9OqZN7q9ywUIDxtHuX/Dgt6M8iFs2rQ78Oi8Ke7BYPS4VkyYXrLP0SMMAbFWtyVpBXJxbPAJZe6Fa3obfc/oCekMqTUrUygOJugTSrgaA3+CVLLnloy/pbUrYSxUmQrpYjoXzLxwBQT9w8EpiRhRjD73Afu/NTrVbKj9kSV+TzHeQ93onVyj4Wi8afe/ICV6I/Kp39HF19oZY0fXJy8vxfJvER/Y/kln2kvp150KKU1iu71OidPGUr3eRjzel6/gIpii/Rc2fhEzwrBQa8zr6ZLunWJFTkwb44FHUYoJoChJG3mhseqcCjHbNPDgxPdUWw/QCHyTIxD/txP4EdQ=="},{"v":206,"b":"AbmWRsTy54EM5zB0dTRcB7rF9cmXCztoDfudVc0ZqWnNbZCYCvAnfylTt5bbR4NE9J5bOtbunx8SndwJ3SPT0NiOUwCBN5XOVrEAqFqntxsvO78DF73OvN21w6kanxirrl66BmPgMlwH+fzjt/tvViHUK9H/z5vD8piesudBEj3y0tCXutn10XI9WAdwiQP5AVJpG9tOUmZLkT3g5QRogUTlft5eanE6I3X0GBTbHMpgbmqycc7vFMFX9ADWOF3r7v0wt2yODFDAGjpTxZ7jtY+8bQ=="},{"v":300,"b":"AV9prIwbl0NMRvG5L7occ0zvArv2jRM/aYQAhoUeU82vjZnRT96rDvynZbmp3aSccc9WVZUN6RrSgXzhxR1pAd3TpUuEmOOF3Km2qYMPwsuDWDsN9q7Rro2yhdt85vlAkl8lzBbsOFDc6nZ/yYJ5peVNAM1NfAGASgPoBoXOnWc6O2XTYsZxPpy6is0aD1mwqzDK12Eex6WE1B1z6pnuvpc+uD7UkbDUmqH5Ir9VfgmkWMvd5OyUCQhwrU4dLKL9/q3iO/BhPjrBcjirH+OAZqDzludyvfiCfN91w6Vprn/o9adqtz/5kDkBuM5f86Hnh10S7Y+MF/d7PXTgkQdgKwgwwQ6/Tmk+5L/+4LQjZbI9vcwjQFFIbl1Rlu2E0onDAerLDJ0r5GRERDK2fXH9YkUd7BgogDPxET3ywsgMJ0aWL67Q4Cz17j34OtI="},{"v":302,"b":"ATq6v5YE8deTsxGPGvVv4N/NFDx4shiis14Kb/r2XRnDFmWe0hBqsB3mSZcuj58tMF4snZbDFwXUnnvAAMelsR0UnXsvmM8mLLQ5GKAE5TrQBpkLe6PDTY7jrasRTNY6owgCk3B6T9lp7FfbrUX4xiM++14xsiDaV54pf5OzSXlh5hRJDWChm1K8PC6ZH60qcMYA2wRjgxbBBkZ5/G0m4CKO2UAkpW/+c86dso27sXgJFkFDcvKVjNQeLnAFreP3BnzGLXhlx6+zPApdvASjTdAXgX7hqLqn5xAU/NrnfNBtabxeb0BMvJmIF9hW4HUxmghZYPLvXlRhIdNiPUCEBX3EUXfLrUNohjJdxIyu84oA3mGjCQyauKwCgs0/74Hkzi/ERwLaokV7/lAD06vwbTZWNpIq1JxJ004AyK2njQLXnXLdyWCsloqaAw0KrUfeWRWOA7R0JAT+RxLal1J2PZIaFZhx3fVWtowAc0nDk6xEpum9C0Y="},{"v":303,"b":"AVFY8zV0YClDXx2gA6P40nU4fzp059cGR3OK9j9STPAGudWk3/sLZBCAFGYLRFcsOvmTebLQldevbQy04hTs1+7QZ5EalsIdjvOJJwbUQrT3P2xKEFLpulQxyWA0xflq7H9xj6O8w6vifRJ6hpHVE61b3KcPHTdB3Q04x1x0cQWIZbOAUuAeIRet/+POd+Gikj760W2k4I5lGNM0sLGIfBUbpuihXZavQr2vKzudETcqI0Q1dv+mhk2JFYAITA+oYMSQULM5y0KlbyB+xGjz/V6Mnrzm3k4z1EhlQnXOM9ixkd5Q4pdmBzKvUfY2vr4D1g/0LQ7wj+MhQM1kvqbVzKwDwWGCwI3nNmbfKU1iDyZy8KQc5/yLIbpSuihfw+GnP4PRR53qqXOSL9l9/OLtCLaz1NujU9XzURufhHZkHW4PvmiWvobB20ZdMd0wvCCsI5D2lbqrETx8tjw2PvhZ1ktYwzR7Tkd79ZI4r66kk1JHZwM+sByI5wxA1XottVPEd2iJqLpc+XyxL0VJC7/kSbcmDiGFQdiEshvdrGvO/4Z4RLCUPzBeKhQb7XsY4ZUG02PDaabqrFYcNnNs83w8UK7E9+xGcTFu2H8XNzWM9hDohYzojGt1drc18uKLa1wHPZgJFjk6PcTRAb8bjy4b1+F1Diw36ubx8dbdDFIowcpHbGyiorG5Xm1TXbVnKsgaXMGoElqd90bLV7odqRodObYOp+sz5tZFIHsoYPi4VP8kidofuuj+7jk2Wo0N3qrOBGvCKh0aKU9Z8q8aVeukcFDZtYk+Rr3P6gWNF55z/+w6FMoTzd22ibbfVCjSCmeRqJ8LKPJlX7v5Ig2XE1jHAoJzZLjK1XCjsE2/EqLmiamcUILkq9n62X8YNDbLG0Acqld+4aQ4buCh8U5OUtJbacmHEHNB7YpNo0sxgDQ9x2w4NjA5qbumkPOw3OCJWg=="},{"v":306,"b":"AT3qz74mFSq5iVgsFUeKLG/M6I+tjc8p8rk1eNYt3Odrp7LnVIz1Wq72SKNyMb7fFDaLG1oFXoFaJfqd2Jjah+A/fjuqA7DANk2ofK9xKXkfBrTuerRFwffWQv0yoXqWemxEWY14QiC0J4sj0J7h0yL1EHD3Ly3M8LFlhmYxl2snYpArm8PzdYUIyJSD+bTg7tD5d1CuTtcZSMsReixio9S8Z6/jZFRl13lf/8swtE3xA2SqfkNr+uXfRaibUUMUCUlkWZ/XmR//l6LsXcW+MDCz/x7414YY1wP3jVMmW55la65UeijkXtE/1aQMOMD+meFLcTjv5LuOjZTSEsjFl/miIiznqJkAfKN2auFc3a+Rq5r7v+NFwbOo4aABEqOrKhcrc+YdFrgbvkxj8s4gDjYrhqcpAeLujf28TpktH5rIDcdaDvYE56X83fkRw+qrzo1VpHyrxC9Jp8nhnCrRDW+5rfurV/MVbTe4J1rqXb6tdNf8Ogc="},{"v":308,"b":"AaGCJwi+imsL5sA8q/hGpDCipTyhoXflMtVqaMlnJpq+u1wXna8jfEjjRqQQj0Vp0C7pq+kvlK6ANYGthVLeK6/5Fuk3Q49cIsw+wZwCCcvUt3mUuwtJGZEoCCwiW1jeqd47eziqGR7v6YYl2Iw0Sc5fzhrnXzTkgSmx37fzfdl4ZqERoO7FJTqvTPJc7a8IcdzB2RiDNrEABaocfo2QpgxamPTjnZ5JvXEXXNx9l9VB3xE+nre81hhiBfoKXWaap0IJ0QSBzUPMl12A5+mLVQ5Ldkn5qM9OLPEkC351vi9zOt/rSUpv9AFzyip2bwgnVHHyToCyavq0xFTlNv086HYozBgLuCcC/cp7JVurSnV2Oi15ZZMXov+E8y9OEhWeUhVIw9pqBYgqLIt+h+BkPW5FBtLUhrNLrwx5CcNSUzfaieiFT9l2Xd92gxyjgLWj3OEMCnt0jH+xQvfiogSc1PlvKwzto01ayNO2sHWdtXIwgAyiS5W0dfehZMZSl+XkbqCa1JOGyaFNekrt5CFE7mEWqRAkT/8UEC5ssOrB7sf5ti/5Rij/7MFmS54jsgxZOANY/NFr0X7o/5Q7kfUcNldxWEngIewRn7lwn7myCREecG7BBfzc+Q+v7abnwUIhCOmMV/CtDFCeS4pOMyhQFGWxK6JmvJPrlfF/C90mSNXBBsCaYvxvFHyINJOsqh2QXmSw2KqxWXN1W2nO+IZwiE2KHVD0icar8xstkYo8rzAhBsVSOEbr0sneZP6IT6UrdTafEglkPHy6RJFW6iyzdwnC9EBbUfv97pwSumRV0EwAd97e3wgZmhv7VhSA+uTSxDXMOanSxFJuhuTJxTRqppYMkq8uymT6s+FMNJSJ6WqFZcJjsjUgCif2kLZnASleDPEqHk+9V4+kwxWpAJlRaOu9B+NtRNT3JJV5VnnNSWrlS1m5uypF7j5fDxfbJlAQsYGi6O2nRjnwB7Q7rs9GAq0/4fHaWHJLdKtm5bVfiDU1XMmRxMllL8HvXeYMAmxluBBbg5zUUJfFv9B86dy/om/5UAcJudErL/f5yi+qJZeaA02w4idwoPdLjVmSD7xFVafwpYRHuaeUu5+AeimWn/U5kvR2RWawBYJ7urfi23uTtzivw9Bm"}];
+var SAL = 'castro-cobranza:';
+var firebaseConfig={apiKey:"AIzaSyDXqLbTAA9TCkUgMJpKrDxkvDMNBzmjTIQ",authDomain:"castro-cobranzas.firebaseapp.com",projectId:"castro-cobranzas",storageBucket:"castro-cobranzas.firebasestorage.app",messagingSenderId:"30596915316",appId:"1:30596915316:web:7a4b57f28342b1e3a3b121"};
+var db,st,LISTOS=[],fotoFile=null,AUTHP=null;
+var CLIENTES=[], VNUM=null, VETIQ='', VNOM='', CODIGO='';
+
+function $(id){return document.getElementById(id);}
+function money(n){n=Math.round(n||0);return '$'+n.toLocaleString('es-AR');}
+function numAR(v){v=String(v==null?'':v).replace(/[^\d.,-]/g,'');if(!v)return 0;var ld=v.lastIndexOf('.'),lc=v.lastIndexOf(',');if(ld>=0&&lc>=0){if(lc>ld)v=v.replace(/\./g,'').replace(',','.');else v=v.replace(/,/g,'');}else if(lc>=0){v=v.replace(',','.');}var n=parseFloat(v);return isNaN(n)?0:n;}
+function hoyISO(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function b64bytes(b64){var s=atob(b64),u=new Uint8Array(s.length);for(var i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u;}
+
+/* ====== candado: mismo sistema que la app de Ventas ====== */
+async function derivar(cod,id){
+  var mat=await crypto.subtle.importKey('raw',new TextEncoder().encode(cod),'PBKDF2',false,['deriveBits']);
+  var bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(SAL+id),iterations:200000,hash:'SHA-256'},mat,256);
+  return new Uint8Array(bits);
+}
+async function descifrar(bytes,cod,id){
+  var kb=await derivar(cod,id);
+  var key=await crypto.subtle.importKey('raw',kb,{name:'AES-GCM'},false,['decrypt']);
+  var iv=bytes.subarray(1,13), ct=bytes.subarray(13);
+  var gz=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:iv},key,ct));
+  var ds=new DecompressionStream('gzip');
+  var stm=new Blob([gz]).stream().pipeThrough(ds);
+  return new TextDecoder().decode(await new Response(stm).arrayBuffer());
+}
+function idDeCodigo(cod){ var m=String(cod||'').trim().toUpperCase().match(/^(\d+)\s*-/); return m?m[1]:null; }
+
+async function abrirCon(cod){
+  cod=String(cod||'').trim().toUpperCase();
+  var id=idDeCodigo(cod);
+  if(!id) throw new Error('formato');
+  var bl=null; for(var i=0;i<BLOQUES.length;i++){ if(String(BLOQUES[i].v)===String(id)) bl=BLOQUES[i]; }
+  if(!bl) throw new Error('nohay');
+  var txt=await descifrar(b64bytes(bl.b),cod,id);
+  var d=JSON.parse(txt);
+  CLIENTES=d.cli||[]; VNUM=d.v; VETIQ=d.etiq||''; VNOM=d.nom||('Vendedor '+d.v); CODIGO=cod;
+  return d;
+}
+/* v61: cada cobro viaja CIFRADO con el codigo del vendedor (misma receta que los bloques: gzip + AES-GCM). */
+async function gzipear(txt){ var cs=new CompressionStream('gzip'); var st2=new Blob([new TextEncoder().encode(txt)]).stream().pipeThrough(cs); return new Uint8Array(await new Response(st2).arrayBuffer()); }
+async function cifrar(txt,cod,id){
+  var kb=await derivar(cod,id);
+  var key=await crypto.subtle.importKey('raw',kb,{name:'AES-GCM'},false,['encrypt']);
+  var gz=await gzipear(txt);
+  var sem=new Uint8Array(kb.length+gz.length); sem.set(kb,0); sem.set(gz,kb.length);
+  var iv=new Uint8Array(await crypto.subtle.digest('SHA-256',sem)).subarray(0,12);
+  var ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,gz));
+  var out=new Uint8Array(1+12+ct.length); out[0]=1; out.set(iv,1); out.set(ct,13);
+  var s2=''; for(var i=0;i<out.length;i++) s2+=String.fromCharCode(out[i]);
+  return btoa(s2);
+}
+/* v61: sesion anonima automatica (invisible para el vendedor). Sin sesion, el buzon no acepta nada. */
+function sesion(){
+  if(AUTHP) return AUTHP;
+  AUTHP=(async function(){ try{ if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously(); }catch(e){ AUTHP=null; throw e; } })();
+  return AUTHP;
+}
+function arrancarApp(){
+  $('puerta').style.display='none';
+  $('hTit').textContent='Cobranza — '+VNOM;
+  $('hFe').textContent=hoyISO().split('-').reverse().join('/')+(VETIQ?(' · '+VETIQ):'');
+  $('fCli').innerHTML='<option value="">— elegí cliente —</option>'+CLIENTES.map(function(c,i){return '<option value="'+i+'">'+c.nombre+(c.saldo!=null?(' — debe '+money(c.saldo)):'')+'</option>';}).join('');
+  $('fFe').value=hoyISO();
+  try{ firebase.initializeApp(firebaseConfig); db=firebase.firestore(); st=firebase.storage(); sesion().catch(function(){}); }
+  catch(e){ var c=$('cxErr'); c.style.display='block'; c.textContent='No se pudo conectar con la oficina. Revisá internet. ('+e.message+')'; }
+  pintar();
+}
+$('pEntrar').onclick=async function(){
+  var b=$('pEntrar'), e=$('pErr'); e.textContent=''; b.disabled=true; b.textContent='Abriendo…';
+  try{
+    await abrirCon($('pCod').value);
+    try{ localStorage.setItem('castro_cob_cod',String($('pCod').value).trim().toUpperCase()); }catch(x){}
+    arrancarApp();
+  }catch(err){
+    e.textContent = (err&&err.message==='formato') ? 'El código va como 10-ABCD2345.' : 'Código incorrecto. Fijate que esté bien escrito.';
+    b.disabled=false; b.textContent='Entrar';
+  }
+};
+$('pCod').addEventListener('keydown',function(ev){ if(ev.key==='Enter') $('pEntrar').click(); });
+$('bSalir').onclick=function(){ try{ localStorage.removeItem('castro_cob_cod'); }catch(x){} location.reload(); };
+$('pOtro').onclick=function(){ try{ localStorage.removeItem('castro_cob_cod'); }catch(x){} location.reload(); };
+
+/* si ya entró antes en este teléfono, abre solo */
+(async function(){
+  var g=null; try{ g=localStorage.getItem('castro_cob_cod'); }catch(x){}
+  if(!g) return;
+  try{ await abrirCon(g); arrancarApp(); }
+  catch(e){ $('pErr').textContent='Tu código ya no sirve. Pedí el nuevo a la oficina.'; $('pOtro').style.display='block'; }
+})();
+
+/* ====== carga de cobros (igual que la versión probada) ====== */
+$('fFoto').onchange=function(){ fotoFile=this.files[0]||null; var t=$('thumb'); if(fotoFile){ t.src=URL.createObjectURL(fotoFile); t.style.display='block'; } else t.style.display='none'; };
+function pintar(){
+  var L=$('lista');
+  if(!LISTOS.length){ L.innerHTML='<div class="vac">Todavía no cargaste ningún cobro.</div>'; }
+  else L.innerHTML=LISTOS.map(function(o){ return '<div class="cobro"><div><div class="cli">'+o.cli+'</div><div class="meta">'+o.fe.split('-').reverse().join('/')+(o.foto?' · 📷 con foto':' · sin foto')+' · <span class="ok">✔ guardado</span></div></div><div class="imp">'+money(o.imp)+'</div></div>'; }).join('');
+  var tot=LISTOS.reduce(function(a,o){return a+o.imp;},0);
+  $('cTot').textContent=money(tot); $('tTot').textContent=money(tot); $('cCant').textContent=LISTOS.length;
+}
+$('bGuardar').onclick=async function(){
+  if(!db){ alert('No hay conexión con la oficina. Revisá internet.'); return; }
+  var vi=$('fCli').value; if(vi===''){ alert('Elegí el cliente.'); return; }
+  var imp=numAR($('fImp').value); if(imp<=0){ alert('Poné el importe de la transferencia.'); return; }
+  var cli=CLIENTES[+vi].nombre, fe=$('fFe').value||hoyISO();
+  var btn=$('bGuardar'), est=$('estado');
+  btn.disabled=true; est.style.color='#5a4a20'; est.textContent='Guardando…';
+  var fotoURL=null, fotoPath=null, fotoErr=false;
+  try{
+    await sesion();   // v61: sin sesion el buzon rechaza (reglas)
+    if(fotoFile){
+      try{
+        fotoPath='comprobantes/V'+VNUM+'/'+Date.now()+'_'+Math.random().toString(36).slice(2,7)+'.jpg';
+        var ref=st.ref(fotoPath); var task=ref.put(fotoFile); var _to;
+        await Promise.race([ task, new Promise(function(_,rej){ _to=setTimeout(function(){ try{task.cancel();}catch(e){} rej(new Error('timeout foto')); }, 25000); }) ]);
+        clearTimeout(_to);
+        fotoURL=await ref.getDownloadURL();
+      }catch(ef){ fotoErr=true; fotoPath=null; fotoURL=null; }
+    }
+    // v61: el contenido (cliente, importe, fecha) va CIFRADO con el codigo del vendedor. En la nube no se lee.
+    var carga=JSON.stringify({v:VNUM, vend:VNOM, etiq:VETIQ, cli:cli, imp:Math.round(imp*100)/100, fe:fe, nf:(fotoURL?1:0)});
+    var b64=await cifrar(carga, CODIGO, String(VNUM));
+    await db.collection('cobranzas').add({
+      v:VNUM, b:b64, nf:(fotoURL?1:0), fotoURL:fotoURL, fotoPath:fotoPath, estado:'nuevo',
+      ts: firebase.firestore.FieldValue.serverTimestamp(), fecha_carga:new Date().toISOString()
+    });
+    LISTOS.unshift({cli:cli, imp:imp, fe:fe, foto:!!fotoURL}); pintar();
+    est.style.color='#0a7c3a'; est.textContent='✔ Cobro guardado en la oficina'+(fotoErr?' (la foto no subió, mandala por WhatsApp)':'');
+    $('fCli').value=''; $('fImp').value=''; $('fFe').value=hoyISO(); fotoFile=null; $('fFoto').value=''; $('thumb').style.display='none';
+  }catch(e){
+    est.style.color='#b91c1c'; est.textContent='No se pudo guardar. Revisá internet y probá de nuevo. ('+e.message+')';
+  }
+  btn.disabled=false;
+};
+</script>
+</body></html>
+
