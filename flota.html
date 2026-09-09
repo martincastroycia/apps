@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Flota — Martín Castro y Cía.</title>
+<meta name="theme-color" content="#0E5A9B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flota">
+<style>
+:root{--marca:#0E5A9B;--tinta:#0D1F3A;--gris:#65726b;--linea:#dfe5ea;--fondo:#f4f6f8}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--tinta);background:var(--fondo)}
+header{background:var(--marca);color:#fff;padding:12px 14px;position:sticky;top:0;z-index:10}
+header b{font-size:17px}
+header .sub{font-size:12.5px;opacity:.85}
+main{padding:12px 12px 90px;max-width:640px;margin:0 auto}
+.caja{background:#fff;border:1px solid var(--linea);border-radius:12px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:13px;font-weight:600;color:var(--gris);margin:10px 0 3px}
+input,select,textarea{width:100%;padding:11px 12px;font-size:17px;border:1px solid #c9d2da;border-radius:9px;background:#fff;color:var(--tinta)}
+input:focus,select:focus{outline:2px solid var(--marca);outline-offset:-1px}
+button{font:inherit;font-weight:700;border-radius:9px;border:1px solid var(--marca);padding:12px 16px;cursor:pointer}
+.prim{background:var(--marca);color:#fff;width:100%;font-size:17px}
+.sec{background:#fff;color:var(--marca)}
+.chico{font-size:13px;padding:8px 12px}
+.nota{font-size:13px;color:var(--gris);line-height:1.45}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tabs button{flex:1;background:#fff;color:var(--marca);border-color:#c9d2da}
+.tabs button.on{background:var(--marca);color:#fff;border-color:var(--marca)}
+.aviso{border-radius:9px;padding:10px 12px;font-size:14px;margin:10px 0}
+.amar{background:#fff5d6;border:1px solid #e3d08a;color:#6b5a12}
+.roj{background:#fbe4e4;border:1px solid #e0a8a8;color:#a3282f}
+.ver{background:#e3f0e3;border:1px solid #a9c9a9;color:#1f6b3b}
+.fila{display:flex;gap:8px;align-items:center}
+.fila>*{flex:1}
+.fila .angosto{flex:0 0 auto;width:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:6px 4px;border-bottom:1px solid var(--linea);text-align:left}
+.der{text-align:right}
+#malAbierta{position:fixed;inset:0;background:#a3282f;color:#fff;z-index:99;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:24px;text-align:center;gap:14px}
+#malAbierta b{font-size:22px}
+#malLink{background:#fff;color:#a3282f;padding:10px;border-radius:8px;word-break:break-all;font-size:14px}
+.oculto{display:none!important}
+.mini{max-width:110px;border-radius:8px;border:1px solid var(--linea)}
+</style></head><body>
+
+<div id="malAbierta">
+  <b>Así no va a funcionar</b>
+  <div>Estás abriendo la app como archivo. Tiene que abrirse desde el link, con Chrome.</div>
+  <div id="malLink"></div>
+  <button class="sec" id="malCopiar">Copiar el link</button>
+  <button class="sec" id="malSeguir">Seguir igual</button>
+</div>
+
+<header><b>Flota — Martín Castro y Cía.</b><div class="sub" id="subT">Depósito</div></header>
+<main>
+
+<div id="pAlta" class="caja">
+  <b>Poné tu código</b>
+  <div class="nota" style="margin:6px 0 10px">Te lo da Mariano. Se pide una sola vez en este teléfono.</div>
+  <input type="text" id="inCod" placeholder="900-XXXXXXXX" autocapitalize="characters" autocomplete="off">
+  <div id="avAlta" class="nota" style="margin:8px 0"></div>
+  <button class="prim" id="btEntrar">Entrar</button>
+</div>
+
+<div id="pApp" class="oculto">
+  <div id="colaCartel"></div>
+
+  <div class="tabs">
+    <button id="tbCom" class="on">⛽ Combustible</button>
+    <button id="tbGas">🔧 Gasto</button>
+  </div>
+
+  <div id="cCom" class="caja">
+    <label for="cvV">Vehículo</label>
+    <select id="cvV"></select>
+    <div id="cvUlt" class="nota" style="margin-top:4px"></div>
+    <label for="cvF">Fecha</label>
+    <input type="date" id="cvF">
+    <label for="cvKm">Odómetro (los kilómetros que marca)</label>
+    <input type="number" id="cvKm" inputmode="numeric" placeholder="por ejemplo 248500">
+    <label for="cvL">Litros que le puse</label>
+    <input type="number" id="cvL" inputmode="decimal" step="0.01" placeholder="por ejemplo 120">
+    <div id="cvAviso"></div>
+    <div style="margin-top:12px"><button class="prim" id="btCom">Guardar la carga</button></div>
+  </div>
+
+  <div id="cGas" class="caja oculto">
+    <label for="gvV">Vehículo</label>
+    <select id="gvV"></select>
+    <label for="gvF">Fecha</label>
+    <input type="date" id="gvF">
+    <label for="gvC">Qué fue</label>
+    <select id="gvC"></select>
+    <label for="gvD">Detalle</label>
+    <input type="text" id="gvD" placeholder="qué compraste, dónde">
+    <label for="gvI">Importe</label>
+    <input type="number" id="gvI" inputmode="decimal" step="0.01" placeholder="$">
+    <label for="gvFoto">Foto del ticket (opcional)</label>
+    <input type="file" id="gvFoto" accept="image/*">
+    <div id="gvFotoV" style="margin-top:8px"></div>
+    <div style="margin-top:12px"><button class="prim" id="btGas">Guardar el gasto</button></div>
+  </div>
+
+  <div class="caja">
+    <b>Lo que cargaste</b>
+    <div id="hist" class="nota" style="margin-top:8px">Todavía no cargaste nada.</div>
+  </div>
+
+  <div class="caja">
+    <button class="sec chico" id="btProbar">🔎 Probar la conexión con la oficina</button>
+    <button class="sec chico" id="btSalir" style="margin-left:6px">Salir</button>
+    <div id="diag" class="nota" style="margin-top:10px"></div>
+  </div>
+</div>
+
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+var firebaseConfig = {
+  apiKey:"AIzaSyDXqLbTAA9TCkUgMJpKrDxkvDMNBzmjTIQ",
+  authDomain:"castro-cobranzas.firebaseapp.com",
+  projectId:"castro-cobranzas",
+  storageBucket:"castro-cobranzas.firebasestorage.app",
+  messagingSenderId:"30596915316",
+  appId:"1:30596915316:web:7a4b57f28342b1e3a3b121"
+};
+var LINK_APP = "https://apps.martincastroycia.com.ar/flota.html";
+var BLOQUES = [{"v":"900","b":"AVqvvlvcgnATtn1kOH0h8SAixd3gQOoQFI8/WwcV0Y5rMxSrlQMaPElACPbXVj+t4pIENPybInowOxqI2GJY21C37ycGq7zefIxPIF1W/lWnd+43+n1lei+phqmU1fuYvvglK2Yo6FVYj2O+Trsb33aeQZDo2jmcPFupAXTZO2SmdAbo2lTpMDShFueg3Gp+E05Hltalag/zR8uZC49lV9nV1kizKK7CrqlFvqjsjbpiMC/8t70LKUpN0s+eJGDWSy3F8MxUq6SDrE+Ogk6LsI5rqO37DV+ZGBJsiANItnK/WZuEGH3bu4ZKvM5TwKfwy9yBalqCRzJaqAV9bNwd9hv/ydTTlMGZI15eIrd8ZakvY9Ola+JMJrTf/fmLM8f5MNk+h85St2pTjYCbo9wol15RFFf+wLJmgLvBJp+gizf1TGmq5fuvVZoQEqkLER8Dsijyc/x0hU5fKxUa5JhZfDRvOpRKaQWQ9TKSE/KdTweNVDRdqz71ilIE4YCIKJG4JOdjpiOxVJz+A9p3gFS+IN3dwGqiDa5eKuP3gPv50N50XbhbvLmwioNG1f9+PVZs9LbTSo/8JvVBXoYd2te70/JS7NNxQLOyrqSP+DVDD11jYjk7XeEKCFqVI9pvDUTt+dR2qypLcw=="}];
+/* ===== Flota — app del encargado de depósito =========================
+   Una sola persona carga combustible del tanque propio y gastos de todos
+   los vehículos. Mismo mecanismo que la app de cobranza: el dato viaja
+   CIFRADO con el código de esa persona, se guarda primero en el teléfono
+   y sale cuando hay señal. La oficina lo ve en el buzón del programa.   */
+
+var SAL = 'castro-flota:';
+var COLECCION = 'flota';
+var LS_COD = 'castro_flota_cod';
+var LS_ULT = 'castro_flota_ult';
+var LS_HIST = 'castro_flota_hist';
+
+var CODIGO = '', VNUM = '', G = null, db = null, st = null, AUTHP = null, IDB = null;
+var COLA = [], FLUSHING = false, COLAMSG = '', ULTERR = '';
+var TAB = 'com', FOTO = null, ULT = {};
+
+function $(id){ return document.getElementById(id); }
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+function hoyISO(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fcorta(iso){ if(!iso) return ''; return iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(2,4); }
+function numAR(n){ return Number(n||0).toLocaleString('es-AR'); }
+function money(n){ return '$ ' + Math.round(Number(n)||0).toLocaleString('es-AR'); }
+function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function nuevoId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+/* ---- se abrió como archivo en vez de por el link ---- */
+function abiertaMal(){
+  try{
+    var pr = String(location.protocol||'');
+    if(pr === 'https:') return false;
+    if(pr === 'http:' && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return false;
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ---- cifrado: misma receta que cobranza ---- */
+function b64bytes(s){ var b=atob(s), u=new Uint8Array(b.length); for(var i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return u; }
+async function gzipear(txt){
+  var cs=new CompressionStream('gzip');
+  var stm=new Blob([new TextEncoder().encode(txt)]).stream().pipeThrough(cs);
+  return new Uint8Array(await new Response(stm).arrayBuffer());
+}
+async function derivar(cod,id){
+  var mat=await crypto.subtle.importKey('raw',new TextEncoder().encode(cod),'PBKDF2',false,['deriveBits']);
+  var bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(SAL+id),iterations:200000,hash:'SHA-256'},mat,256);
+  return new Uint8Array(bits);
+}
+async function cifrar(txt,cod,id){
+  var kb=await derivar(cod,id);
+  var key=await crypto.subtle.importKey('raw',kb,{name:'AES-GCM'},false,['encrypt']);
+  var gz=await gzipear(txt);
+  var sem=new Uint8Array(kb.length+gz.length); sem.set(kb,0); sem.set(gz,kb.length);
+  var iv=new Uint8Array(await crypto.subtle.digest('SHA-256',sem)).subarray(0,12);
+  var ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,gz));
+  var out=new Uint8Array(1+12+ct.length); out[0]=1; out.set(iv,1); out.set(ct,13);
+  var s2=''; for(var i=0;i<out.length;i++) s2+=String.fromCharCode(out[i]);
+  return btoa(s2);
+}
+async function descifrar(bytes,cod,id){
+  var kb=await derivar(cod,id);
+  var key=await crypto.subtle.importKey('raw',kb,{name:'AES-GCM'},false,['decrypt']);
+  var gz=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes.subarray(1,13)},key,bytes.subarray(13)));
+  var stm=new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return new TextDecoder().decode(await new Response(stm).arrayBuffer());
+}
+function idDeCodigo(cod){ var m=String(cod||'').trim().toUpperCase().match(/^(\d+)\s*-/); return m?m[1]:null; }
+
+/* ---- Firebase ---- */
+function conectarFB(){
+  if(db) return true;
+  try{
+    if(typeof firebase === 'undefined') return false;
+    try{ firebase.app(); }catch(e){ firebase.initializeApp(firebaseConfig); }
+    db = firebase.firestore(); st = firebase.storage();
+    sesion().catch(function(){});
+    return true;
+  }catch(e){ return false; }
+}
+function sesion(){
+  if(AUTHP) return AUTHP;
+  AUTHP = (async function(){
+    try{ if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously(); }
+    catch(e){ AUTHP=null; throw e; }
+  })();
+  return AUTHP;
+}
+function conTope(pr, ms, que){
+  return Promise.race([pr, new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('tardó demasiado ('+que+')')); }, ms); })]);
+}
+
+/* ---- la cola: primero el teléfono, después la nube ---- */
+function idbAbrir(){
+  return new Promise(function(res,rej){
+    if(IDB) return res(IDB);
+    if(typeof indexedDB === 'undefined') return rej(new Error('sin indexedDB'));
+    var r=indexedDB.open('castro_flota',1);
+    r.onupgradeneeded=function(){ var d=r.result; if(!d.objectStoreNames.contains('pend')) d.createObjectStore('pend',{keyPath:'id'}); };
+    r.onsuccess=function(){ IDB=r.result; res(IDB); };
+    r.onerror=function(){ rej(r.error||new Error('idb')); };
+  });
+}
+function idbTx(modo, fn){
+  return idbAbrir().then(function(d){
+    return new Promise(function(res,rej){
+      var tx=d.transaction('pend',modo), st2=tx.objectStore('pend'), req=fn(st2);
+      tx.oncomplete=function(){ res(req && ('result' in req) ? req.result : null); };
+      tx.onerror=function(){ rej(tx.error||new Error('tx')); };
+    });
+  });
+}
+function colaLeer(){ return idbTx('readonly',function(s){ return s.getAll(); }).then(function(l){ COLA=l||[]; return COLA; }).catch(function(){ COLA=[]; return COLA; }); }
+function colaGuardar(o){ return idbTx('readwrite',function(s){ return s.put(o); }); }
+function colaSacar(id){ return idbTx('readwrite',function(s){ return s.delete(id); }); }
+
+/* ---- historial local, para que vea lo que ya cargó ---- */
+function histLeer(){ try{ return JSON.parse(lsGet(LS_HIST)||'[]'); }catch(e){ return []; } }
+function histAgregar(o){ var l=histLeer(); l.unshift(o); if(l.length>60) l=l.slice(0,60); lsSet(LS_HIST, JSON.stringify(l)); }
+
+/* ---- último odómetro conocido de cada vehículo ----
+   Sale de lo que mandó la oficina y se va corrigiendo con lo que carga él
+   en este teléfono, así el aviso sirve aunque la oficina no haya bajado
+   todavía las cargas de esta semana. */
+function ultLeer(){ try{ return JSON.parse(lsGet(LS_ULT)||'{}'); }catch(e){ return {}; } }
+function ultPoner(vid, km, fe){
+  var U = ultLeer();
+  if(!U[vid] || km > U[vid].km){ U[vid] = {km:km, fe:fe}; lsSet(LS_ULT, JSON.stringify(U)); }
+  ULT = U;
+}
+function ultDe(vid){
+  var U = ULT || {}, del = U[vid];
+  var base = null;
+  (G && G.veh || []).forEach(function(v){ if(String(v.id) === String(vid) && v.km > 0) base = {km:v.km, fe:v.fe||''}; });
+  if(del && base) return del.km >= base.km ? del : base;
+  return del || base;
+}
+function vehDe(id){ var r=null; (G && G.veh || []).forEach(function(v){ if(String(v.id)===String(id)) r=v; }); return r; }
+function nomVeh(id){ var v=vehDe(id); if(!v) return id; return v.nom + (v.pat ? ' · ' + v.pat : ''); }
+
+/* ---- el aviso del kilometraje, igual que en el programa ---- */
+function avisoKm(vid, km){
+  var v = vehDe(vid);
+  if(!v || v.sinkm) return '';
+  if(!km) return 'Sin el odómetro, esta carga no entra en el promedio de consumo.';
+  var u = ultDe(vid);
+  if(!u) return '';
+  var d = km - u.km, ant = numAR(u.km), f = u.fe ? (' el ' + fcorta(u.fe)) : '';
+  if(d < 0) return 'El odómetro BAJÓ: venía en ' + ant + ' km' + f + ' y estás poniendo ' + numAR(km) + '.';
+  if(d === 0) return 'Es el MISMO odómetro que la vez pasada (' + ant + ' km). ¿Lo copiaste sin querer?';
+  var med = Number(v.salto) || 0;
+  if(med > 0 && d > med * 4) return 'Son ' + numAR(d) + ' km desde la última carga, cuando lo normal en este vehículo son unos ' + numAR(Math.round(med)) + '. Fijate que no le sobre un dígito.';
+  if(med > 0 && d < med * 0.15) return 'Son apenas ' + numAR(d) + ' km desde la última carga (venía en ' + ant + f + ').';
+  if(d > 20000) return 'Son ' + numAR(d) + ' km de golpe. Fijate el número.';
+  return '';
+}
+
+/* ---- foto: se achica antes de subir ---- */
+function achicarFoto(file){
+  return new Promise(function(res){
+    try{
+      if(!file || !/^image\//.test(file.type||'')) return res(file);
+      if(typeof createImageBitmap === 'function'){
+        return createImageBitmap(file).then(function(bm){
+          try{
+            var MAX=1400, w=bm.width, h=bm.height;
+            var e2=Math.min(1, MAX/Math.max(w,h)), cw=Math.max(1,Math.round(w*e2)), ch=Math.max(1,Math.round(h*e2));
+            var cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+            cv.getContext('2d').drawImage(bm,0,0,cw,ch); try{ bm.close(); }catch(e){}
+            return new Promise(function(r2){ cv.toBlob(function(b){ r2(b||file); },'image/jpeg',0.62); }).then(res);
+          }catch(e){ return res(file); }
+        }, function(){ res(file); });
+      }
+      res(file);
+    }catch(e){ res(file); }
+  });
+}
+
+/* ---- mandar lo que está en la cola ---- */
+async function flush(){
+  if(FLUSHING) return;
+  await colaLeer();
+  if(!COLA.length){ pintarCola(); return; }
+  if(!conectarFB()){
+    ULTERR = 'no cargaron los programas de Google';
+    COLAMSG = '<b>Sin conexión con la oficina.</b> Tocá «Probar la conexión» acá abajo.';
+    pintarCola(); return;
+  }
+  if(typeof navigator !== 'undefined' && navigator.onLine === false){ COLAMSG = 'El teléfono está sin internet.'; pintarCola(); return; }
+  FLUSHING = true; COLAMSG = ''; pintarCola();
+  try{
+    await conTope(sesion(), 20000, 'entrar');
+    var lista = COLA.slice();
+    for(var i=0;i<lista.length;i++){
+      var o = lista[i];
+      o.intentos = (o.intentos||0) + 1;
+      try{ await colaGuardar(o); }catch(e){}
+      var fotoURL=null, fotoPath=null;
+      if(!o.foto && o.fotoTxt){
+        try{
+          var pr=String(o.fotoTxt).split(','), bin=atob(pr[1]||''), u8=new Uint8Array(bin.length);
+          for(var q=0;q<bin.length;q++) u8[q]=bin.charCodeAt(q);
+          o.foto=new Blob([u8],{type:(/data:([^;]+)/.exec(pr[0])||[,'image/jpeg'])[1]});
+        }catch(e){}
+      }
+      if(o.foto){
+        try{
+          /* va adentro de comprobantes/ a proposito: la regla de Storage que ya
+             existe permite comprobantes/{v}/{f}, asi no hay que tocar nada mas */
+          fotoPath = 'comprobantes/flota/' + o.id + '.jpg';
+          var ref = st.ref(fotoPath), task = ref.put(o.foto);
+          await conTope(task, 25000, 'foto').catch(function(e){ try{ task.cancel(); }catch(x){} throw e; });
+          fotoURL = await conTope(ref.getDownloadURL(), 15000, 'foto');
+        }catch(ef){ fotoPath=null; fotoURL=null; }
+      }
+      var cuerpo = JSON.stringify({
+        v: VNUM, tipo: o.tipo, veh: o.veh, f: o.f,
+        km: o.km||0, l: o.l||0, cat: o.cat||'', d: o.d||'', i: o.i||0, nf: (fotoURL?1:0)
+      });
+      var b64 = await cifrar(cuerpo, CODIGO, String(VNUM));
+      try{
+        await conTope(db.collection(COLECCION).doc(o.id).set({
+          v: VNUM, b: b64, nf: (fotoURL?1:0), fotoURL: fotoURL, fotoPath: fotoPath, estado: 'nuevo',
+          ts: firebase.firestore.FieldValue.serverTimestamp(), fecha_carga: new Date().toISOString()
+        }), 30000, 'mandar');
+      }catch(em){
+        var cod = String((em && (em.code||em.message)) || '');
+        /* con el id fijo, un reintento que ya había entrado se ve como update
+           y las reglas lo rechazan: eso significa que YA LLEGÓ. */
+        if(o.intentos > 1 && /permission|denied/i.test(cod)){ /* ya estaba */ }
+        else throw em;
+      }
+      await colaSacar(o.id);
+      histAgregar({tipo:o.tipo, veh:o.veh, f:o.f, km:o.km||0, l:o.l||0, cat:o.cat||'', i:o.i||0, ok:1});
+    }
+    COLAMSG = '';
+  }catch(e){
+    ULTERR = String((e && (e.code||e.message)) || e);
+    COLAMSG = '<b>No salió todavía.</b> ' + esc(ULTERR);
+  }
+  FLUSHING = false;
+  await colaLeer();
+  pintarCola(); pintarHist();
+}
+
+/* ---- pantalla ---- */
+function pintarCola(){
+  var d = $('colaCartel'); if(!d) return;
+  var n = COLA.length;
+  if(!n && !COLAMSG){ d.innerHTML=''; return; }
+  var h = '';
+  if(n) h += '<div class="aviso amar"><b>⏳ ' + n + (n===1?' carga esperando señal':' cargas esperando señal') + '</b>'
+           + '<div style="margin-top:6px"><button class="sec chico" onclick="flush()">Reintentar ahora</button></div>'
+           + (COLAMSG ? '<div style="margin-top:6px">' + COLAMSG + '</div>' : '') + '</div>';
+  else if(COLAMSG) h += '<div class="aviso roj">' + COLAMSG + '</div>';
+  d.innerHTML = h;
+}
+function pintarHist(){
+  var d = $('hist'); if(!d) return;
+  var l = histLeer();
+  if(!l.length && !COLA.length){ d.innerHTML = 'Todavía no cargaste nada.'; return; }
+  var filas = [];
+  COLA.forEach(function(o){ filas.push({o:o, esp:1}); });
+  l.forEach(function(o){ filas.push({o:o, esp:0}); });
+  var h = '<table><tbody>';
+  filas.slice(0,40).forEach(function(x){
+    var o = x.o;
+    var que = o.tipo === 'com'
+      ? ('⛽ ' + numAR(o.l) + ' L' + (o.km ? ' · ' + numAR(o.km) + ' km' : ''))
+      : ('🔧 ' + esc(o.cat||'gasto') + ' · ' + money(o.i));
+    h += '<tr><td>' + esc(fcorta(o.f)) + '</td><td>' + esc(nomVeh(o.veh)) + '</td>'
+       + '<td>' + que + '</td>'
+       + '<td class="der" style="font-size:12.5px;color:' + (x.esp ? '#8a6d1a' : '#1f6b3b') + '">'
+       + (x.esp ? '⏳ esperando' : '✔ mandado') + '</td></tr>';
+  });
+  d.innerHTML = h + '</tbody></table>';
+}
+function llenarVehiculos(){
+  var op = (G && G.veh || []).map(function(v){
+    return '<option value="' + esc(v.id) + '">' + esc(v.nom) + (v.pat ? ' · ' + esc(v.pat) : '') + '</option>';
+  }).join('');
+  $('cvV').innerHTML = op; $('gvV').innerHTML = op;
+  var cats = (G && G.cats && G.cats.length) ? G.cats : ['Repuestos','Service / aceite','Cubiertas','Otro'];
+  $('gvC').innerHTML = cats.map(function(c){ return '<option>' + esc(c) + '</option>'; }).join('');
+}
+function pintarUlt(){
+  var vid = $('cvV').value, u = ultDe(vid), v = vehDe(vid);
+  var d = $('cvUlt');
+  if(v && v.sinkm){ d.innerHTML = 'Este no lleva kilómetros (se mide en horas).'; return; }
+  d.innerHTML = u ? ('La última vez marcaba <b>' + numAR(u.km) + ' km</b>' + (u.fe ? ' el ' + fcorta(u.fe) : '') + '.')
+                  : 'No tengo un odómetro anterior de este vehículo.';
+  $('cvAviso').innerHTML = '';
+}
+function verAvisoKm(){
+  var vid = $('cvV').value, km = parseInt($('cvKm').value, 10) || 0;
+  var a = km ? avisoKm(vid, km) : '';
+  $('cvAviso').innerHTML = a ? '<div class="aviso amar">' + esc(a) + '</div>' : '';
+}
+function irTab(t){
+  TAB = t;
+  $('tbCom').className = t==='com' ? 'on' : '';
+  $('tbGas').className = t==='gas' ? 'on' : '';
+  $('cCom').className = 'caja' + (t==='com' ? '' : ' oculto');
+  $('cGas').className = 'caja' + (t==='gas' ? '' : ' oculto');
+}
+
+/* ---- guardar ---- */
+async function encolar(o){
+  o.id = nuevoId();
+  if(FOTO){
+    try{ o.foto = await achicarFoto(FOTO); }catch(e){ o.foto = FOTO; }
+  }
+  try{ await colaGuardar(o); }
+  catch(e){
+    /* algunos teléfonos no aceptan guardar el Blob: va como texto */
+    if(o.foto){
+      try{
+        var dat = await new Promise(function(res,rej){ var fr=new FileReader(); fr.onload=function(){res(fr.result);}; fr.onerror=rej; fr.readAsDataURL(o.foto); });
+        delete o.foto; o.fotoTxt = dat;
+        await colaGuardar(o);
+      }catch(e2){ alert('No pude guardar la carga en el teléfono: ' + (e2.message||e2)); return false; }
+    } else { alert('No pude guardar la carga en el teléfono: ' + (e.message||e)); return false; }
+  }
+  await colaLeer(); pintarCola(); pintarHist();
+  flush();
+  return true;
+}
+async function guardarCombustible(){
+  var vid = $('cvV').value, f = $('cvF').value || hoyISO();
+  var km = parseInt($('cvKm').value, 10) || 0;
+  var l = parseFloat(String($('cvL').value).replace(',','.')) || 0;
+  if(!vid){ alert('Elegí el vehículo.'); return; }
+  if(!(l > 0)){ alert('Poné cuántos litros le cargaste.'); return; }
+  var a = avisoKm(vid, km);
+  if(a && !confirm(a + '\n\n¿Lo guardo igual?')) return;
+  FOTO = null;
+  if(!(await encolar({tipo:'com', veh:vid, f:f, km:km, l:Math.round(l*100)/100}))) return;
+  if(km > 0) ultPoner(vid, km, f);
+  $('cvKm').value = ''; $('cvL').value = ''; $('cvAviso').innerHTML = '';
+  pintarUlt();
+}
+async function guardarGasto(){
+  var vid = $('gvV').value, f = $('gvF').value || hoyISO();
+  var cat = $('gvC').value, d = String($('gvD').value||'').trim();
+  var i = parseFloat(String($('gvI').value).replace(',','.')) || 0;
+  if(!vid){ alert('Elegí el vehículo.'); return; }
+  if(!(i > 0)){ alert('Poné el importe.'); return; }
+  if(!FOTO && !confirm('Vas a guardar el gasto SIN foto del ticket.\n\n¿Lo guardo igual?')) return;
+  if(!(await encolar({tipo:'gas', veh:vid, f:f, cat:cat, d:d, i:Math.round(i*100)/100}))) return;
+  $('gvD').value = ''; $('gvI').value = ''; $('gvFoto').value = ''; $('gvFotoV').innerHTML = ''; FOTO = null;
+}
+
+/* ---- probar la conexión ---- */
+async function probar(){
+  var d = $('diag'); d.innerHTML = 'Probando…';
+  var l = [];
+  function ok(t){ l.push('✔ ' + t); }
+  function mal(t,e){ l.push('✘ <b>' + t + '</b>' + (e ? ' — ' + esc(String(e.message||e)) : '')); }
+  try{
+    (location.protocol === 'https:') ? ok('abierta por el link') : mal('NO está abierta por el link (por eso puede fallar todo)');
+    (typeof indexedDB !== 'undefined') ? ok('el teléfono deja guardar') : mal('el teléfono no deja guardar');
+    (crypto && crypto.subtle) ? ok('puede cifrar') : mal('no puede cifrar');
+    (typeof firebase !== 'undefined') ? ok('cargaron los programas de Google') : mal('no cargaron los programas de Google');
+    if(!conectarFB()) mal('no conecta con la oficina');
+    else{
+      ok('conecta con la oficina');
+      try{ await conTope(sesion(), 15000, 'entrar'); ok('entró'); }catch(e){ mal('no pudo entrar', e); }
+      try{ await conTope(db.collection(COLECCION).limit(1).get(), 15000, 'leer'); ok('lee la oficina'); }
+      catch(e){ mal('no lee la oficina', e); }
+    }
+  }catch(e){ mal('error general', e); }
+  if(ULTERR) l.push('<span style="color:#a3282f">Último error al mandar: ' + esc(ULTERR) + '</span>');
+  d.innerHTML = l.join('<br>');
+}
+
+/* ---- entrar con el código ---- */
+async function abrirCon(cod){
+  cod = String(cod||'').trim().toUpperCase();
+  var id = idDeCodigo(cod);
+  if(!id) throw new Error('formato');
+  var bl = null;
+  for(var i=0;i<BLOQUES.length;i++){ if(String(BLOQUES[i].v) === String(id)) bl = BLOQUES[i]; }
+  if(!bl) throw new Error('no figura');
+  var txt = await descifrar(b64bytes(bl.b), cod, String(id));
+  var g = JSON.parse(txt);
+  CODIGO = cod; VNUM = String(id); G = g;
+  return g;
+}
+function arrancarApp(){
+  lsSet(LS_COD, CODIGO);
+  ULT = ultLeer();
+  $('pAlta').className = 'caja oculto';
+  $('pApp').className = '';
+  $('subT').textContent = (G && G.nom ? G.nom : 'Depósito') + ' · ' + ((G && G.veh || []).length) + ' vehículos';
+  llenarVehiculos();
+  $('cvF').value = hoyISO(); $('gvF').value = hoyISO();
+  pintarUlt(); pintarHist();
+  colaLeer().then(function(){ pintarCola(); flush(); });
+}
+async function entrar(){
+  var a = $('avAlta'); a.innerHTML = 'Comprobando…';
+  try{
+    await abrirCon($('inCod').value);
+    a.innerHTML = '';
+    arrancarApp();
+  }catch(e){
+    var m = String(e.message||e);
+    a.innerHTML = '<span style="color:#a3282f">' +
+      (m === 'formato' ? 'Ese código no tiene la forma correcta. Es como 900-XXXXXXXX.'
+       : m === 'no figura' ? 'Ese código no figura. Fijate que esté bien copiado.'
+       : 'El código no abre los datos. Pedile uno nuevo a Mariano.') + '</span>';
+  }
+}
+
+/* ---- arranque ---- */
+document.addEventListener('DOMContentLoaded', function(){
+  if(abiertaMal()){
+    var d = $('malAbierta');
+    $('malLink').textContent = LINK_APP;
+    d.style.display = 'flex';
+    $('malCopiar').onclick = function(){
+      var b = this;
+      try{ navigator.clipboard.writeText(LINK_APP).then(function(){ b.textContent = '✔ Copiado — pegalo en Chrome'; }, function(){}); }catch(e){}
+    };
+    $('malSeguir').onclick = function(){ d.style.display = 'none'; };
+  }
+  $('btEntrar').onclick = entrar;
+  $('inCod').addEventListener('keydown', function(e){ if(e.key === 'Enter') entrar(); });
+  $('tbCom').onclick = function(){ irTab('com'); };
+  $('tbGas').onclick = function(){ irTab('gas'); };
+  $('cvV').onchange = pintarUlt;
+  $('cvKm').addEventListener('input', verAvisoKm);
+  $('btCom').onclick = guardarCombustible;
+  $('btGas').onclick = guardarGasto;
+  $('btProbar').onclick = probar;
+  $('btSalir').onclick = function(){
+    if(!confirm('¿Salir? Te va a volver a pedir el código.')) return;
+    lsDel(LS_COD); location.reload();
+  };
+  $('gvFoto').onchange = function(){
+    var f = this.files && this.files[0];
+    if(!f){ FOTO = null; $('gvFotoV').innerHTML = ''; return; }
+    if(!/^image\//.test(f.type||'')){ alert('Eso no parece una foto.'); this.value=''; return; }
+    FOTO = f;
+    var kb = Math.round(f.size/1024);
+    var url = URL.createObjectURL(f);
+    $('gvFotoV').innerHTML = '<img src="' + url + '" class="mini"> <span class="nota">' + kb + ' KB</span> '
+      + '<button class="sec chico" onclick="FOTO=null;document.getElementById(\'gvFoto\').value=\'\';document.getElementById(\'gvFotoV\').innerHTML=\'\';">✕ Sacar</button>';
+  };
+  var guardado = lsGet(LS_COD);
+  if(guardado){
+    abrirCon(guardado).then(arrancarApp, function(){ lsDel(LS_COD); });
+  }
+  window.addEventListener('online', function(){ flush(); });
+  setInterval(function(){ if(CODIGO) flush(); }, 30000);
+});
+
+</script>
+</body></html>
