@@ -683,12 +683,13 @@ function vnBuscar(t){ VENQ = String(t||'').toLowerCase(); pintarVenc(); }
 function pintarVenc(){
   var d = $('vnLista'); if(!d) return;
   var h = '<div class="tabs" style="margin-bottom:10px">'
-        + [['fechas','Fechas'],['avisar','Avisar'],['pers','Personal'],['serv','Services'],['cub','Cubiertas']].map(function(x){
+        + [['fechas','Fechas'],['avisar','Avisar'],['veh','Vehículos'],['pers','Personal'],['serv','Services'],['cub','Cubiertas']].map(function(x){
             return '<button class="' + (VENSUB===x[0]?'on':'') + '" onclick="vnSub(\'' + x[0] + '\')">' + x[1] + '</button>';
           }).join('') + '</div><div id="vnMsg"></div>';
   if(VENSUB === 'fechas') h += vnHtmlFechas();
   if(VENSUB === 'avisar') h += vnHtmlAvisar();
   if(VENSUB === 'pers')   h += vnHtmlPersonal();
+  if(VENSUB === 'veh')    h += vnHtmlVehiculos();
   if(VENSUB === 'serv')   h += vnHtmlServ();
   if(VENSUB === 'cub')    h += vnHtmlCub();
   d.innerHTML = h;
@@ -951,6 +952,65 @@ function vnHtmlAvisar(){
 /* ---- personal: dar de alta, cambiar el nombre y dar de baja ----
    El que se va se DA DE BAJA, no se borra: deja de contar en los avisos pero
    sus fechas quedan por si vuelve. Borrar del todo es solo en la oficina. */
+/* ---- vehículos: agregar y corregir desde el teléfono ----
+   Los que tienen vencimientos pero no son vehículos (los matafuegos del
+   depósito, el descuento flotillero) no se tocan desde acá. */
+var VE_TIPOS_LAB = [['reparto','Reparto'],['camion','Camión'],['acoplado','Acoplado'],
+                    ['camioneta','Camioneta'],['autoelevador','Autoelevador']];
+function vnHtmlVehiculos(){
+  var V = ven();
+  var l = (V.vehiculos||[]).filter(function(v){ return v.tipo !== 'otro'; });
+  var h = '<div class="nota" style="margin-bottom:8px">Si le cambiás el nombre o la patente acá, se corrige también donde cargás el gasoil.</div>';
+  h += '<div class="caja" style="margin:0 0 10px;padding:10px">'
+     + '<b>Agregar un vehículo</b>'
+     + '<label for="vhN">Cómo le dicen</label><input type="text" id="vhN" placeholder="C11, Tector 4…">'
+     + '<label for="vhP">Patente</label><input type="text" id="vhP" placeholder="AB123CD" style="text-transform:uppercase">'
+     + '<label for="vhM">Qué es</label><input type="text" id="vhM" placeholder="IVECO DAILY, HILUX…">'
+     + '<label for="vhT">Tipo</label><select id="vhT">'
+     + VE_TIPOS_LAB.map(function(t){ return '<option value="' + t[0] + '">' + t[1] + '</option>'; }).join('')
+     + '</select>'
+     + '<div style="margin-top:12px"><button class="prim" onclick="vnNuevoVeh()">Agregar</button></div></div>';
+  h += '<b>' + l.length + ' vehículos</b>';
+  if(VENQ) l = l.filter(function(v){ return (vnNomVeh(v) + ' ' + (v.pat||'')).toLowerCase().indexOf(VENQ) >= 0; });
+  l.forEach(function(v){
+    var un = vnTipo(v).un === 'hs' ? 'horas' : 'km';
+    h += '<div class="caja" style="margin:6px 0;padding:10px">'
+       + '<div class="fila"><input type="text" value="' + esc(v.den || v.id) + '" onchange="vnSetVeh(' + JSON.stringify(String(v.id)).replace(/"/g,'&quot;') + ',\'den\', this.value)" placeholder="nombre">'
+       + '<input type="text" value="' + esc(v.pat || '') + '" style="text-transform:uppercase" onchange="vnSetVeh(' + JSON.stringify(String(v.id)).replace(/"/g,'&quot;') + ',\'pat\', this.value)" placeholder="patente"></div>'
+       + '<div class="nota" style="margin-top:4px">' + esc(v.veh || '') + (v.km ? ' · ' + numAR(v.km) + ' ' + un : ' · sin ' + un)
+       + (v.chofer ? ' · ' + esc(v.chofer) : '') + '</div></div>';
+  });
+  return h;
+}
+async function vnNuevoVeh(){
+  var n = String(($('vhN')||{}).value || '').trim().toUpperCase();
+  if(!n){ alert('Poné cómo le dicen.'); return; }
+  if(vnObj('veh', n)){ alert('Ya hay uno con ese nombre.'); return; }
+  var pat = String(($('vhP')||{}).value || '').trim().toUpperCase();
+  var mar = String(($('vhM')||{}).value || '').trim();
+  var tipo = ($('vhT')||{}).value || 'reparto';
+  var ok = await vnMandar([{tabla:'vehNuevo', nom:n, pat:pat, mar:mar, tipo:tipo}], 'Vehículo nuevo: ' + n);
+  if(ok){
+    (ven().vehiculos || (ven().vehiculos = [])).push({id:n, den:n, veh:mar, pat:pat, chofer:'', tipo:tipo,
+      rt:null, senasa:null, seguro:null, habctes:null, matafuego:null, servFecha:null,
+      km:null, servKm:null, activo:true, sinAviso:{}, cubiertas:{}});
+    if($('vhN')) $('vhN').value = '';
+    if($('vhP')) $('vhP').value = '';
+    if($('vhM')) $('vhM').value = '';
+  }
+  pintarVenc();
+}
+async function vnSetVeh(id, campo, txt){
+  var v = vnObj('veh', id); if(!v) return;
+  var nv = String(txt||'').trim();
+  if(campo === 'den' || campo === 'pat') nv = nv.toUpperCase();
+  if(nv === String(v[campo]||'')){ return; }
+  var lab = campo === 'den' ? 'Nombre' : campo === 'pat' ? 'Patente' : 'Marca';
+  var ok = await vnMandar([{tabla:'veh', id:String(id), campo:campo, valor:nv}],
+                          lab + ' de ' + vnNomVeh(v) + ': ' + (v[campo] || 'vacío') + ' → ' + (nv || 'vacío'));
+  if(ok) v[campo] = nv;
+  pintarVenc();
+}
 function vnHtmlPersonal(){
   var V = ven();
   var act = (V.empleados||[]).filter(function(e){ return e.activo !== false; });
