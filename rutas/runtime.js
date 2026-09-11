@@ -12,9 +12,13 @@ function okRg(c,n){ var r=c.rg; if(!r) return true; var f=rcan(n); var i; if(r.s
 function focohtml(c){ if(!c.rg) return ''; var t=''; if(c.rg.foco) t='Hacé foco en <b>'+esc(c.rg.foco)+'</b>'; else if(c.rg.solo&&c.rg.solo.length) t='Solo comprale <b>'+c.rg.solo.map(esc).join(' · ')+'</b>'; if(c.rg.nota) t+=(t?' · ':'')+esc(c.rg.nota); if(!t) return ''; return '<div class="foco">★ '+t+'</div>'; }
 function bnombre(c){ for(var i=0;i<(CB||[]).length;i++) if(String(CB[i].c)===String(c)) return CB[i].n; return 'Artículo '+c; }
 /* El portafolio que le corresponde a ESTE cliente segun lo que es (kiosco,
-   almacen, autoservicio...). Reemplaza al viejo bloque de 'X de 57', que le
+   almacen, autoservicio...). Reemplazo al viejo bloque de 'X de 57', que le
    pedia Macallan a un kiosco y ademas mostraba menos de lo que el cliente
-   realmente compra. Si el cliente no tiene rubro cargado, cae en el viejo. */
+   realmente compra.
+   v34: Branca vive SOLO aca arriba, en pfdia(). El recuadro que iba adentro
+   de la ficha de cada cliente se saco entero: era la misma informacion en
+   dos lugares. Y el cliente que nunca compro una botella de la familia no
+   tiene portafolio (viene sin pf) y no figura en ningun lado. */
 /* ABRIR EL CLIENTE SIN NAVEGAR.
    Antes cada renglon era un <a href=#cliN>. Adentro de la vista previa del
    panel el documento va por srcdoc, y ahi un salto con almohadilla no se
@@ -34,11 +38,11 @@ var BOTELLA='<img class="pfimg" alt="Branca" src="data:image/png;base64,iVBORw0K
 function pfdia(D){
   if(!D||!D.c||!D.c.length) return '';
   var T=(G&&G.pf)||null; if(!T||!T.sk||!T.sk.length) return '';
-  var l=D.c.filter(function(c){ return c.pf && c.pf.f && c.pf.f.length; });
+  var l=D.c.filter(function(c){ return c.pf && !c.pf.nu && c.pf.f && c.pf.f.length; });
   if(!l.length) return '';
   l=l.slice().sort(function(a,b){ return (b.p||0)-(a.p||0); });
   var h='<details class="pfdia"><summary><span class="pfbot">'+BOTELLA+'</span><span><b>Hoy podés sumar '+l.length+(l.length===1?' cliente':' clientes')+'</b><span class="pfsub">les falta algo del portafolio de Branca</span></span></summary><div class="pfdl">';
-  l.slice(0,15).forEach(function(c){
+  l.forEach(function(c){
    var n=c.pf.s.length, tot=c.pf.s.length+c.pf.f.length;
    var pc=Math.round(100*n/tot), col= pc>=80?'#198754':(pc>=50?'#b8860b':'#c0392b');
    h+='<div class="pfdi" onclick="irCli('+c.n+')">'
@@ -47,32 +51,114 @@ function pfdia(D){
      + '<div class="pfdf">Le falta: '+c.pf.f.slice(0,4).map(function(i){return esc(T.sk[i]||'');}).join(' · ')+(c.pf.f.length>4?' y '+(c.pf.f.length-4)+' más':'')+'</div>'
      + '<div class="pfdm">Compra '+fmt(c.p)+'/mes</div></div>';
   });
-  if(l.length>15) h+='<div class="pfdm" style="padding:7px 10px">y '+(l.length-15)+' más en la lista de abajo</div>';
   return h+'</div></details>';
 }
+/* ===== RELEVAMIENTO DE PRECIOS =====================================
+   Solo existe si v.pre vino en los datos, y v.pre solo viaja si en la
+   oficina esta PRENDIDO. Con la campana apagada, esta hoja es igual a la
+   de siempre. Lo tomado queda en el telefono (funciona sin senal) y se
+   manda al final en un texto, igual que el parte de los repositores. */
+function preLee(){ try{ return JSON.parse(lsGet('rg_pre_'+quien)||'{}'); }catch(e){ return {}; } }
+function preGuarda(o){ lsSet('rg_pre_'+quien, JSON.stringify(o)); }
+function preSet(cli, cod, marca, campo, val){
+  var P=preLee(), k=cli+'|'+cod+'|'+(marca||'');
+  var z=P[k]||(P[k]={p:0,pr:'',m:marca||''});
+  if(campo==='p'){ var n=Number(String(val).replace(/[^0-9,.]/g,'').replace(/\./g,'').replace(',','.'))||0; z.p=n; }
+  else if(campo==='pr') z.pr=String(val||'').slice(0,24);
+  else if(campo==='m'){ delete P[k]; k=cli+'|'+cod+'|'+String(val||''); P[k]=z; z.m=String(val||''); }
+  if(!z.p && !z.pr && !z.m) delete P[k];
+  preGuarda(P); preCont();
+}
+function preCuantos(){ var P=preLee(), n=0; for(var k in P) if(P[k] && P[k].p>0) n++; return n; }
+function preCont(){ var e=document.getElementById('preN'); if(e) e.textContent=preCuantos(); var b=document.getElementById('preBar'); if(b) b.style.display=preCuantos()?'':'none'; }
+function preFila(c, cod, nom, marca, i){
+  var P=preLee(), z=P[c.n+'|'+cod+'|'+(marca||'')]||{p:0,pr:''};
+  return '<div class="preF">'
+   + '<span class="preN">'+esc(nom)+'</span>'
+   + '<input class="preI" type="number" inputmode="decimal" placeholder="$" value="'+(z.p||'')+'" onchange="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'p\',this.value)">'
+   + '<input class="prePr" placeholder="promo" value="'+esc(z.pr||'')+'" onchange="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'pr\',this.value)">'
+   + '</div>';
+}
+function prehtml(c, v, ix){
+  if(!v.pre || !v.pre.p || !v.pre.p.length) return '';
+  /* solo a los primeros del dia: la lista ya viene ordenada por lo que
+     compra cada uno, asi que son los que mas valen la pena */
+  if(v.pre.m && ix >= v.pre.m) return '';
+  var P=preLee(), hechos=0;
+  v.pre.p.forEach(function(x){ if((P[c.n+'|'+x[0]+'|']||{}).p>0) hechos++; });
+  var tot=v.pre.p.length;
+  var h='<details class="preBox"'+(hechos?'':'')+'><summary><b>\ud83d\udcb2 Precios</b> <span class="preCh">'+hechos+'/'+tot+'</span>'
+   + '<span class="preSub">'+esc(v.pre.n)+'</span></summary><div class="preIn">';
+  h += '<div class="preTit">Lo que vale en este comercio</div>';
+  v.pre.p.forEach(function(x, i){ h += preFila(c, x[0], x[1], '', i); });
+  var marcas=(v.pre.c||[]);
+  if(marcas.length){
+   h += '<div class="preTit">La competencia</div>';
+   var abiertos={};
+   for(var k in P){ var pz=k.split('|'); if(pz[0]==String(c.n) && pz[2]) abiertos[pz[1]+'|'+pz[2]]=1; }
+   for(var kk in abiertos){ var pp=kk.split('|'); var nm=''; v.pre.p.forEach(function(x){ if(x[0]==pp[0]) nm=x[1]; });
+     h += preFila(c, pp[0], pp[1]+' \u00b7 '+nm, pp[1]); }
+   h += '<div class="preAdd">'
+     + '<select id="preP'+c.n+'">'+v.pre.p.map(function(x){ return '<option value="'+x[0]+'">'+esc(x[1])+'</option>'; }).join('')+'</select>'
+     + '<select id="preM'+c.n+'">'+marcas.map(function(m){ return '<option>'+esc(m)+'</option>'; }).join('')+'<option value="__otra__">otra...</option></select>'
+     + '<button class="preMas" onclick="preSumar('+c.n+')">+ agregar</button></div>';
+  }
+  h += '</div></details>';
+  return h;
+}
+function preSumar(n){
+  var a=document.getElementById('preP'+n), b=document.getElementById('preM'+n);
+  if(!a||!b) return;
+  var m=b.value;
+  if(m==='__otra__'){ m=prompt('\u00bfQu\u00e9 marca?',''); if(!m) return; }
+  preSet(n, a.value, m, 'pr', '');
+  pintar();
+}
+function preTexto(){
+  var P=preLee(), v=elVend(quien), l=[], hoy=hoyIso();
+  var d=hoy.slice(8,10)+'/'+hoy.slice(5,7)+'/'+hoy.slice(2,4);
+  for(var k in P){ var z=P[k]; if(!z||!(z.p>0)) continue; var q=k.split('|');
+    l.push(q[0]+';'+q[1]+';'+z.p+';'+(z.pr||'')+';'+(q[2]||'')); }
+  if(!l.length) return '';
+  return 'PRECIOS \u00b7 '+quien+' \u00b7 '+d+'\n'+l.join('\n');
+}
+function preMandar(){
+  var t=preTexto();
+  if(!t){ alert('Todav\u00eda no cargaste ning\u00fan precio.'); return; }
+  if(navigator.share){ navigator.share({text:t})['catch'](function(){ copiar(t); }); }
+  else copiar(t);
+}
+function preBorrarTodo(){
+  if(!confirm('\u00bfBorrar los precios que cargaste? Hacelo despu\u00e9s de mandarlos.')) return;
+  lsSet('rg_pre_'+quien, '{}'); pintar();
+}
 function pfchip(c){
-  var p=c.pf; if(!p) return '';
+  var p=c.pf; if(!p||p.nu) return '';
   var n=p.s.length, tot=p.s.length+p.f.length; if(!tot) return '';
   var pc=Math.round(100*n/tot), col= pc>=80?'#198754':(pc>=50?'#b8860b':'#c0392b');
   var t = p.f.length ? ('Le faltan '+p.f.length+' de '+tot+' de Branca') : 'Tiene todo el portafolio';
   return ' <span class="pfchip" style="border-color:'+col+';color:'+col+'" title="'+esc(t)+'">' + '<b class="pfini">'+esc(p.l||'')+'</b>'
        + '<span class="pfpt" style="background:'+col+'"></span>' + n + '/' + tot + '</span>';
 }
-function pfhtml(c){
-  var T=(G&&G.pf)||null, p=c.pf;
-  if(!T||!p||!T.sk||!T.sk.length) return '';
-  var n=p.s.length, tot=p.s.length+p.f.length;
-  if(!tot) return '';
-  var pc=Math.round(100*n/tot), col= pc>=80?'#198754':(pc>=50?'#b8860b':'#c0392b');
-  var h='<div class="brbox"><div class="brtit"><span style="color:'+col+';margin-right:6px">●</span>PORTAFOLIO '+esc(String(p.t).toUpperCase())+'</div>';
-  h+='<div><strong style="font-size:22px;color:'+col+'">'+n+' de '+tot+'</strong> <span class="brmeta" style="display:inline">de lo que le corresponde tener</span></div>';
-  if(p.f.length){ h+='<div style="margin-top:7px;font-weight:700;font-size:13.5px">Le falta:</div><div>'+p.f.map(function(i){return '<span class="brno">'+esc(T.sk[i]||'')+'</span>';}).join('')+'</div>'; }
-  else h+='<div style="margin-top:7px;color:#198754;font-weight:800">Tiene todo lo que le corresponde ✔</div>';
-  if(p.s.length) h+='<details class="brdet"><summary>Ya lleva <b>'+p.s.length+'</b></summary><div>'+p.s.map(function(i){return '<span class="brsi">'+esc(T.sk[i]||'')+'</span>';}).join('')+'</div></details>';
-  if(c.br&&c.br.ult) h+='<div class="brmeta">Última compra Branca: '+fcorta(c.br.ult)+'</div>';
-  return h+'</div>';
+/* LOS QUE TODAVIA NO COMPRAN BRANCA. Van abajo de todo, como sugeridos
+   para abrir: tienen rubro cargado y nunca llevaron una botella de la
+   familia. El dia que compren algo suben solos a la ventana de arriba. */
+function pfsug(D){
+  if(!D||!D.c||!D.c.length) return '';
+  var T=(G&&G.pf)||null; if(!T||!T.sk||!T.sk.length) return '';
+  var l=D.c.filter(function(c){ return c.pf && c.pf.nu; });
+  if(!l.length) return '';
+  l=l.slice().sort(function(a,b){ return (b.p||0)-(a.p||0); });
+  var h='<details class="sec pfsug"><summary><span class="fl">&#9656;</span><span class="tit">Todavía no le vendés Branca — para abrir</span><span class="cnt">'+l.length+'</span></summary><div class="pfdl">';
+  l.forEach(function(c){
+   h+='<div class="pfdi" onclick="irCli('+c.n+')">'
+     + '<div class="pfdn">'+esc(c.c)+'</div>'
+     + '<div class="pfdr">' + esc(c.pf.t) + '</div>'
+     + '<div class="pfdf">Empezá por: '+c.pf.f.slice(0,3).map(function(i){return esc(T.sk[i]||'');}).join(' · ')+'</div>'
+     + '<div class="pfdm">Compra '+fmt(c.p)+'/mes de otras cosas</div></div>';
+  });
+  return h+'</div></details>';
 }
-function bhtml(c){ if(c.br&&c.br.off) return ''; var pf=pfhtml(c); if(pf) return pf; var cat=CB||[], a=((c.br&&c.br.a)||[]).slice(); ((c.br&&c.br.x)||[]).forEach(function(k){a.push([k,0,0,'']);}); var tiene={}, h=''; a.forEach(function(x){tiene[String(x[0])]=1;}); if(!cat.length)return ''; h='<div class="brbox"><div class="brtit"><span style="color:'+(a.length?'#198754':'#c0392b')+';margin-right:6px">●</span>PORTAFOLIO BRANCA: <strong>'+a.length+' de '+cat.length+'</strong> cubiertos</div>'; if(a.length)h+='<details class="brdet"><summary>Artículos que compra <b>'+a.length+'</b></summary><div>'+a.map(function(x){return '<span class="brsi">'+esc(bnombre(x[0]))+'</span>';}).join('')+'</div></details>'; var f=cat.filter(function(x){return !tiene[String(x.c)];}); if(f.length)h+='<details class="brdet"><summary>Artículos que faltan vender <b>'+f.length+'</b></summary><div>'+f.map(function(x){return '<span class="brno">'+esc(x.n)+'</span>';}).join('')+'</div></details>'; if(c.br&&c.br.ult)h+='<div class="brmeta">Última compra Branca: '+fcorta(c.br.ult)+'</div>'; return h+'</div>'; }
 function cohtml(c){var z=c.co||{c:[],s:[]},a=z.c||[],s=z.s||[];if(!a.length&&!s.length)return '';var h='<div class="brbox"><div class="brtit"><span style="color:'+(a.length?'#198754':'#c0392b')+';margin-right:6px">●</span>COMBOS PARA OFRECER</div>';if(a.length)h+='<details class="brdet"><summary>Combos que ya compra <b>'+a.length+'</b></summary><div>'+a.map(function(n){return '<span class="brsi">'+esc(n)+'</span>';}).join('')+'</div></details>';if(s.length)h+='<details class="brdet" open><summary>Oportunidades <b>'+s.length+'</b></summary><div>'+s.map(function(x){return '<div><span class="brno">'+esc(x[0])+'</span><span class="brmeta">'+esc(x[1])+'</span></div>';}).join('')+'</div></details>';return h+'</div>';}
 function uvhtml(c){var z=c.uv||{f:'',a:[]},a=z.a||[];if(!a.length)return '';return '<div class="brbox"><div class="brtit">ÚLTIMA VISITA / COMPRA · '+fcorta(z.f)+'</div><details class="brdet" open><summary>Artículos que llevó <b>'+a.length+'</b></summary><div>'+a.map(function(x){return '<div><span class="brsi">'+esc(x[0])+'</span><span class="brmeta">'+Number(x[1]||0).toLocaleString('es-AR')+' un. · '+fmt(x[2]||0)+'</span></div>';}).join('')+'</div></details></div>';}
 function phtml(c,n){if(c.pr&&!Object.prototype.hasOwnProperty.call(c.pr,n))return '';var cat=(CP&&CP[n])||[],a=(c.pr&&c.pr[n])||[],t={},h='';a.forEach(function(x){t[String(x[0])]=1;});if(!cat.length)return '';function nom(k){for(var i=0;i<cat.length;i++)if(String(cat[i].c)===String(k))return cat[i].n;return k;}var f=cat.filter(function(x){return !t[String(x.c)];});h='<div class="brbox"><div class="brtit"><span style="color:'+(a.length?'#198754':'#c0392b')+';margin-right:6px">●</span>'+esc(n)+': <strong>'+a.length+' de '+cat.length+'</strong> artículos</div>';if(a.length)h+='<details class="brdet"><summary>Artículos que compra <b>'+a.length+'</b></summary><div>'+a.map(function(x){return '<span class="brsi">'+esc(nom(x[0]))+'</span>';}).join('')+'</div></details>';if(f.length)h+='<details class="brdet"><summary>Artículos que faltan vender <b>'+f.length+'</b></summary><div>'+f.map(function(x){return '<span class="brno">'+esc(x.n)+'</span>';}).join('')+'</div></details>';return h+'</div>';}
@@ -323,6 +409,9 @@ function pintar(){
   }
   h += '<div class="ley"><span><span class="sem sv"></span> Estable</span><span><span class="sem sa"></span> Comprando menos</span><span><span class="sem sr"></span> En picada</span><span><span class="sem sg"></span> Chico</span></div>';
   h += '<button class="resumen" onclick="resumir()">Copiar el resumen del día para mandar</button>';
+  if(v.pre){ h += '<div class="preBar" id="preBar"><b>\ud83d\udcb2 Precios tomados: <span id="preN">'+preCuantos()+'</span></b>'
+    + '<button onclick="preMandar()">Mandar los precios</button>'
+    + '<button class="preSec" onclick="preBorrarTodo()">Borrar</button></div>'; }
   if(!tieneDias){
    D.c = D.c.slice().sort(function(a,b){
     var da = dias(a.u), db = dias(b.u);
@@ -360,7 +449,7 @@ function pintar(){
     h += pedidoHtml(c);
     h += reposicionHtml(c);
     if(c.rp.length) h += '<div class="repo">Reponer: ' + c.rp.map(function(y){ return esc(y[0]) + ' ' + fmt(y[1]); }).join(' · ') + '</div>';
-    h += uvhtml(c) + bhtml(c) + cohtml(c);
+    h += uvhtml(c) + cohtml(c) + prehtml(c, v, ix);
     h += phtml(c,'CELUSAL') + phtml(c,'5 HISPANOS') + fhtml(c);
     if(v.ag){ var ag=agenda(v.id), z=ag[c.n]||{}, opts=[['pendiente','Pendiente'],['visitado','Visitado'],['no_atendio','No atendió'],['reagendado','Reagendado']]; h += '<div class="agenda"><strong>Visita del mes</strong><label class="aglabel">Fecha prevista</label><div class="agfila"><input type="date" value="'+esc(z.f||'')+'" onchange="agendaFecha('+c.n+',this.value)"><select onchange="agendaEstado('+c.n+',this.value)">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(z.e===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></div><label class="aglabel">Nueva fecha de reprogramación</label><div class="agfila"><input type="date" value="'+esc(z.r||'')+'" onchange="agendaRefecha('+c.n+',this.value)"></div></div>'; }
     if(!c.f.length && !c.rp.length) h += '<div class="fperd">Ya te compra todo lo que trabajamos</div>';
@@ -390,6 +479,7 @@ function pintar(){
     });
     h += '</details>';
   }
+  h += pfsug(D);
   h += escBarra();
   document.body.innerHTML = h;
   aplicarEsc();
