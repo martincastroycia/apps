@@ -122,6 +122,86 @@ function preTexto(){
   if(!l.length) return '';
   return 'PRECIOS \u00b7 '+quien+' \u00b7 '+d+'\n'+l.join('\n');
 }
+/* Mandar los precios AL SISTEMA, por el mismo buzon que el parte de los
+   repositores. Si no hay internet queda en el telefono y se reintenta
+   solo; si el telefono no puede con esto, sigue estando WhatsApp. */
+var PREDB=null, PREAUTH=null;
+function preFB(){
+  if(PREDB) return true;
+  try{
+    if(typeof firebase === 'undefined') return false;
+    try{ firebase.app(); }catch(e){ firebase.initializeApp(G0().fb); }
+    PREDB = firebase.firestore();
+    preSes()['catch'](function(){});
+    return true;
+  }catch(e){ return false; }
+}
+function G0(){ var v=elVend(quien); return (v&&v.pre)||{}; }
+function preSes(){
+  if(PREAUTH) return PREAUTH;
+  PREAUTH=(async function(){
+    try{ if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously(); }
+    catch(e){ PREAUTH=null; throw e; }
+  })();
+  return PREAUTH;
+}
+async function preGz(txt){
+  var cs=new CompressionStream('gzip');
+  var stm=new Blob([new TextEncoder().encode(txt)]).stream().pipeThrough(cs);
+  return new Uint8Array(await new Response(stm).arrayBuffer());
+}
+async function preCif(txt,cod,id,sal){
+  var mat=await crypto.subtle.importKey('raw',new TextEncoder().encode(cod),'PBKDF2',false,['deriveBits']);
+  var bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(sal+id),iterations:200000,hash:'SHA-256'},mat,256);
+  var kb=new Uint8Array(bits);
+  var key=await crypto.subtle.importKey('raw',kb,{name:'AES-GCM'},false,['encrypt']);
+  var gz=await preGz(txt);
+  var sem=new Uint8Array(kb.length+gz.length); sem.set(kb,0); sem.set(gz,kb.length);
+  var iv=new Uint8Array(await crypto.subtle.digest('SHA-256',sem)).subarray(0,12);
+  var ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,gz));
+  var out=new Uint8Array(1+12+ct.length); out[0]=1; out.set(iv,1); out.set(ct,13);
+  var s2=''; for(var i=0;i<out.length;i++) s2+=String.fromCharCode(out[i]);
+  return btoa(s2);
+}
+function preTope(pr,ms,q){ return Promise.race([pr,new Promise(function(_,rj){ setTimeout(function(){ rj(new Error('tard\u00f3 demasiado ('+q+')')); },ms); })]); }
+function prePendL(){ try{ return JSON.parse(lsGet('pre_pend')||'[]'); }catch(e){ return []; } }
+function prePendSet(l){ lsSet('pre_pend', JSON.stringify(l)); }
+async function preMandarUno(o){
+  var P=G0();
+  if(!preFB()) throw new Error('no cargaron los programas de Google');
+  await preSes();
+  var b64=await preCif(JSON.stringify({v:P.vnum, tipo:'precios', vend:o.vend, fecha:o.fecha, txt:o.txt}), P.cod, P.vnum, P.sal);
+  await preTope(PREDB.collection(P.col).doc(o.id).set({
+    v:P.vnum, b:b64, nf:0, estado:'nuevo',
+    ts:firebase.firestore.FieldValue.serverTimestamp(), fecha_carga:new Date().toISOString()
+  }), 30000, 'mandar');
+}
+async function preVaciar(){
+  var l=prePendL();
+  if(!l.length) return {n:0, falta:0};
+  var q=[], n=0;
+  for(var i=0;i<l.length;i++){
+    try{ await preMandarUno(l[i]); n++; }catch(e){ l[i].err=String((e&&e.message)||e); q.push(l[i]); }
+  }
+  prePendSet(q);
+  return {n:n, falta:q.length};
+}
+async function preAlSistema(){
+  var t=preTexto(), P=G0();
+  if(!t){ alert('Todav\u00eda no cargaste ning\u00fan precio.'); return; }
+  if(!P.cod){ preMandar(); return; }                 /* hoja vieja: sigue por WhatsApp */
+  var id=P.vnum+'-'+quien+'-'+hoyIso();
+  var l=prePendL().filter(function(x){ return x.id!==id; });
+  l.push({id:id, vend:String(quien), fecha:hoyIso(), txt:t});
+  prePendSet(l);
+  try{
+    var R=await preVaciar();
+    if(R.falta) alert('Qued\u00f3 guardado en el tel\u00e9fono: cuando haya se\u00f1al se manda solo. No hace falta que hagas nada.');
+    else alert('\u2705 Los precios llegaron al sistema.');
+  }catch(e){ alert('Qued\u00f3 guardado en el tel\u00e9fono y se reintenta solo.'); }
+  pintar();
+}
+try{ window.addEventListener('online', function(){ if(prePendL().length) preVaciar().then(function(R){ if(R.n) pintar(); }); }); }catch(e){}
 function preMandar(){
   var t=preTexto();
   if(!t){ alert('Todav\u00eda no cargaste ning\u00fan precio.'); return; }
@@ -409,9 +489,13 @@ function pintar(){
   }
   h += '<div class="ley"><span><span class="sem sv"></span> Estable</span><span><span class="sem sa"></span> Comprando menos</span><span><span class="sem sr"></span> En picada</span><span><span class="sem sg"></span> Chico</span></div>';
   h += '<button class="resumen" onclick="resumir()">Copiar el resumen del día para mandar</button>';
-  if(v.pre){ h += '<div class="preBar" id="preBar"><b>\ud83d\udcb2 Precios tomados: <span id="preN">'+preCuantos()+'</span></b>'
-    + '<button onclick="preMandar()">Mandar los precios</button>'
-    + '<button class="preSec" onclick="preBorrarTodo()">Borrar</button></div>'; }
+  if(v.pre){ var pnd2=prePendL().length;
+   h += '<div class="preBar" id="preBar"><b>\ud83d\udcb2 Precios tomados: <span id="preN">'+preCuantos()+'</span></b>'
+    + (v.pre.cod ? '<button onclick="preAlSistema()">Mandar los precios</button>' : '<button onclick="preMandar()">Mandar los precios</button>')
+    + (v.pre.cod ? '<button class="preSec" onclick="preMandar()">Por WhatsApp</button>' : '')
+    + '<button class="preSec" onclick="preBorrarTodo()">Borrar</button>'
+    + (pnd2 ? '<span class="rpest">\u26a0 '+pnd2+' env\u00edo(s) sin salir \u2014 se mandan solos cuando haya se\u00f1al</span>' : '')
+    + '</div>'; }
   if(!tieneDias){
    D.c = D.c.slice().sort(function(a,b){
     var da = dias(a.u), db = dias(b.u);
