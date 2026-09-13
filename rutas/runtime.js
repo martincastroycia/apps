@@ -660,7 +660,10 @@ function tvTot(){ return 1 + PAN.vs.length + (pcaiTodos().length ? 1 : 0); }
 function tvIr(i){ var n = tvTot(); TVI = ((i % n) + n) % n; TVC = 0; pintar(); window.scrollTo(0,0); }
 function tvCai(i){ TVC = i; pintar(); window.scrollTo(0,0); }
 function tvCaiIr(){ TVI = PAN.vs.length + 1; TVC = 0; verVista('tv'); }
+function tvPg(i){ TVC = i; pintar(); window.scrollTo(0,0); }
+function tvPfIr(i){ TVI = i; TVC = 0; verVista('tv'); }
 function pmil(n){ return Math.round(Number(n)||0).toLocaleString('es-AR'); }
+function psnt(t){ return String(t==null?'':t).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 function plit(n){ n = Number(n)||0; return (Math.round(n*10)/10).toLocaleString('es-AR',{maximumFractionDigits:1}); }
 function pvol(n,k){ return k==='CELUSAL' ? (Math.round(n*10)/10).toLocaleString('es-AR',{maximumFractionDigits:1})+' t' : pmil(n)+' cj'; }
 function ppc(r,m){ return m ? Math.round(r/m*100) : 0; }
@@ -1005,6 +1008,7 @@ function ptv(){
     x.cai.slice(0,12).forEach(function(z){ h += '<div class="ptvli"><span>' + esc(z[0]) + (z[4] ? ' <i style="font-style:normal;color:#9db6d4;font-size:.75em">última ' + fcorta(z[4]) + '</i>' : '') + '</span><b>' + (z[1] ? qshort(z[1]) + '/mes · ' : '') + z[2] + ' d</b></div>'; });
     h += '</div></div>';
   }
+  h += ptvPortafolio(x);
   h += '<div class="ptvnav">';
   h += '<button class="ptvn' + (TVI===0?' act':'') + '" onclick="tvIr(0)">⌂</button>';
   for(var i=1;i<=n;i++) h += '<button class="ptvn' + (i===TVI?' act':'') + '" onclick="tvIr(' + i + ')">' + i + '</button>';
@@ -1053,7 +1057,59 @@ function ppfUno(x){
   }
   if(P.ti && P.ti.length) h += '<div class="ppfd" style="margin-top:6px">Lo que ya vende bien: '
      + P.ti.map(function(z){ return esc(z[0]) + ' (' + z[1] + ')'; }).join(', ') + '</div>';
+  h += ppfClientes(x);
   return h + '</div>';
+}
+function ppfFil(id, q){
+  var box = document.getElementById('ppfl' + id); if(!box) return;
+  var t = psnt(String(q || '').trim()), n = 0;
+  var f = box.children;
+  for(var i = 0; i < f.length; i++){
+    var b = f[i].getAttribute('data-b') || '';
+    var va = !t || b.indexOf(t) >= 0;
+    f[i].style.display = va ? '' : 'none';
+    if(va) n++;
+  }
+  var c = document.getElementById('ppfc' + id);
+  if(c) c.textContent = t ? (n + (n === 1 ? ' cliente' : ' clientes')) : '';
+}
+function ppfClientes(x){
+  var P = x.pf, L = P.cl || [], SC = P.sc || [];
+  if(!L.length && !SC.length) return '';
+  var id = esc(String(x.id));
+  var h = '<details class="ppfcl" onclick="event.stopPropagation()">'
+        + '<summary>Ver los clientes de ' + esc(x.nom) + ' <i>' + pmil(L.length) + '</i></summary>';
+  h += '<div class="ppfbw"><input class="ppfbu" type="search" placeholder="Buscar cliente..." '
+     + 'oninput="ppfFil(\'' + id + '\', this.value)"><span class="ppfcn" id="ppfc' + id + '"></span></div>';
+  h += '<div class="ppfrs" id="ppfl' + id + '">';
+  L.forEach(function(z){
+    var nom = String(z[0] || ''), cat = String(z[1] || ''), ti = Number(z[2]) || 0, tot = Number(z[3]) || 0;
+    var fa = z[4] || [], bits = Number(z[5]) || 0;
+    var fal = tot - ti;
+    var cls = fal === 0 ? 'ppfok' : (ti === 0 ? 'ppfnada' : 'ppfmedio');
+    h += '<div class="ppfr" data-b="' + esc(psnt(nom)) + ' ' + esc(psnt(cat)) + '">'
+       + '<div class="ppfrn"><b>' + esc(nom) + '</b><span class="ppfrt">'
+       + (cat ? '<span class="ppfcat">' + esc(cat) + '</span>' : '')
+       + '<span class="ppfnum ' + cls + '">' + ti + ' de ' + tot + '</span></span></div>';
+    if(fa.length) h += '<div class="ppffa">Le falta: ' + fa.map(esc).join(' \u00b7 ')
+       + (fal > fa.length ? ' y ' + (fal - fa.length) + ' m\u00e1s' : '') + '</div>';
+    else if(fal === 0) h += '<div class="ppffb">Le vende todo lo que le toca</div>';
+    var no = [];
+    if(bits & 2) no.push('todav\u00eda no compra Branca');
+    if(bits & 1) no.push('l\u00e1mina prestada');
+    if(no.length) h += '<div class="ppfnt3">' + no.join(' \u00b7 ') + '</div>';
+    h += '</div>';
+  });
+  h += '</div>';
+  if(SC.length){
+    h += '<details class="ppfsc" onclick="event.stopPropagation()"><summary>Sin categor\u00eda <i>'
+       + pmil(SC.length) + '</i></summary><div class="ppfscl">'
+       + 'Estos no entran en ninguna cuenta hasta que alguien diga qu\u00e9 son.'
+       + '</div><div class="ppfrs">';
+    SC.forEach(function(nm){ h += '<div class="ppfr"><div class="ppfrn"><b>' + esc(nm) + '</b></div></div>'; });
+    h += '</div></details>';
+  }
+  return h + '</details>';
 }
 function ppanPortafolio(){
   var L = (PAN.vs || []).filter(function(x){ return !!x.pf; });
@@ -1101,6 +1157,39 @@ function ppanCaidos(){
        + '<span class="pcaiv mbadtxt">' + (z.p ? qshort(z.p) + '/mes' : '') + '</span></div>'
        + '<div class="pcaid">hace <b>' + z.d + ' d\u00edas</b> \u00b7 \u00faltima compra ' + fcorta(z.f) + (z.fa.length ? ' \u00b7 llevaba ' + z.fa.map(esc).join(', ') : '') + '</div>';
   });
+  return h + '</div>';
+}
+function ptvPortafolio(x){
+  var P = x.pf; if(!P || !P.cl || !P.cl.length) return '';
+  var pag = 10, L = P.cl, tot = Math.ceil(L.length / pag) || 1;
+  var pg = TVC; if(pg >= tot) pg = 0; if(pg < 0) pg = 0;
+  var h = '<div class="ptvc"><div class="ptvt">EL PORTAFOLIO DE BRANCA</div>'
+        + '<div class="ptvbig ' + (P.cob >= 50 ? 'pv' : (P.cob >= 30 ? 'pa' : 'pr')) + '">' + P.cob + '%</div>'
+        + '<div class="ptvv">' + pmil(P.n) + ' clientes categorizados'
+        + (P.sin ? ' · <b>' + pmil(P.sin) + ' sin categoría</b>' : '')
+        + ' · ' + pmil(P.full) + ' con todo lo que le toca</div>';
+  h += '<div class="ptvsub" style="margin:10px 0 2px">Cliente por cliente · página ' + (pg+1) + ' de ' + tot + '</div>';
+  h += '<div class="ptvl">';
+  L.slice(pg*pag, pg*pag + pag).forEach(function(z){
+    var nom = String(z[0]||''), cat = String(z[1]||''), ti = Number(z[2])||0, to = Number(z[3])||0;
+    var fa = z[4] || [], fal = to - ti, bits = Number(z[5])||0;
+    h += '<div class="ptvli"><span>' + esc(nom)
+       + (cat ? ' <i style="font-style:normal;color:#9db6d4;font-size:.75em">' + esc(cat) + '</i>' : '')
+       + '</span><b class="' + (fal === 0 ? 'ptvpfok' : (ti === 0 ? 'ptvpfmal' : '')) + '">' + ti + ' de ' + to + '</b></div>';
+    var det = '';
+    if(fa.length) det = 'le falta: ' + fa.slice(0,4).map(esc).join(' · ') + (fal > 4 ? ' y ' + (fal - 4) + ' más' : '');
+    else if(fal === 0) det = 'le vende todo lo que le toca';
+    if(bits & 2) det += (det ? ' · ' : '') + 'todavía no compra Branca';
+    if(det) h += '<div class="ptvpfd">' + det + '</div>';
+  });
+  h += '</div>';
+  if(tot > 1){
+    h += '<div class="ptvpg">';
+    h += '<button class="ptvn" onclick="tvPg(' + (pg-1 < 0 ? tot-1 : pg-1) + ')">&#8592;</button>';
+    for(var i=0;i<tot;i++) h += '<button class="ptvn' + (i===pg?' act':'') + '" onclick="tvPg(' + i + ')">' + (i+1) + '</button>';
+    h += '<button class="ptvn" onclick="tvPg(' + (pg+1 >= tot ? 0 : pg+1) + ')">&#8594;</button>';
+    h += '</div>';
+  }
   return h + '</div>';
 }
 function ptvCaidos(){

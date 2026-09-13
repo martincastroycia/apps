@@ -8,7 +8,9 @@
      2) pregunta por v.json (48 bytes) si hay algo nuevo -> no gasta datos
      3) si hay, se baja el archivo nuevo y avisa con una barra verde        */
 
-var LS_COD = "rutas_cod", LS_KEY = "rutas_key", LS_GEN = "rutas_gen", LS_VER = "rutas_ver", LS_SEL = "rutas_sel";
+var LS_COD = "rutas_cod", LS_KEY = "rutas_key", LS_GEN = "rutas_gen", LS_VER = "rutas_ver", LS_SEL = "rutas_sel",
+    LS_FZ = "rutas_forzar";
+var C_DATOS = "rutas-datos";   /* el mismo nombre que usa sw.js */
 
 function $(id){ return document.getElementById(id); }
 function guardar(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -65,6 +67,24 @@ async function bajarDatos(id, keyBytes, soloCache){
   }else{
     r = await fetch(url, {cache:"no-store"});
     if(!r.ok) throw new Error("http " + r.status);
+    /* La copia la guardamos NOSOTROS, aca, y no se confia en que lo haga el
+       service worker al interceptar el fetch.
+       POR QUE: si el service worker no esta controlando la pagina en ese
+       momento —recien instalado, o iOS que lo descarta cuando necesita
+       lugar— la descarga no quedaba guardada en ningun lado. Al recargar se
+       leia la copia VIEJA del cache, el cartel verde volvia a salir y el
+       telefono se quedaba PARA SIEMPRE con los datos de antes.
+       Es lo que le pasaba al 800 el 12/9/2026: el cartel decia "datos nuevos
+       del 11/09" y la pantalla seguia diciendo "Datos al 09/09" por mas veces
+       que lo tocara. Reproducido desregistrando el service worker: sin este
+       guardado falla siempre; con este guardado anda igual con service worker
+       o sin el. */
+    try{
+      if(typeof caches !== "undefined"){
+        var c = await caches.open(C_DATOS);
+        await c.put(urlAbs(url), r.clone());
+      }
+    }catch(e){}
   }
   return await descifrar(await r.arrayBuffer(), keyBytes);
 }
@@ -132,6 +152,10 @@ async function traerNuevo(id, keyBytes, gen, ver, sel, hayDatos){
          en vez de quedarse callado con lo viejo */
       guardar(LS_VER, ver || "");
       guardar(LS_SEL, sel || "");
+      /* Red de seguridad: el proximo arranque NO usa la copia guardada, va
+         derecho a internet. Asi tocar el cartel funciona aunque el guardado
+         del cache haya fallado por lo que sea. Se usa una sola vez. */
+      guardar(LS_FZ, "1");
       location.reload();
     });
   }catch(e){}
@@ -147,8 +171,17 @@ async function inicio(){
   if(!p){ borrar(LS_COD); borrar(LS_KEY); mostrarAlta(""); return; }
   var keyBytes = b64aBytes(keyB64);
 
+  /* si viene de tocar el cartel verde, esta vez no se usa la copia guardada */
+  var forzar = leer(LS_FZ) === "1";
+  if(forzar) borrar(LS_FZ);
+
   var abrio = false;
-  try{ arrancar(await bajarDatos(p.id, keyBytes, true)); abrio = true; }catch(e){}
+  if(forzar){
+    try{ arrancar(await bajarDatos(p.id, keyBytes, false)); abrio = true; }catch(e){}
+  }
+  if(!abrio){
+    try{ arrancar(await bajarDatos(p.id, keyBytes, true)); abrio = true; }catch(e){}
+  }
 
   try{
     var v = await bajarVersion();
@@ -159,6 +192,14 @@ async function inicio(){
        telefono decia "no hay nada nuevo": se quedaba con el programa viejo para
        siempre. Ahora tambien mira v.ver, que cambia cuando cambia el programa. */
     var sel = (v.s && v.s[p.id]) || "";
+    /* La PRIMERA vez, rutas_ver y rutas_sel estan en null: se anotan recien
+       cuando se toca el cartel. Sin esto, al recien instalado le salia el
+       cartel verde "Hay informacion nueva" de entrada, sin que hubiera nada
+       nuevo. Se adoptan calladamente. */
+    if(leer(LS_VER) === null && leer(LS_SEL) === null){
+      guardar(LS_VER, v.ver || "");
+      guardar(LS_SEL, sel || "");
+    }
     var hayDatos = v.gen && v.gen !== leer(LS_GEN);
     var hayProg  = v.ver && v.ver !== leer(LS_VER);
     /* el sello es lo unico que cambia si Mariano toca las cuotas y publica de
@@ -203,7 +244,16 @@ async function revisar(){
     var p = partirCodigo(cod);
     var v = await bajarVersion();
     sacarBarra("bSinSenal");
-    if(v.gen && v.gen !== leer(LS_GEN)) await traerNuevo(p.id, b64aBytes(keyB64), v.gen);
+    /* OJO: esto llamaba a traerNuevo con TRES de los seis argumentos. El
+       cartel salia con el texto generico ("Hay informacion nueva") aunque
+       fueran datos nuevos, y al tocarlo guardaba rutas_ver y rutas_sel
+       VACIOS, asi que al rato volvia a avisar de algo que ya estaba. Ahora
+       mira lo mismo que el arranque y pasa todo. */
+    var sel = (v.s && v.s[p.id]) || "";
+    var hayDatos = v.gen && v.gen !== leer(LS_GEN);
+    var hayProg  = v.ver && v.ver !== leer(LS_VER);
+    var hayMio   = sel && sel !== leer(LS_SEL);
+    if(hayDatos || hayProg || hayMio) await traerNuevo(p.id, b64aBytes(keyB64), v.gen, v.ver, sel, hayDatos);
   }catch(e){}
   finally{ REVISANDO = false; }
 }
