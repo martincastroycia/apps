@@ -143,6 +143,7 @@ $('bMandar').onclick=function(){
   try{ $('marco').contentWindow.postMessage({tipo:'PEDIR_REND'}, '*'); }catch(e){ ESPERANDO=false; $('bMandar').disabled=false; vEst('No pude leer la planilla. Cerrá y volvé a abrir el reparto.','err'); }
   setTimeout(function(){ if(ESPERANDO){ ESPERANDO=false; $('bMandar').disabled=false; vEst('La planilla no respondió. Cerrá y volvé a abrir el reparto, y probá de nuevo.','err'); } }, 8000);
 };
+var REP_MAX_VER = 5;   // v102: cuantos repartos se le muestran al chofer (antes eran 15)
 async function cargarRepartos(){
   $('avi').textContent='Buscando tus repartos…';
   if(!db && !conectar()){ $('avi').textContent='⚠ Sin conexión. Abrí la app con señal para bajar el reparto.'; return; }
@@ -152,11 +153,11 @@ async function cargarRepartos(){
     var arr=[]; snap.forEach(function(d){ var o=d.data()||{}; o._id=d.id; arr.push(o); });
     arr.sort(function(a,b){ return String(b.fe||'').localeCompare(String(a.fe||'')); });
     var out=[];
-    for(var i=0;i<arr.length && i<15;i++){
+    for(var i=0;i<arr.length && i<REP_MAX_VER;i++){   // v102: antes 15
       try{ var txt=await descifrar(b64bytes(arr[i].b), CODIGO, CHOFER); out.push(JSON.parse(txt)); }catch(e){}
     }
     REPS=out;
-    $('avi').textContent = out.length? 'Tocá el reparto que vas a hacer. El de otro día queda intacto, con lo que ya cargaste.' : 'Todavía no hay repartos para vos.';
+    $('avi').textContent = out.length? ('Tocá el reparto que vas a hacer. El de otro día queda intacto, con lo que ya cargaste.'+(arr.length>REP_MAX_VER?' Se muestran los '+REP_MAX_VER+' más nuevos.':'')) : 'Todavía no hay repartos para vos.';
     pintar();
   }catch(e){ $('avi').textContent='⚠ No se pudieron bajar los repartos. Revisá internet. ('+(e&&e.message||e)+')'; }
 }
