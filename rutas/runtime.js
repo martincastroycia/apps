@@ -153,13 +153,23 @@ function prehtml(c, v, ix){
    for(var k in P){ var pz=k.split('|'); if(pz[0]==String(c.n) && pz[2]) abiertos[pz[1]+'|'+pz[2]]=1; }
    for(var kk in abiertos){ var pp=kk.split('|'); var nm=''; v.pre.p.forEach(function(x){ if(x[0]==pp[0]) nm=x[1]; });
      h += preFila(c, pp[0], pp[1]+' \u00b7 '+nm, pp[1]); }
+   var prim = marcas[0], primCod = prim ? String(prim[1]||'') : '';
    h += '<div class="preAdd">'
-     + '<select id="preP'+c.n+'">'+v.pre.p.map(function(x){ return '<option value="'+x[0]+'">'+esc(x[1])+'</option>'; }).join('')+'</select>'
-     + '<select id="preM'+c.n+'">'+marcas.map(function(m){ return '<option>'+esc(m)+'</option>'; }).join('')+'<option value="__otra__">otra...</option></select>'
+     + '<select id="preM'+c.n+'" onchange="preMarcaCambio('+c.n+')">'
+     + marcas.map(function(m){ return '<option data-cod="'+esc(String(m[1]||''))+'">'+esc(String(m[0]||''))+'</option>'; }).join('')
+     + '<option value="__otra__" data-cod="">otra...</option></select>'
+     + '<select id="preP'+c.n+'"'+(primCod?' style="display:none"':'')+'>'
+     + v.pre.p.map(function(x){ return '<option value="'+x[0]+'"'+(String(x[0])===primCod?' selected':'')+'>'+esc(x[1])+'</option>'; }).join('')+'</select>'
      + '<button class="preMas" onclick="preSumar('+c.n+')">+ agregar</button></div>';
   }
   h += '</div></details>';
   return h;
+}
+function preMarcaCambio(n){
+  var b=document.getElementById('preM'+n), a=document.getElementById('preP'+n);
+  if(!b||!a) return;
+  var o=b.options[b.selectedIndex], cod=o?String(o.getAttribute('data-cod')||''):'';
+  if(cod){ a.value=cod; a.style.display='none'; } else { a.style.display=''; }
 }
 function preSumar(n){
   var a=document.getElementById('preP'+n), b=document.getElementById('preM'+n);
