@@ -61,9 +61,10 @@ img{max-width:100%}
 }
 *{box-sizing:border-box}
 html,body{height:100%}
+html{font-size:17.5px}   /* <- lo cambia el selector de tamaño de letra */
 body{margin:0;background:var(--bg);color:var(--ink);
   font-family:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+  font-size:0.9375rem;line-height:1.45;-webkit-font-smoothing:antialiased}
 
 #app{max-width:460px;margin:0 auto;min-height:100%;background:var(--bg);
   display:flex;flex-direction:column;border-left:1px solid var(--line-soft);border-right:1px solid var(--line-soft)}
@@ -77,40 +78,40 @@ header{position:sticky;top:env(safe-area-inset-top,0px);z-index:30;
 .iconbtn{background:none;border:0;padding:6px;margin:-6px;cursor:pointer;color:var(--ink2);
   border-radius:8px;display:inline-flex}
 .iconbtn:active{background:var(--surf2)}
-h1{font-family:'Zilla Slab',Georgia,serif;font-weight:600;font-size:24px;line-height:1.15;margin:0;
+h1{font-family:'Zilla Slab',Georgia,serif;font-weight:600;font-size:1.5rem;line-height:1.15;margin:0;
   letter-spacing:-.01em;text-wrap:balance}
-.hsub{font-size:12.5px;color:var(--ink3);margin-top:2px}
-.hsub.frase{font-style:italic;font-size:13.5px;color:var(--acc-ink);background:var(--acc-soft);
+.hsub{font-size:0.7812rem;color:var(--ink3);margin-top:2px}
+.hsub.frase{font-style:italic;font-size:0.9375rem;color:var(--acc-ink);background:var(--acc-soft);
   border-left:2.5px solid var(--acc);border-radius:0 9px 9px 0;padding:7px 11px 7px 10px;
   margin-top:8px;line-height:1.35;max-width:38ch}
 
 main{flex:1;padding:15px 15px 104px;display:flex;flex-direction:column;gap:15px}
 
 .seg{display:flex;background:var(--surf2);border-radius:10px;padding:3px;gap:3px}
-.seg button{flex:1;background:none;border:0;font-family:inherit;font-size:13px;font-weight:600;
+.seg button{flex:1;background:none;border:0;font-family:inherit;font-size:0.8125rem;font-weight:600;
   color:var(--ink2);padding:7px 4px;border-radius:8px;cursor:pointer}
 .seg button[aria-selected="true"]{background:var(--surf);color:var(--ink);box-shadow:var(--shadow)}
 
 section.blk{display:flex;flex-direction:column;gap:9px}
 .blk-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-.blk-t{font-size:11px;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3)}
-.blk-a{font-size:12.5px;color:var(--acc-ink);font-weight:600;background:none;border:0;padding:0;
+.blk-t{font-size:0.6875rem;font-weight:600;letter-spacing:.13em;text-transform:uppercase;color:var(--ink3)}
+.blk-a{font-size:0.7812rem;color:var(--acc-ink);font-weight:600;background:none;border:0;padding:0;
   cursor:pointer;font-family:inherit}
 .card{background:var(--surf);border:1px solid var(--line);border-radius:12px}
 
 .hero{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:15px 16px 14px;box-shadow:var(--shadow)}
-.hero-lab{font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);font-weight:600}
-.hero-n{font-family:'Zilla Slab',Georgia,serif;font-weight:700;font-size:42px;line-height:1;
+.hero-lab{font-size:0.7188rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink3);font-weight:600}
+.hero-n{font-family:'Zilla Slab',Georgia,serif;font-weight:700;font-size:2.625rem;line-height:1;
   letter-spacing:-.02em;margin:7px 0 2px;font-variant-numeric:tabular-nums}
 .hero-n.neg{color:var(--crit)}
-.hero-sub{font-size:13px;color:var(--ink2)}
+.hero-sub{font-size:0.8125rem;color:var(--ink2)}
 .hero-foot{display:flex;margin-top:13px;padding-top:12px;border-top:1px solid var(--line-soft)}
 .hero-foot>div{flex:1;padding-right:10px;min-width:0}
 .hero-foot>div+div{border-left:1px solid var(--line-soft);padding-left:13px;padding-right:0}
-.ff-l{font-size:10.5px;color:var(--ink3);letter-spacing:.05em;text-transform:uppercase;font-weight:600}
-.ff-v{font-size:16px;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
+.ff-l{font-size:0.6562rem;color:var(--ink3);letter-spacing:.05em;text-transform:uppercase;font-weight:600}
+.ff-v{font-size:1rem;font-weight:600;margin-top:3px;font-variant-numeric:tabular-nums}
 
-.pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:0.7188rem;font-weight:600;
   padding:2px 8px;border-radius:20px;border:1px solid transparent;white-space:nowrap}
 .pill.ok{background:var(--ok-soft);color:var(--ok);border-color:color-mix(in srgb,var(--ok) 26%,transparent)}
 .pill.warn{background:var(--warn-soft);color:var(--warn);border-color:color-mix(in srgb,var(--warn) 30%,transparent)}
@@ -128,11 +129,11 @@ section.blk{display:flex;flex-direction:column;gap:9px}
 .row-ph{width:42px;height:42px;border-radius:9px;flex:none;border:1px dashed var(--line);
   background:var(--surf2);display:flex;align-items:center;justify-content:center;color:var(--ink3)}
 .row-b{flex:1;min-width:0}
-.row-n{font-weight:600;font-size:14px}
-.row-s{font-size:12px;color:var(--ink3);margin-top:1px;font-variant-numeric:tabular-nums}
+.row-n{font-weight:600;font-size:0.875rem}
+.row-s{font-size:0.75rem;color:var(--ink3);margin-top:1px;font-variant-numeric:tabular-nums}
 .row-r{text-align:right;flex:none}
-.row-v{font-weight:600;font-size:14px;font-variant-numeric:tabular-nums}
-.row-v2{font-size:12px;margin-top:1px;font-variant-numeric:tabular-nums;color:var(--ink3)}
+.row-v{font-weight:600;font-size:0.875rem;font-variant-numeric:tabular-nums}
+.row-v2{font-size:0.75rem;margin-top:1px;font-variant-numeric:tabular-nums;color:var(--ink3)}
 .row-v2.pos{color:var(--ok)} .row-v2.neg{color:var(--crit)}
 .bar{height:4px;border-radius:3px;background:var(--surf2);overflow:hidden;margin-top:6px}
 .bar i{display:block;height:100%;border-radius:3px}
@@ -145,39 +146,39 @@ section.blk{display:flex;flex-direction:column;gap:9px}
 .prod-ph{width:100%;aspect-ratio:1;background:var(--surf2);display:flex;align-items:center;
   justify-content:center;color:var(--ink3)}
 .prod-b{padding:9px 10px 10px;display:flex;flex-direction:column;gap:5px;flex:1}
-.prod-n{font-weight:600;font-size:13.5px;line-height:1.25}
+.prod-n{font-weight:600;font-size:0.8438rem;line-height:1.25}
 .prod-r{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:auto}
-.prod-st{font-size:12px;color:var(--ink2);font-variant-numeric:tabular-nums}
+.prod-st{font-size:0.75rem;color:var(--ink2);font-variant-numeric:tabular-nums}
 
 .backlink{background:none;border:0;padding:0;cursor:pointer;font-family:inherit;color:var(--acc-ink);
-  font-size:13.5px;font-weight:600;display:inline-flex;align-items:center;gap:4px}
+  font-size:0.8438rem;font-weight:600;display:inline-flex;align-items:center;gap:4px}
 .fhead{display:flex;gap:13px;align-items:flex-start}
 .fhead img,.fhead .ph{width:92px;height:92px;border-radius:10px;object-fit:cover;flex:none;
   border:1px solid var(--line);max-width:100%;background:var(--surf2)}
 .fhead .ph{display:flex;align-items:center;justify-content:center;color:var(--ink3);border-style:dashed}
-.fh-n{font-family:'Zilla Slab',Georgia,serif;font-size:20px;font-weight:600;line-height:1.15}
-.fh-m{font-size:12.5px;color:var(--ink3);margin-top:3px}
+.fh-n{font-family:'Zilla Slab',Georgia,serif;font-size:1.25rem;font-weight:600;line-height:1.15}
+.fh-m{font-size:0.7812rem;color:var(--ink3);margin-top:3px}
 
-.rec{border-collapse:collapse;width:100%;font-size:13.5px}
-.rec th{text-align:left;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);
+.rec{border-collapse:collapse;width:100%;font-size:0.8438rem}
+.rec th{text-align:left;font-size:0.6562rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);
   font-weight:600;padding:0 0 7px;border-bottom:1px solid var(--line)}
 .rec th:last-child,.rec td:last-child{text-align:right}
 .rec td{padding:8px 0;border-bottom:1px solid var(--line-soft);vertical-align:top}
 .rec tr:last-child td{border-bottom:0}
-.rec .q{font-size:12px;color:var(--ink3);margin-top:1px}
+.rec .q{font-size:0.75rem;color:var(--ink3);margin-top:1px}
 .rec .v{font-variant-numeric:tabular-nums;white-space:nowrap}
-.rec tfoot td{border-top:2px solid var(--line);border-bottom:0;padding-top:10px;font-weight:700;font-size:15px}
+.rec tfoot td{border-top:2px solid var(--line);border-bottom:0;padding-top:10px;font-weight:700;font-size:0.9375rem}
 
 .split{display:flex;gap:9px}
 .split>div{flex:1;min-width:0;background:var(--surf);border:1px solid var(--line);border-radius:11px;padding:11px 12px}
-.sp-l{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);font-weight:600}
-.sp-v{font-size:19px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums;
+.sp-l{font-size:0.6562rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);font-weight:600}
+.sp-v{font-size:1.1875rem;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums;
   font-family:'Zilla Slab',Georgia,serif;letter-spacing:-.01em}
 .sp-v.neg{color:var(--crit)} .sp-v.pos{color:var(--ok)}
 
-label{display:block;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);
+label{display:block;font-size:0.6562rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);
   font-weight:600;margin-bottom:5px}
-input,select,textarea{width:100%;font-family:inherit;font-size:16px;color:var(--ink);background:var(--bg);
+input,select,textarea{width:100%;font-family:inherit;font-size:max(16px,1rem);color:var(--ink);background:var(--bg);
   border:1px solid var(--line);border-radius:9px;padding:10px 11px;-webkit-appearance:none;appearance:none}
 input[type=number]{font-variant-numeric:tabular-nums}
 select{background-image:linear-gradient(45deg,transparent 50%,var(--ink3) 50%),linear-gradient(135deg,var(--ink3) 50%,transparent 50%);
@@ -187,7 +188,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .row2{display:flex;gap:9px}
 .row2>*{flex:1;min-width:0}
 
-.btn{width:100%;font-family:inherit;font-size:15.5px;font-weight:600;background:var(--ink);color:var(--bg);
+.btn{width:100%;font-family:inherit;font-size:0.9688rem;font-weight:600;background:var(--ink);color:var(--bg);
   border:0;border-radius:10px;padding:13px;cursor:pointer}
 .btn:active{opacity:.85}
 .btn.ghost{background:none;color:var(--ink2);border:1px solid var(--line)}
@@ -208,10 +209,19 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .sheet.on{transform:translateY(0)}
 .sheet-h{padding:15px 17px 11px;border-bottom:1px solid var(--line-soft);display:flex;
   align-items:center;justify-content:space-between;gap:12px;flex:none}
-.sheet-t{font-family:'Zilla Slab',Georgia,serif;font-size:18px;font-weight:600}
+.sheet-t{font-family:'Zilla Slab',Georgia,serif;font-size:1.125rem;font-weight:600}
 .sheet-b{padding:15px 17px;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
 .sheet-f{padding:12px 17px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line-soft);flex:none}
 .grab{width:34px;height:4px;border-radius:3px;background:var(--line);margin:8px auto 0}
+
+.esc{display:flex;gap:6px;margin-bottom:6px}
+.esc button{flex:1;background:var(--bg);border:1px solid var(--line);border-radius:10px;
+  font-family:inherit;color:var(--ink2);padding:11px 4px 9px;cursor:pointer;line-height:1.1;
+  display:flex;flex-direction:column;align-items:center;gap:5px}
+.esc button[aria-selected="true"]{border-color:var(--acc);background:var(--acc-soft);color:var(--acc-ink);
+  box-shadow:inset 0 0 0 1px var(--acc)}
+.esc .m{font-weight:700}
+.esc .l{font-size:11px;font-weight:600;letter-spacing:.02em}
 
 .photo{display:flex;gap:12px;align-items:center;margin-bottom:12px}
 .photo-box{width:76px;height:76px;border-radius:11px;border:1px dashed var(--line);background:var(--surf2);
@@ -219,9 +229,9 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
   cursor:pointer;position:relative}
 .photo-box img{width:100%;height:100%;object-fit:cover}
 .photo-box.has{border-style:solid}
-.photo-t{flex:1;min-width:0;font-size:12.5px;color:var(--ink3);line-height:1.4}
-.photo-t b{display:block;color:var(--ink);font-size:13.5px;font-weight:600;margin-bottom:2px}
-.photo-x{background:none;border:0;color:var(--crit);font-family:inherit;font-size:12.5px;
+.photo-t{flex:1;min-width:0;font-size:0.7812rem;color:var(--ink3);line-height:1.4}
+.photo-t b{display:block;color:var(--ink);font-size:0.8438rem;font-weight:600;margin-bottom:2px}
+.photo-x{background:none;border:0;color:var(--crit);font-family:inherit;font-size:0.7812rem;
   font-weight:600;padding:4px 0;cursor:pointer;margin-top:3px}
 
 .reclist{display:flex;flex-direction:column;gap:8px;margin-bottom:11px}
@@ -231,28 +241,28 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .recrow .del{background:none;border:1px solid var(--line);border-radius:9px;color:var(--crit);
   width:40px;height:41px;flex:none;cursor:pointer;display:flex;align-items:center;justify-content:center}
 .addline{background:none;border:1px dashed var(--line);border-radius:9px;color:var(--acc-ink);
-  font-family:inherit;font-size:13.5px;font-weight:600;padding:9px;width:100%;cursor:pointer}
+  font-family:inherit;font-size:0.8438rem;font-weight:600;padding:9px;width:100%;cursor:pointer}
 
-.hint{font-size:12.5px;color:var(--ink2);font-variant-numeric:tabular-nums;line-height:1.45}
+.hint{font-size:0.7812rem;color:var(--ink2);font-variant-numeric:tabular-nums;line-height:1.45}
 .hint b{color:var(--ink)}
 .hintbox{background:var(--surf2);border-radius:9px;padding:10px 12px;margin-bottom:12px}
 .warnbox{background:var(--warn-soft);border:1px solid color-mix(in srgb,var(--warn) 32%,transparent);
-  border-radius:9px;padding:10px 12px;font-size:12.5px;color:var(--ink2);line-height:1.4;display:flex;gap:9px}
+  border-radius:9px;padding:10px 12px;font-size:0.7812rem;color:var(--ink2);line-height:1.4;display:flex;gap:9px}
 .warnbox b{color:var(--ink)}
 .warnbox svg{flex:none;margin-top:1px;color:var(--warn)}
 
 /* ---------- almanaque ---------- */
 .cal{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:13px 12px 11px;box-shadow:var(--shadow)}
 .cal-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:11px}
-.cal-m{font-family:'Zilla Slab',Georgia,serif;font-size:16.5px;font-weight:600}
+.cal-m{font-family:'Zilla Slab',Georgia,serif;font-size:1.0312rem;font-weight:600}
 .cal-nav{display:flex;gap:2px}
 .cal-nav button{background:none;border:0;color:var(--ink2);cursor:pointer;padding:5px 7px;
   border-radius:8px;display:inline-flex;font-family:inherit}
 .cal-nav button:active{background:var(--surf2)}
 .cal-g{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-.cal-dow{font-size:10px;font-weight:600;color:var(--ink3);text-align:center;padding-bottom:5px;
+.cal-dow{font-size:0.625rem;font-weight:600;color:var(--ink3);text-align:center;padding-bottom:5px;
   letter-spacing:.04em;text-transform:uppercase}
-.cal-d{aspect-ratio:1;border:0;background:none;font-family:inherit;font-size:13.5px;color:var(--ink);
+.cal-d{aspect-ratio:1;border:0;background:none;font-family:inherit;font-size:0.8438rem;color:var(--ink);
   border-radius:9px;cursor:pointer;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:2px;position:relative;font-variant-numeric:tabular-nums;padding:0}
 .cal-d.out{color:var(--ink3);opacity:.45}
@@ -276,17 +286,17 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-off
 .ev-i.compra{background:var(--warn-soft);color:var(--warn)}
 .ev-i.respaldo{background:var(--ok-soft);color:var(--ok)}
 .ev-b{flex:1;min-width:0}
-.ev-t{font-weight:600;font-size:14px;line-height:1.3}
+.ev-t{font-weight:600;font-size:0.875rem;line-height:1.3}
 .ev-t.done{text-decoration:line-through;color:var(--ink3);font-weight:500}
-.ev-s{font-size:12px;color:var(--ink3);margin-top:2px;line-height:1.35}
-.ev-h{font-size:12px;font-weight:600;color:var(--acc-ink);font-variant-numeric:tabular-nums;flex:none;margin-top:2px}
+.ev-s{font-size:0.75rem;color:var(--ink3);margin-top:2px;line-height:1.35}
+.ev-h{font-size:0.75rem;font-weight:600;color:var(--acc-ink);font-variant-numeric:tabular-nums;flex:none;margin-top:2px}
 .tick{width:26px;height:26px;border-radius:50%;border:1.6px solid var(--line);background:none;flex:none;
   cursor:pointer;display:flex;align-items:center;justify-content:center;color:transparent;margin-top:2px}
 .tick.on{background:var(--ok);border-color:var(--ok);color:#fff}
 
 .chart{padding:14px 12px 10px}
-.chart-t{font-size:13.5px;font-weight:600}
-.chart-s{font-size:12px;color:var(--ink3);margin-top:2px}
+.chart-t{font-size:0.8438rem;font-weight:600}
+.chart-s{font-size:0.75rem;color:var(--ink3);margin-top:2px}
 
 nav{position:fixed;bottom:0;left:0;right:0;z-index:40;
   background:color-mix(in srgb,var(--surf) 95%,transparent);backdrop-filter:saturate(1.4) blur(14px);
@@ -295,13 +305,13 @@ nav{position:fixed;bottom:0;left:0;right:0;z-index:40;
 .tab{flex:1;background:none;border:0;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;
   align-items:center;gap:3px;padding:5px 2px;color:var(--ink3);border-radius:9px}
 .tab svg{width:21px;height:21px}
-.tab span{font-size:10px;font-weight:600}
+.tab span{font-size:0.625rem;font-weight:600}
 .tab[aria-selected="true"]{color:var(--acc-ink)}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 
-.empty{padding:26px 16px;text-align:center;color:var(--ink3);font-size:13.5px;line-height:1.5}
+.empty{padding:26px 16px;text-align:center;color:var(--ink3);font-size:0.8438rem;line-height:1.5}
 .toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
-  background:var(--ink);color:var(--bg);font-size:13.5px;font-weight:500;padding:10px 16px;border-radius:22px;
+  background:var(--ink);color:var(--bg);font-size:0.8438rem;font-weight:500;padding:10px 16px;border-radius:22px;
   z-index:60;box-shadow:var(--shadow);opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
 .toast.on{opacity:1}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -467,6 +477,18 @@ function migrar(){
   if(DB.cfg.v !== ESQUEMA) DB.cfg.v = ESQUEMA;
 }
 migrar();
+
+/* ===== TAMAÑO DE LETRA ===== */
+const ESCALAS = [
+  {k:'ch', lab:'Chica',      px:16,   demo:13},
+  {k:'no', lab:'Normal',     px:17.5, demo:15},
+  {k:'gr', lab:'Grande',     px:19,   demo:17},
+  {k:'xl', lab:'Muy grande', px:20.5, demo:19},
+];
+function aplicarEscala(){
+  const e = ESCALAS.find(x => x.k === (DB.cfg.escala || 'no')) || ESCALAS[1];
+  document.documentElement.style.fontSize = e.px + 'px';
+}
 
 function guardar(){
   try{ localStorage.setItem(KEY, JSON.stringify(DB)); }
@@ -1332,16 +1354,31 @@ Así te avisa el teléfono aunque no abras la app.</div>
 
 <label>El respaldo</label>
 <div class="hint" style="margin-bottom:16px">
-Engranaje → <b>Mandar respaldo</b>. Se abre el compartir del teléfono y lo mandás por WhatsApp,
+Hay dos, y conviene tener los dos.<br><br>
+<b>En la nube</b> (recomendado): se conecta una vez y después guarda solo, cada vez que cargás algo.
+En Ajustes vas a ver si está «Al día» y de cuándo es la última copia. Si cambiás de teléfono,
+conectás la nube y tocás <b>Traer copia</b>.<br><br>
+<b>A mano</b>: engranaje → <b>Mandar respaldo</b>. Se abre el compartir del teléfono y lo mandás por WhatsApp,
 por mail o lo guardás en Archivos. Cada 7 días la app te lo recuerda sola en la agenda.<br><br>
 Si cambiás de teléfono: abrís la app en el nuevo, <b>Subir respaldo</b>, elegís el archivo
 y vuelve todo — incluidas las fotos.</div>
+
+<label>Si la letra se ve chica</label>
+<div class="hint" style="margin-bottom:16px">Engranaje ▸ <b>Tamaño de la letra</b>: elegí entre cuatro
+tamaños y toda la app se agranda junta. Queda elegido, no hay que volver a tocarlo.</div>
 
 <label>Tenerla como una app</label>
 <div class="hint">En el teléfono, abrila y tocá Compartir → <b>Agregar a pantalla de inicio</b>.
 Queda con ícono propio y se abre a pantalla completa, como cualquier otra app.</div>`;
 
 const NOVEDADES = `
+<label>Versión 2 · 15/09/2026</label>
+<div class="hint" style="margin-bottom:16px">
+· <b>Respaldo en la nube</b>: se guarda solo cada vez que cargás algo, sin tener que acordarse.
+Se conecta una sola vez desde acá mismo.<br><br>
+· <b>Tamaño de la letra</b>: cuatro tamaños a elegir en este mismo lugar, arriba de todo.
+Toda la app se agranda junta y queda elegido para siempre.</div>
+
 <label>Versión 1 · 15/09/2026</label>
 <div class="hint" style="margin-bottom:14px">La primera. Trae:</div>
 <div class="hint" style="margin-bottom:16px">
@@ -1367,6 +1404,14 @@ function verTexto(titulo, html){
 /* ============ AJUSTES Y RESPALDO ============ */
 function edAjustes(){
   abrir('Ajustes y respaldo', `
+    <label>Tamaño de la letra</label>
+    <div class="esc" id="a-esc" role="group">
+      ${ESCALAS.map(e => `<button data-esc="${e.k}" aria-selected="${(DB.cfg.escala||'no') === e.k}">
+        <span class="m" style="font-size:${e.demo}px">Aa</span>
+        <span class="l">${e.lab}</span></button>`).join('')}
+    </div>
+    <div class="hint" style="margin-bottom:18px">Se ve al toque. Toda la app se agranda junto.</div>
+
     <div class="field"><label for="a-m">Margen que querés ganar</label>
       <input type="number" id="a-m" value="${DB.cfg.margenObj}" min="0" max="95" inputmode="decimal">
       <div class="hint" style="margin-top:6px">Con esto la app calcula a cuánto conviene vender cada modelo.</div></div>
@@ -1374,7 +1419,14 @@ function edAjustes(){
     <div class="btnrow" style="margin-bottom:6px">
       <button class="btn ghost" id="a-man">Cómo funciona</button>
       <button class="btn ghost" id="a-nov">Novedades</button></div>
-    <label style="margin-top:18px">Respaldo</label>
+    <label style="margin-top:18px">Respaldo en la nube</label>
+    <div id="nube-est" style="margin-bottom:9px"></div>
+    <div class="btnrow" style="margin-bottom:6px">
+      <button class="btn ghost" id="a-nube">Conectar</button>
+      <button class="btn ghost" id="a-nube-baja">Traer copia</button></div>
+    <div class="hint" style="margin-bottom:4px">Guarda solo, sin que ella tenga que acordarse.</div>
+
+    <label style="margin-top:18px">Respaldo a mano</label>
     <div class="hint" style="margin-bottom:11px">Los datos viven en este teléfono. Mandá un respaldo cada semana
       —por WhatsApp, mail o a Archivos— y si cambiás de teléfono lo volvés a subir sin perder nada.<br>
       <b id="a-ult"></b></div>
@@ -1400,6 +1452,29 @@ function edAjustes(){
         DB.cfg.margenObj = Math.min(95, Math.max(0, +document.getElementById('a-m').value || 0));
         guardar(); cerrar(); render();
       };
+      pintarNube();
+      const bn = document.getElementById('a-nube');
+      bn.textContent = cred().u ? 'Cambiar clave' : 'Conectar';
+      bn.onclick = edNube;
+      document.getElementById('a-nube-baja').onclick = () => {
+        if(!cred().u) return toast('Primero hay que conectar la nube.');
+        const b = document.getElementById('a-nube-baja');
+        if(b.dataset.ok !== '1'){
+          b.dataset.ok = '1';
+          b.textContent = 'Reemplaza todo · confirmar';
+          return;
+        }
+        nubeBajar();
+      };
+      document.getElementById('a-esc').querySelectorAll('[data-esc]').forEach(b => {
+        b.onclick = () => {
+          DB.cfg.escala = b.dataset.esc;
+          aplicarEscala(); guardar();
+          document.getElementById('a-esc').querySelectorAll('[data-esc]').forEach(o =>
+            o.setAttribute('aria-selected', o.dataset.esc === DB.cfg.escala));
+          render();
+        };
+      });
       document.getElementById('a-man').onclick = () => verTexto('Cómo funciona', MANUAL);
       document.getElementById('a-nov').onclick = () => verTexto('Novedades', NOVEDADES);
       document.getElementById('a-exp').onclick = mandarRespaldo;
@@ -1526,7 +1601,7 @@ function vHoy(){
     <div class="blk-t">${MESN[new Date().getMonth()]} hasta hoy</div>
     <div class="hero">
       <div class="hero-lab">Te quedó</div>
-      <div class="hero-n${m.neto < 0 ? ' neg' : ''}" style="font-size:36px">${fmt(m.neto)}</div>
+      <div class="hero-n${m.neto < 0 ? ' neg' : ''}" style="font-size:2.25rem">${fmt(m.neto)}</div>
       <div class="hero-sub">${fmt(m.vendido)} vendidos · ${fmt(m.costo)} de materiales y mano de obra · ${fmt(m.gastos)} de gastos</div>
       <div class="hero-foot">
         <div><div class="ff-l">Margen bruto</div><div class="ff-v">${pct(m.margenBruto)}</div></div>
@@ -1585,7 +1660,7 @@ function vFicha(id){
 
   <div class="hero" style="padding:14px 16px">
     <div class="hero-lab">Deja de ganancia</div>
-    <div class="hero-n${gan < 0 ? ' neg' : ''}" style="font-size:34px">${fmt(gan)}</div>
+    <div class="hero-n${gan < 0 ? ' neg' : ''}" style="font-size:2.125rem">${fmt(gan)}</div>
     <div class="hero-sub">${pct(margenPct(p))} del precio de venta</div>
   </div>
 
@@ -1607,7 +1682,7 @@ function vFicha(id){
       <tr><td><div>Mano de obra</div><div class="q">confección de la pieza</div></td>
         <td class="v">${fmt(p.mo)}</td></tr></tbody>
       <tfoot><tr><td>Costo total</td><td class="v">${fmt(tot)}</td></tr></tfoot></table>
-      <div class="hint" style="margin-top:10px;color:var(--ink3);font-size:12px">
+      <div class="hint" style="margin-top:10px;color:var(--ink3);font-size:0.75rem">
         Materiales ${fmt(mat)} + mano de obra ${fmt(p.mo)}</div>
     </div>
   </section>
@@ -1757,15 +1832,15 @@ function vNumeros(){
          aria-label="Margen neto por mes">
       ${ticks.map(t => `<line x1="${X0}" y1="${py(t)}" x2="${X1}" y2="${py(t)}"
           stroke="var(--line)" stroke-width="1"/>
-        <text x="${X0-7}" y="${py(t)+3.5}" text-anchor="end" font-size="9" fill="var(--ink3)">${t}%</text>`).join('')}
+        <text x="${X0-7}" y="${py(t)+3.5}" text-anchor="end" font-size="10" fill="var(--ink3)">${t}%</text>`).join('')}
       <path d="${linea} L${px(last)} ${py(lo)} L${X0} ${py(lo)} Z" fill="var(--acc)" opacity=".13"/>
       <path d="${linea}" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
       ${pts.map((pt,i) => `<circle cx="${pt[0].toFixed(1)}" cy="${pt[1].toFixed(1)}" r="${i===last?4.5:3.4}"
         fill="${i===last?'var(--acc-ink)':'var(--acc)'}" stroke="var(--surf)" stroke-width="2">
         <title>${esc(nombreMes(serie[i].m))}: ${pct(serie[i].margenNeto)} · ${fmt(serie[i].neto)}</title></circle>`).join('')}
       <text x="${pts[last][0].toFixed(1)}" y="${(pts[last][1]-9).toFixed(1)}" text-anchor="${last === serie.length-1 ? 'end' : 'middle'}"
-        font-size="10.5" font-weight="600" fill="var(--ink)">${pct(serie[last].margenNeto)}</text>
-      ${serie.map((s,i) => `<text x="${px(i).toFixed(1)}" y="143" text-anchor="middle" font-size="9.5"
+        font-size="12" font-weight="600" fill="var(--ink)">${pct(serie[last].margenNeto)}</text>
+      ${serie.map((s,i) => `<text x="${px(i).toFixed(1)}" y="143" text-anchor="middle" font-size="10.5"
         fill="${i===last?'var(--acc-ink)':'var(--ink3)'}" font-weight="600">${esc(MESN[+s.m.slice(5,7)-1].slice(0,3).toUpperCase())}</text>`).join('')}
     </svg>`
     : `<div class="empty" style="padding:18px 0">Con un mes solo todavía no hay tendencia.<br>
@@ -1904,11 +1979,257 @@ document.getElementById('fab').addEventListener('click', () => {
 });
 document.getElementById('btn-cfg').addEventListener('click', edAjustes);
 
+aplicarEscala();
 render();
 </script>
 
 <script>
-/* pide que iOS no borre los datos por falta de uso */
+/* ===================== RESPALDO EN LA NUBE =====================
+   Firestore del proyecto la-barbara-taller. El respaldo se parte en
+   pedazos porque un documento no puede pasar de 1 MB.
+   Nada de esto es obligatorio: si no hay internet o no carga, la app
+   sigue andando igual con los datos del teléfono.                     */
+
+const FB_CFG = {
+  apiKey: "AIzaSyAC0vQyPQ-i2Cm6qh9DiB3H7waDuy3Iewo",
+  authDomain: "la-barbara-taller.firebaseapp.com",
+  projectId: "la-barbara-taller",
+  storageBucket: "la-barbara-taller.firebasestorage.app",
+  messagingSenderId: "574091048228",
+  appId: "1:574091048228:web:a1dbe65ea46fb4728d6fb1"
+};
+const FB_VER = '10.14.1';
+const FB_URL = n => `https://cdn.jsdelivr.net/npm/firebase@${FB_VER}/firebase-${n}-compat.js`;
+const TROZO = 600000;                  // caracteres por pedazo
+const K_USER = 'taller_lb_user', K_PASS = 'taller_lb_pass';
+
+const NUBE = {
+  sdk:null, estado:'off', detalle:'', ultima:'', subiendo:false, pendiente:false, timer:null
+};
+/* off · sin-clave · conectando · listo · subiendo · error · sin-red */
+
+const cred = () => {
+  try { return {u: localStorage.getItem(K_USER) || '', p: localStorage.getItem(K_PASS) || ''}; }
+  catch(e){ return {u:'', p:''}; }
+};
+function guardarCred(u, p){
+  try { localStorage.setItem(K_USER, u); localStorage.setItem(K_PASS, p); } catch(e){}
+}
+function borrarCred(){
+  try { localStorage.removeItem(K_USER); localStorage.removeItem(K_PASS); } catch(e){}
+  NUBE.estado = 'sin-clave'; NUBE.detalle = ''; pintarNube();
+}
+
+function cargarScript(src){
+  return new Promise((ok, mal) => {
+    const s = document.createElement('script');
+    s.src = src; s.async = true;
+    s.onload = ok;
+    s.onerror = () => mal(new Error('no cargó ' + src));
+    document.head.appendChild(s);
+  });
+}
+
+async function nubeIniciar(){
+  const c = cred();
+  if(!c.u || !c.p){ NUBE.estado = 'sin-clave'; pintarNube(); return null; }
+  if(NUBE.sdk) return NUBE.sdk;
+  NUBE.estado = 'conectando'; NUBE.detalle = ''; pintarNube();
+  try{
+    if(!window.firebase){
+      await cargarScript(FB_URL('app'));
+      await Promise.all([cargarScript(FB_URL('auth')), cargarScript(FB_URL('firestore'))]);
+    }
+    const app = firebase.apps && firebase.apps.length
+      ? firebase.app() : firebase.initializeApp(FB_CFG);
+    await firebase.auth().signInWithEmailAndPassword(c.u, c.p);
+    NUBE.sdk = {db: firebase.firestore()};
+    NUBE.estado = 'listo'; NUBE.detalle = '';
+    await nubeLeerMeta();
+    pintarNube();
+    return NUBE.sdk;
+  }catch(err){
+    NUBE.sdk = null;
+    const cod = (err && err.code) || '';
+    NUBE.estado = 'error';
+    NUBE.detalle =
+      cod === 'auth/invalid-credential' || cod === 'auth/wrong-password' || cod === 'auth/user-not-found'
+        ? 'El usuario o la contraseña no son correctos.'
+      : cod === 'auth/network-request-failed' || /no cargó/.test(err.message || '')
+        ? 'Sin internet. Se va a reintentar solo.'
+      : cod === 'auth/too-many-requests'
+        ? 'Demasiados intentos. Esperá un rato.'
+      : (err && err.message) || 'No se pudo conectar.';
+    if(NUBE.detalle.startsWith('Sin internet')) NUBE.estado = 'sin-red';
+    pintarNube();
+    return null;
+  }
+}
+
+async function nubeLeerMeta(){
+  try{
+    const d = await NUBE.sdk.db.collection('respaldo').doc('meta').get();
+    NUBE.ultima = d.exists ? (d.data().fecha || '') + (d.data().hora ? ' ' + d.data().hora : '') : '';
+  }catch(e){ NUBE.ultima = ''; }
+}
+
+/* ---- subir ---- */
+async function nubeSubir(silencioso){
+  const sdk = NUBE.sdk || await nubeIniciar();
+  if(!sdk) return false;
+  if(NUBE.subiendo){ NUBE.pendiente = true; return false; }
+  NUBE.subiendo = true; NUBE.estado = 'subiendo'; pintarNube();
+  try{
+    const txt = JSON.stringify(DB);
+    const partes = [];
+    for(let i = 0; i < txt.length; i += TROZO) partes.push(txt.slice(i, i + TROZO));
+    const ahora = new Date();
+    const col = sdk.db.collection('respaldo');
+    const lote = sdk.db.batch();
+    partes.forEach((t, i) => lote.set(col.doc('p' + i), {i, t}));
+    lote.set(col.doc('meta'), {
+      partes: partes.length, bytes: txt.length, v: ESQUEMA,
+      fecha: ahora.toISOString().slice(0,10),
+      hora: String(ahora.getHours()).padStart(2,'0') + ':' + String(ahora.getMinutes()).padStart(2,'0'),
+      ts: Date.now()
+    });
+    await lote.commit();
+    /* si antes había más pedazos, los de sobra se borran */
+    const viejas = await col.get();
+    const sobran = viejas.docs.filter(d => d.id !== 'meta' && +d.id.slice(1) >= partes.length);
+    if(sobran.length){
+      const l2 = sdk.db.batch();
+      sobran.forEach(d => l2.delete(d.ref));
+      await l2.commit();
+    }
+    NUBE.ultima = ahora.toISOString().slice(0,10) + ' ' +
+      String(ahora.getHours()).padStart(2,'0') + ':' + String(ahora.getMinutes()).padStart(2,'0');
+    NUBE.estado = 'listo'; NUBE.detalle = '';
+    DB.cfg.ultimoRespaldo = hoyISO();
+    try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){}
+    if(!silencioso) toast('Respaldo guardado en la nube.');
+    return true;
+  }catch(err){
+    NUBE.estado = 'error';
+    NUBE.detalle = (err && err.code === 'permission-denied')
+      ? 'La nube no acepta la escritura. Faltan pegar las reglas.'
+      : 'No se pudo subir: ' + ((err && err.message) || 'error');
+    if(!silencioso) toast(NUBE.detalle);
+    return false;
+  }finally{
+    NUBE.subiendo = false; pintarNube();
+    if(NUBE.pendiente){ NUBE.pendiente = false; nubeAgendar(); }
+  }
+}
+
+/* espera a que deje de tocar y recién ahí sube, para no subir 20 veces seguidas */
+function nubeAgendar(){
+  if(NUBE.estado === 'sin-clave') return;
+  clearTimeout(NUBE.timer);
+  NUBE.timer = setTimeout(() => nubeSubir(true), 8000);
+}
+
+/* ---- bajar ---- */
+async function nubeBajar(){
+  const sdk = NUBE.sdk || await nubeIniciar();
+  if(!sdk) return toast('No se pudo conectar con la nube.');
+  try{
+    const meta = await sdk.db.collection('respaldo').doc('meta').get();
+    if(!meta.exists) return toast('Todavía no hay ningún respaldo en la nube.');
+    const n = meta.data().partes || 0;
+    const partes = [];
+    for(let i = 0; i < n; i++){
+      const d = await sdk.db.collection('respaldo').doc('p' + i).get();
+      if(!d.exists) throw new Error('falta el pedazo ' + i);
+      partes.push(d.data().t || '');
+    }
+    const o = JSON.parse(partes.join(''));
+    if(!o || !Array.isArray(o.productos)) throw new Error('el respaldo está incompleto');
+    DB = o; migrar(); guardar();
+    cerrar(); ir('hoy');
+    toast('Listo, se trajo el respaldo del ' + (meta.data().fecha || '') + '.');
+  }catch(err){
+    toast('No se pudo traer: ' + ((err && err.message) || 'error'));
+  }
+}
+
+/* ---- el estado que se ve en Ajustes ---- */
+const NUBE_TXT = {
+  off:       ['', ''],
+  'sin-clave':['mut',  'Sin conectar'],
+  conectando:['mut',  'Conectando…'],
+  listo:     ['ok',   'Al día'],
+  subiendo:  ['warn', 'Guardando…'],
+  'sin-red': ['warn', 'Sin internet'],
+  error:     ['crit', 'Con problema'],
+};
+function pintarNube(){
+  const cont = document.getElementById('nube-est');
+  if(!cont) return;
+  const [cl, lab] = NUBE_TXT[NUBE.estado] || NUBE_TXT.off;
+  const ult = NUBE.ultima ? `Última copia: ${dm(NUBE.ultima.slice(0,10))} ${NUBE.ultima.slice(11)}` : 'Todavía sin copia';
+  cont.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+      <span class="pill ${cl}"><span class="dot"></span>${lab}</span></div>
+    <div class="hint">${esc(ult)}${NUBE.detalle ? '<br><span style="color:var(--crit)">' + esc(NUBE.detalle) + '</span>' : ''}</div>`;
+}
+
+/* ---- conectar / desconectar desde Ajustes ---- */
+function edNube(){
+  const c = cred();
+  abrir('Respaldo en la nube', `
+    <div class="hintbox hint" style="margin-bottom:14px">Con esto el respaldo se guarda solo, sin que
+      Laura tenga que acordarse. Se carga <b>una sola vez</b> en su teléfono.</div>
+    <div class="field"><label for="n-u">Usuario</label>
+      <input id="n-u" value="${esc(c.u || 'laura@labarbara.app')}" autocomplete="off"
+        autocapitalize="off" spellcheck="false"></div>
+    <div class="field"><label for="n-p">Contraseña</label>
+      <input type="password" id="n-p" value="${esc(c.p)}" autocomplete="off"></div>
+    <div class="hint" id="n-msg"></div>`,
+    `<div class="btnrow">${c.u ? '<button class="btn danger" id="n-off">Desconectar</button>' : ''}
+      <button class="btn" id="n-ok">Conectar</button></div>`,
+    () => {
+      document.getElementById('n-ok').onclick = async () => {
+        const u = document.getElementById('n-u').value.trim();
+        const p = document.getElementById('n-p').value;
+        if(!u || !p) return toast('Poné el usuario y la contraseña.');
+        document.getElementById('n-msg').textContent = 'Conectando…';
+        guardarCred(u, p);
+        NUBE.sdk = null;
+        const sdk = await nubeIniciar();
+        if(sdk){
+          await nubeSubir(true);
+          cerrar(); edAjustes(); toast('Conectado. El respaldo ahora se guarda solo.');
+        } else {
+          document.getElementById('n-msg').innerHTML =
+            '<span style="color:var(--crit)">' + esc(NUBE.detalle || 'No se pudo conectar.') + '</span>';
+        }
+      };
+      const bo = document.getElementById('n-off');
+      if(bo) bo.onclick = () => { borrarCred(); NUBE.sdk = null; cerrar(); edAjustes(); toast('Desconectado.'); };
+    });
+}
+
+/* cada vez que se guarda algo, se agenda la subida */
+const _guardarLocal = guardar;
+guardar = function(){
+  _guardarLocal();
+  nubeAgendar();
+};
+
+/* al abrir la app: conectar en segundo plano, sin trabar nada */
+setTimeout(() => {
+  const c = cred();
+  if(c.u && c.p) nubeIniciar().then(sdk => { if(sdk) nubeAgendar(); });
+  else { NUBE.estado = 'sin-clave'; pintarNube(); }
+}, 1200);
+
+/* si vuelve la señal, reintenta */
+window.addEventListener('online', () => {
+  if(NUBE.estado === 'sin-red' || NUBE.estado === 'error'){ NUBE.sdk = null; nubeIniciar(); }
+});
+</script>
+
+<script>
 if (navigator.storage && navigator.storage.persist) {
   navigator.storage.persisted().then(ok => { if (!ok) navigator.storage.persist(); });
 }
