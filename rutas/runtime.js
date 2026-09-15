@@ -1178,26 +1178,34 @@ function ptvPortafolio(x){
         + '<div class="ptvv">' + pmil(P.n) + ' clientes categorizados'
         + (P.sin ? ' · <b>' + pmil(P.sin) + ' sin categoría</b>' : '')
         + ' · ' + pmil(P.full) + ' con todo lo que le toca</div>';
-  h += '<div class="ptvsub" style="margin:10px 0 2px">Cliente por cliente · página ' + (pg+1) + ' de ' + tot + '</div>';
-  h += '<div class="ptvl">';
+  h += '<div class="ptvsub" style="margin:10px 0 2px">Cliente por cliente, el que más tiene para vender primero · página ' + (pg+1) + ' de ' + tot + '</div>';
+  h += '<div class="ptvpfl">';
   L.slice(pg*pag, pg*pag + pag).forEach(function(z){
     var nom = String(z[0]||''), cat = String(z[1]||''), ti = Number(z[2])||0, to = Number(z[3])||0;
     var fa = z[4] || [], fal = to - ti, bits = Number(z[5])||0;
-    h += '<div class="ptvli"><span>' + esc(nom)
-       + (cat ? ' <i style="font-style:normal;color:#9db6d4;font-size:.75em">' + esc(cat) + '</i>' : '')
-       + '</span><b class="' + (fal === 0 ? 'ptvpfok' : (ti === 0 ? 'ptvpfmal' : '')) + '">' + ti + ' de ' + to + '</b></div>';
-    var det = '';
-    if(fa.length) det = 'le falta: ' + fa.slice(0,4).map(esc).join(' · ') + (fal > 4 ? ' y ' + (fal - 4) + ' más' : '');
-    else if(fal === 0) det = 'le vende todo lo que le toca';
-    if(bits & 2) det += (det ? ' · ' : '') + 'todavía no compra Branca';
-    if(det) h += '<div class="ptvpfd">' + det + '</div>';
+    h += '<div class="ptvpfr"><div class="ptvpfh"><div class="ptvpfn">' + esc(nom)
+       + (cat ? ' <span class="ptvpfc">' + esc(cat) + '</span>' : '')
+       + '</div><div class="ptvpfv ' + (fal === 0 ? 'ptvpfok' : (ti === 0 ? 'ptvpfmal' : '')) + '">' + ti + ' de ' + to + '</div></div>';
+    if(fa.length) h += '<div class="ptvpfd">le falta: ' + fa.slice(0,8).map(esc).join(' · ')
+       + (fal > 8 ? ' y ' + (fal - 8) + ' más' : '') + '</div>';
+    else if(fal === 0) h += '<div class="ptvpfd ptvpfok">le vende todo lo que le toca</div>';
+    var no = [];
+    if(bits & 2) no.push('todavía no compra Branca');
+    if(bits & 1) no.push('lámina prestada');
+    if(no.length) h += '<div class="ptvpfnt">' + no.join(' · ') + '</div>';
+    h += '</div>';
   });
   h += '</div>';
   if(tot > 1){
     h += '<div class="ptvpg">';
-    h += '<button class="ptvn" onclick="tvPg(' + (pg-1 < 0 ? tot-1 : pg-1) + ')">&#8592;</button>';
-    for(var i=0;i<tot;i++) h += '<button class="ptvn' + (i===pg?' act':'') + '" onclick="tvPg(' + i + ')">' + (i+1) + '</button>';
-    h += '<button class="ptvn" onclick="tvPg(' + (pg+1 >= tot ? 0 : pg+1) + ')">&#8594;</button>';
+    if(tot <= 10){
+      h += '<button class="ptvn" onclick="tvPg(' + (pg-1 < 0 ? tot-1 : pg-1) + ')">&#8592;</button>';
+      for(var i=0;i<tot;i++) h += '<button class="ptvn' + (i===pg?' act':'') + '" onclick="tvPg(' + i + ')">' + (i+1) + '</button>';
+      h += '<button class="ptvn" onclick="tvPg(' + (pg+1 >= tot ? 0 : pg+1) + ')">&#8594;</button>';
+    } else {
+      h += '<button class="ptvgo" onclick="tvPg(' + (pg-1 < 0 ? tot-1 : pg-1) + ')">&#8592; anteriores</button>';
+      h += '<button class="ptvgo" onclick="tvPg(' + (pg+1 >= tot ? 0 : pg+1) + ')">siguientes &#8594;</button>';
+    }
     h += '</div>';
   }
   return h + '</div>';
