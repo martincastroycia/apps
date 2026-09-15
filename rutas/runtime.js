@@ -496,7 +496,7 @@ function copiarPedido(n){
   copiar(t);
 }
 function pintar(){
-  if(PAN && (VISTA==='pan' || VISTA==='tv' || !G.vs || !G.vs.length)){ pintarPanel(); return; }
+  if(PAN && (VISTA==='pan' || VISTA==='tv' || VISTA==='tvtb' || !G.vs || !G.vs.length)){ pintarPanel(); return; }
   try{ document.body.className = ''; document.body.style.background = ''; }catch(e){}
   var v = quien ? elVend(quien) : null;
   var h = '';
@@ -1249,6 +1249,236 @@ function ptvPortada(){
   h += '<button class="ptvsal" onclick="verVista(\'pan\')">Salir del modo pantalla</button></div>';
   return h;
 }
+/* ===== EL TABLERO DE BRANCA EN EL TELEFONO ==========================
+   Las mismas hojas del informe de Branca, pero adentro de la aplicacion.
+   Van en un BLOQUE APARTE, abajo de todo lo que ya venian viendo, para
+   no mezclar: arriba la preventa de siempre, abajo el tablero.
+   Quien ve que: las tres hojas del supervisor (Cumplimiento, Clientes en
+   Riesgo y Segmentación) las ve todo el que tiene tablero; el Resumen
+   Ejecutivo y el Mix de portafolio son GERENCIALES y solo viajan a los
+   duenios (800, 802, 804). Eso se decide en la oficina, en panelDatos:
+   aca solo se dibuja lo que vino. */
+function tbHay(){ return !!(PAN && PAN.tb && PAN.tb.sup); }
+function tbGer(){ return !!(PAN && PAN.tb && PAN.tb.ger); }
+function tbtvTot(){ return tbtvOrden().length; }
+/* [stated] 15/9/2026: «el resumen ejecutivo mas que nada es para verlo en
+   pantalla». Por eso, al que le corresponde lo gerencial, la pantalla grande
+   ARRANCA por ahi: Resumen Ejecutivo, Mix, y despues las tres del supervisor.
+   Al 206 y al 308 les arranca por Cumplimiento, que es lo que tienen. */
+function tbtvOrden(){ return tbGer() ? ['ger', 'mix', 'cumpl', 'ries', 'seg'] : ['cumpl', 'ries', 'seg']; }
+var TBI = 0;
+var TBTV = false;
+function tbtvIr(i){ var n = tbtvTot(); TBI = ((i % n) + n) % n; pintar(); window.scrollTo(0,0); }
+function tbtvAbrir(i){ TBI = i; verVista('tvtb'); }
+/* una barra proporcional simple, sin depender de cuota */
+function tbbar(v, max, col){
+  var p = max > 0 ? Math.max(0, Math.min(100, v / max * 100)) : 0;
+  return '<div class="pbar"><i style="width:' + p.toFixed(1) + '%;background:' + (col || '#2f6fb3') + '"></i></div>';
+}
+function tbpcCol(pc){ return pc >= 100 ? 'mokt' : pc >= 80 ? 'mwarnt' : 'mbadtxt'; }
+var TB_RELN = ['Nivel 1 · de arranque', 'Nivel 2 · medianos', 'Nivel 3 · importantes', 'Nivel 4 · los que hacen la mitad'];
+/* ---------- HOJA 1: CUMPLIMIENTO COMERCIAL ---------- */
+function ptbCumpl(){
+  var S = PAN.tb.sup, L = S.cumpl || [];
+  var h = '<div class="pcard"><div class="pct">Cumplimiento comercial</div>'
+        + '<div class="phint">Litros de la línea Branca contra la cuota, vendedor por vendedor'
+        + (S.cumplMeses && S.cumplMeses.length ? '. Período: ' + esc(S.cumplMeses.join(', ')) : '') + '.</div>';
+  if(!L.length) return h + '<div class="pal">Todavía no hay cuotas cargadas para este periodo.</div></div>';
+  var tr = 0, to = 0;
+  L.forEach(function(x){ tr += x[2]; to += x[3]; });
+  h += '<div class="pctop"><span class="pct">El grupo</span><span class="pcpc ' + pcol(tr, to) + '">' + ppc(tr, to) + '%</span></div>'
+     + '<div class="psb">' + plit(tr) + ' L de ' + plit(to) + ' L de cuota</div>' + pbar(tr, to);
+  L.forEach(function(x){
+    h += '<div class="prow"><span class="prn">' + esc(x[0]) + '</span>'
+       + '<span class="prv ' + tbpcCol(x[1]) + '"><b>' + x[1] + '%</b></span></div>'
+       + '<div class="prs">' + plit(x[2]) + ' L de ' + plit(x[3]) + ' L</div>' + pbar(x[2], x[3]);
+  });
+  return h + '</div>';
+}
+/* ---------- HOJA 2: CLIENTES EN RIESGO ---------- */
+function ptbRiesgo(){
+  var R = PAN.tb.sup.ries, pc = R.cart ? Math.round(R.n / R.cart * 100) : 0;
+  var h = '<div class="pcard ' + (pc >= 25 ? 'prjc' : '') + '"><div class="pctop"><span class="pct">Clientes en riesgo</span>'
+        + '<span class="pcpc ' + (pc >= 25 ? 'mbadtxt' : 'mwarnt') + '">' + pc + '%</span></div>'
+        + '<div class="pbig">' + pmil(R.n) + '</div>'
+        + '<div class="psb">de ' + pmil(R.cart) + ' clientes de la cartera. Hace más de ' + R.dias + ' días que no compran Branca.</div>';
+  if(R.zonas && R.zonas.length){
+    h += '<div class="psub">POR ZONA</div>';
+    var mx = R.zonas[0][1];
+    R.zonas.slice(0, 10).forEach(function(z){
+      h += '<div class="prow"><span class="prn">' + esc(z[0]) + '</span><span class="prv"><b>' + pmil(z[1]) + '</b></span></div>'
+         + tbbar(z[1], mx, '#c0392b');
+    });
+  }
+  if(R.lista && R.lista.length){
+    /* en el telefono va plegada, que es una lista larga; en el televisor va
+       abierta y cortada a doce, que es para lo que se prende la pantalla. */
+    var L2 = TBTV ? R.lista.slice(0, 12) : R.lista;
+    h += TBTV ? '<div class="psub">A QUI\u00c9N HAY QUE IR A BUSCAR</div><div class="plista">'
+              : '<details class="pdet"><summary>La lista, los m\u00e1s grandes primero <b>' + R.lista.length + '</b></summary><div class="plista">';
+    L2.forEach(function(z){
+      h += '<div class="pl"><span>' + esc(z[0]) + ' <i>&middot; ' + esc(z[3] || '') + '</i></span><b>'
+         + (z[2] ? fmt(z[2]) + ' &middot; ' : '') + z[1] + ' d</b></div>';
+    });
+    h += TBTV ? '</div>' : '</div></details>';
+  }
+  return h + '</div>';
+}
+/* ---------- HOJA 3: SEGMENTACION DE CARTERA ---------- */
+function ptbSeg(){
+  var S = PAN.tb.sup.seg;
+  var h = '<div class="pcard"><div class="pct">Segmentación de cartera</div>'
+        + '<div class="phint">' + pmil(S.n) + ' clientes. El subcanal es lo que es el cliente; el nivel lo arma el programa por lo que factura.</div>';
+  if(S.sub && S.sub.length){
+    var mx = S.sub[0][1];
+    h += '<div class="psub">POR SUBCANAL</div>';
+    S.sub.slice(0, 12).forEach(function(z){
+      h += '<div class="prow"><span class="prn">' + esc(z[0]) + '</span><span class="prv"><b>' + pmil(z[1]) + '</b>'
+         + (S.n ? ' <i>' + Math.round(z[1] / S.n * 100) + '%</i>' : '') + '</span></div>' + tbbar(z[1], mx, '#2f6fb3');
+    });
+  }
+  h += '<div class="psub">POR NIVEL DE RELEVANCIA</div>';
+  var mr = Math.max.apply(null, S.rel);
+  S.rel.forEach(function(n, i){
+    h += '<div class="prow"><span class="prn">' + TB_RELN[i] + '</span><span class="prv"><b>' + pmil(n) + '</b></span></div>'
+       + tbbar(n, mr, ['#7f8c9b', '#4a86c5', '#2f6fb3', '#c89b3c'][i]);
+  });
+  if(S.cruce && S.cruce.length){
+    h += TBTV ? '<div class="psub">SUBCANAL POR NIVEL</div><div class="plista">'
+              : '<details class="pdet"><summary>Subcanal por nivel, el cruce</summary><div class="plista">';
+    S.cruce.forEach(function(z){
+      h += '<div class="pl"><span>' + esc(z[0]) + '</span><b>' + z[1] + ' &middot; ' + z[2] + ' &middot; ' + z[3] + ' &middot; ' + z[4] + '</b></div>';
+    });
+    h += '</div><div class="phint">Los cuatro n\u00fameros son los niveles 1, 2, 3 y 4.</div>' + (TBTV ? '' : '</details>');
+  }
+  return h + '</div>';
+}
+/* ---------- HOJA 4 (gerencial): RESUMEN EJECUTIVO ---------- */
+function ptbResumen(){
+  var G2 = PAN.tb.ger, K = G2.kpi;
+  var h = '<div class="pcard pazulc"><div class="pct">Resumen ejecutivo ' + esc(String(G2.ano || '')) + '</div>'
+        + '<div class="phint">Esto es GERENCIAL: va solamente a la dirección.</div>'
+        + '<div class="ptvchips">'
+        + '<span class="ptvch">' + plit(K.lit) + ' L vendidos</span>'
+        + (K.si === null ? '' : '<span class="ptvch">' + plit(K.si) + ' L comprados a Branca</span>')
+        + '<span class="ptvch">' + pmil(K.cajas) + ' cajas</span>'
+        + '<span class="ptvch">' + pmil(K.cli) + ' de ' + pmil(K.cart) + ' clientes</span>'
+        + (K.dias === null ? '' : '<span class="ptvch' + (K.dias < 15 ? ' pr2' : '') + '">' + K.dias + ' días de stock</span>')
+        + '</div>';
+  if(K.pc !== null){
+    h += '<div class="pctop"><span class="pct">Cumplimiento</span><span class="pcpc ' + pcol(K.real, K.obj) + '">' + K.pc + '%</span></div>'
+       + '<div class="psb">' + plit(K.real) + ' L de ' + plit(K.obj) + ' L'
+       + (K.cmeses && K.cmeses.length ? ' &middot; ' + esc(K.cmeses.join(', ')) : '') + '</div>' + pbar(K.real, K.obj);
+  }
+  if(K.stl) h += '<div class="pln">Quedan <b>' + plit(K.stl) + ' L</b> en el depósito; se vendieron <b>' + plit(K.diasPer) + ' L por día</b>.</div>';
+  h += '</div>';
+  /* litros mes por mes, contra objetivo y contra el ano pasado */
+  var S = G2.serie || [], mx = 0;
+  S.forEach(function(r){ mx = Math.max(mx, r[1] || 0, r[2] || 0, r[3] || 0); });
+  h += '<div class="pcard"><div class="pct">Litros mes por mes</div>'
+     + '<div class="phint">La barra es lo vendido. Abajo, el objetivo y el mismo mes del año pasado.</div>';
+  S.forEach(function(r){
+    if(r[1] === null && r[2] === null) return;
+    var pie = [];
+    if(r[2] !== null) pie.push('objetivo ' + plit(r[2]) + ' L');
+    if(r[3] !== null) pie.push('año pasado ' + plit(r[3]) + ' L');
+    h += '<div class="prow"><span class="prn">' + esc(r[0]) + '</span><span class="prv"><b>'
+       + (r[1] === null ? 'sin datos' : plit(r[1]) + ' L') + '</b></span></div>'
+       + tbbar(r[1] || 0, mx, '#2f6fb3')
+       + (pie.length ? '<div class="prs">' + pie.join(' &middot; ') + '</div>' : '');
+  });
+  h += '</div>';
+  /* clientes que compraron, mes por mes */
+  var hayC = S.some(function(r){ return r[4] !== null; });
+  if(hayC){
+    var mc = 0; S.forEach(function(r){ mc = Math.max(mc, r[4] || 0, r[5] || 0); });
+    h += '<div class="pcard"><div class="pct">Clientes que compraron Branca</div>';
+    S.forEach(function(r){
+      if(r[4] === null) return;
+      h += '<div class="prow"><span class="prn">' + esc(r[0]) + '</span><span class="prv"><b>' + pmil(r[4]) + '</b>'
+         + (r[5] === null ? '' : ' <i>vs ' + pmil(r[5]) + '</i>') + '</span></div>' + tbbar(r[4], mc, '#c89b3c');
+    });
+    h += '</div>';
+  }
+  /* participacion por marca */
+  if(G2.marcas && G2.marcas.length){
+    h += '<div class="pcard"><div class="pct">Participación por marca</div>'
+       + '<div class="phint">Qué parte de los litros se lleva cada marca, mes por mes.</div>';
+    G2.marcas.forEach(function(M){
+      var v = M[1], ult = v.length ? v[v.length - 1] : 0;
+      h += '<div class="prow"><span class="prn">' + esc(M[0]) + '</span><span class="prv"><b>' + ult + '%</b></span></div>'
+         + tbbar(ult, 100, '#2f6fb3')
+         + '<div class="prs">' + v.map(function(x){ return x + '%'; }).join(' &middot; ') + '</div>';
+    });
+    h += '</div>';
+  }
+  return h;
+}
+/* ---------- HOJA 5 (gerencial): MIX Y PORTAFOLIO ---------- */
+function ptbMix(){
+  var G2 = PAN.tb.ger;
+  var h = '<div class="pcard"><div class="pct">Mix por presentación</div>'
+        + '<div class="phint">Los litros del periodo, repartidos por el envase. Es gerencial.</div>';
+  (G2.pres || []).forEach(function(z){
+    var pc = G2.totL ? Math.round(z[1] / G2.totL * 100) : 0;
+    h += '<div class="prow"><span class="prn">' + esc(z[0]) + '</span><span class="prv"><b>' + plit(z[1]) + ' L</b> <i>' + pc + '%</i></span></div>'
+       + tbbar(z[1], (G2.pres[0] || [0, 1])[1], '#2f6fb3')
+       + '<div class="prs">' + pmil(z[2]) + ' unidades</div>';
+  });
+  h += '</div>';
+  if(G2.subL && G2.subL.length){
+    h += '<div class="pcard"><div class="pct">Litros por subcanal</div>'
+       + '<div class="phint">De los meses que tienen el detalle por cliente' + (G2.hayL && G2.hayL.length ? ': ' + esc(G2.hayL.join(', ')) : '') + '.</div>';
+    var mx = G2.subL[0][1];
+    G2.subL.slice(0, 12).forEach(function(z){
+      h += '<div class="prow"><span class="prn">' + esc(z[0]) + '</span><span class="prv"><b>' + plit(z[1]) + ' L</b></span></div>'
+         + tbbar(z[1], mx, '#4a86c5');
+    });
+    h += '</div>';
+  }
+  if(G2.pen && G2.pen.length){
+    h += '<div class="pcard"><div class="pct">Penetración del portafolio</div>'
+       + '<div class="phint">De los ' + pmil(G2.penBase) + ' clientes que compran Branca, cuántos llevan cada marca. Lo que falta es lo que hay para colocar.</div>';
+    G2.pen.forEach(function(z){
+      h += '<div class="prow"><span class="prn">' + esc(z[0]) + '</span><span class="prv"><b>' + z[2] + '%</b> <i>' + pmil(z[1]) + '</i></span></div>'
+         + tbbar(z[2], 100, z[2] >= 50 ? '#2f7d4f' : z[2] >= 20 ? '#c89b3c' : '#c0392b');
+    });
+    h += '</div>';
+  }
+  return h;
+}
+/* ---------- el bloque entero, abajo de todo ---------- */
+function ppanTb(){
+  if(!tbHay()) return '';
+  var h = '<div class="pcard pazulc"><div class="pct">TABLERO DE BRANCA</div>'
+        + '<div class="phint">Las hojas del informe que le mandamos a la fabrica, acá adentro. Es un bloque aparte: arriba queda la preventa de siempre.</div>'
+        + '<button class="pbtn" onclick="tbtvAbrir(0)">Ver en pantalla grande</button></div>';
+  h += ptbCumpl();
+  h += ptbRiesgo();
+  h += ptbSeg();
+  if(tbGer()){ h += ptbResumen(); h += ptbMix(); }
+  return h;
+}
+/* ---------- el modo pantalla del tablero ---------- */
+function ptvTb(){
+  var TIT = {cumpl:'Cumplimiento comercial', ries:'Clientes en riesgo', seg:'Segmentación de cartera',
+             ger:'Resumen ejecutivo', mix:'Mix y portafolio'};
+  var O = tbtvOrden(), n = O.length, k = O[TBI], cuerpo = '';
+  TBTV = true;
+  if(k === 'cumpl') cuerpo = ptbCumpl();
+  else if(k === 'ries') cuerpo = ptbRiesgo();
+  else if(k === 'seg') cuerpo = ptbSeg();
+  else if(k === 'ger') cuerpo = ptbResumen();
+  else cuerpo = ptbMix();
+  TBTV = false;
+  var h = '<div class="ptv"><div class="ptvtop"><button class="ptvb" onclick="tbtvIr(' + (TBI-1) + ')">&#8592;</button>'
+        + '<div class="ptvnom">' + esc(TIT[k]) + '</div><button class="ptvb" onclick="tbtvIr(' + (TBI+1) + ')">&#8594;</button></div>'
+        + '<div class="ptvsub">' + (TBI+1) + ' de ' + n + ' &middot; tablero de Branca</div>'
+        + '<div class="ptvc ptvtb">' + cuerpo + '</div><div class="ptvnav">';
+  for(var i = 0; i < n; i++) h += '<button class="ptvn' + (i === TBI ? ' act' : '') + '" onclick="tbtvIr(' + i + ')">' + (i+1) + '</button>';
+  h += '</div><button class="ptvsal" onclick="verVista(\'pan\')">Salir del modo pantalla</button></div>';
+  return h;
+}
 function ppestanas(){
   /* OJO: esto lo llama tambien la hoja del vendedor comun, que no tiene
      tablero. Sin el chequeo de PAN se caia la hoja de los 13 vendedores. */
@@ -1259,6 +1489,8 @@ function ppestanas(){
        + '<button class="tab'+(VISTA==='pan'?' act':'')+'" onclick="verVista(\'pan\')">'+ot+'</button></div>';
 }
 function pintarPanel(){
+  if(VISTA === 'tvtb'){ document.body.style.background = '#0d1f3a'; document.body.className = 'tvon';
+    document.body.innerHTML = ptvTb(); aplicarEsc(); return; }
   if(VISTA === 'tv'){ document.body.style.background = '#0d1f3a'; document.body.className = 'tvon';
     document.body.innerHTML = ptv(); aplicarEsc(); return; }
   document.body.style.background = ''; document.body.className = '';
@@ -1298,6 +1530,7 @@ function pintarPanel(){
     h += ppanCaidos();
     h += ppanAlertas();
   }
+  h += ppanTb();
   h += escBarra() + '</div>';
   document.body.innerHTML = h;
   aplicarEsc();
