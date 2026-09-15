@@ -310,6 +310,34 @@ nav{position:fixed;bottom:0;left:0;right:0;z-index:40;
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 
 .empty{padding:26px 16px;text-align:center;color:var(--ink3);font-size:0.8438rem;line-height:1.5}
+/* ---------- pantalla del PIN ---------- */
+.pinwrap{position:fixed;inset:0;z-index:90;background:var(--bg);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:0;padding:24px 20px calc(24px + env(safe-area-inset-bottom,0px))}
+.pin-logo{height:34px;width:auto;opacity:.9;margin-bottom:26px;filter:none}
+.pin-t{font-family:'Zilla Slab',Georgia,serif;font-size:1.25rem;font-weight:600;text-align:center}
+.pin-s{font-size:0.82rem;color:var(--ink3);margin-top:5px;text-align:center;min-height:1.2em}
+.pin-dots{display:flex;gap:14px;margin:26px 0 4px}
+.pin-dots i{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--acc);display:block}
+.pin-dots i.on{background:var(--acc)}
+.pin-err{font-size:0.8rem;color:var(--crit);min-height:1.4em;margin-bottom:10px;text-align:center}
+.pin-pad{display:grid;grid-template-columns:repeat(3,72px);gap:12px;justify-content:center}
+.pin-pad button{height:64px;border-radius:50%;border:1px solid var(--line);background:var(--surf);
+  font-family:'Zilla Slab',Georgia,serif;font-size:1.5rem;font-weight:600;color:var(--ink);cursor:pointer}
+.pin-pad button:active{background:var(--surf2)}
+.pin-pad button.chico{font-family:inherit;font-size:0.76rem;font-weight:600;color:var(--ink3);
+  border-color:transparent;background:none;border-radius:12px}
+.pinwrap.tiembla{animation:tiembla .4s}
+@keyframes tiembla{0%,100%{transform:translateX(0)}20%{transform:translateX(-9px)}
+  40%{transform:translateX(9px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+/* ---------- aviso de version nueva ---------- */
+.vernueva{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom,0px));
+  z-index:45;max-width:436px;margin:0 auto;background:var(--ink);color:var(--bg);
+  border-radius:13px;padding:13px 14px;display:flex;align-items:center;gap:12px;
+  box-shadow:0 6px 26px rgba(46,36,27,.3);font-size:0.82rem;line-height:1.35}
+.vernueva button{flex:none;background:var(--bg);color:var(--ink);border:0;border-radius:9px;
+  padding:9px 14px;font-family:inherit;font-size:0.82rem;font-weight:700;cursor:pointer}
+
 .toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
   background:var(--ink);color:var(--bg);font-size:0.8438rem;font-weight:500;padding:10px 16px;border-radius:22px;
   z-index:60;box-shadow:var(--shadow);opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw;text-align:center}
@@ -353,6 +381,8 @@ function syncLogo(){
   document.getElementById('logo').src = dark ? IMG.logo_c : IMG.logo;
 }
 matchMedia('(prefers-color-scheme:dark)').addEventListener('change', syncLogo);
+
+const APP_VER = 3;                 /* lo lee el chequeo de version nueva */
 
 /* ============ ESTADO ============ */
 const KEY = 'taller_labarbara_v1';
@@ -474,6 +504,8 @@ function migrar(){
   });
   if(!DB.cfg.margenObj) DB.cfg.margenObj = 50;
   if(DB.cfg.ultimoRespaldo === undefined) DB.cfg.ultimoRespaldo = '';
+  if(!DB.cfg.escala) DB.cfg.escala = 'no';
+  if(DB.cfg.pin === undefined) DB.cfg.pin = '';
   if(DB.cfg.v !== ESQUEMA) DB.cfg.v = ESQUEMA;
 }
 migrar();
@@ -1363,6 +1395,12 @@ por mail o lo guardás en Archivos. Cada 7 días la app te lo recuerda sola en l
 Si cambiás de teléfono: abrís la app en el nuevo, <b>Subir respaldo</b>, elegís el archivo
 y vuelve todo — incluidas las fotos.</div>
 
+<label>El PIN</label>
+<div class="hint" style="margin-bottom:16px">En Ajustes podés poner un PIN de 4 números.
+Después la app lo pide al abrir, una vez por día — no en cada rato.<br><br>
+Frena a cualquiera que agarre el teléfono desbloqueado. Si alguna vez te lo olvidás,
+avisale a Mariano: se entra desde otro lado y se recupera todo con la copia de la nube.</div>
+
 <label>Si la letra se ve chica</label>
 <div class="hint" style="margin-bottom:16px">Engranaje ▸ <b>Tamaño de la letra</b>: elegí entre cuatro
 tamaños y toda la app se agranda junta. Queda elegido, no hay que volver a tocarlo.</div>
@@ -1372,6 +1410,13 @@ tamaños y toda la app se agranda junta. Queda elegido, no hay que volver a toca
 Queda con ícono propio y se abre a pantalla completa, como cualquier otra app.</div>`;
 
 const NOVEDADES = `
+<label>Versión 3 · 15/09/2026</label>
+<div class="hint" style="margin-bottom:16px">
+· <b>PIN de 4 números</b> para abrir la app. Se pone desde Ajustes y lo pide una vez por día.<br><br>
+· <b>Se actualiza sola</b>: cuando subimos una versión nueva, la app la toma sola la próxima vez que la abrís. Si estás en medio de cargar algo, espera a que termines.<br><br>
+· <b>Cuidado del respaldo</b>: si en el teléfono hay mucho menos que en la nube, la app <b>no sube</b>
+y avisa, para no borrar la copia buena por accidente. Lo mismo al traer la copia.</div>
+
 <label>Versión 2 · 15/09/2026</label>
 <div class="hint" style="margin-bottom:16px">
 · <b>Respaldo en la nube</b>: se guarda solo cada vez que cargás algo, sin tener que acordarse.
@@ -1415,6 +1460,11 @@ function edAjustes(){
     <div class="field"><label for="a-m">Margen que querés ganar</label>
       <input type="number" id="a-m" value="${DB.cfg.margenObj}" min="0" max="95" inputmode="decimal">
       <div class="hint" style="margin-top:6px">Con esto la app calcula a cuánto conviene vender cada modelo.</div></div>
+    <label style="margin-top:18px">Seguridad</label>
+    <div class="btnrow" style="margin-bottom:6px">
+      <button class="btn ghost" id="a-pin"></button></div>
+    <div class="hint" id="a-pin-h" style="margin-bottom:4px"></div>
+
     <label style="margin-top:18px">Ayuda</label>
     <div class="btnrow" style="margin-bottom:6px">
       <button class="btn ghost" id="a-man">Cómo funciona</button>
@@ -1452,6 +1502,13 @@ function edAjustes(){
         DB.cfg.margenObj = Math.min(95, Math.max(0, +document.getElementById('a-m').value || 0));
         guardar(); cerrar(); render();
       };
+      const bp = document.getElementById('a-pin');
+      bp.textContent = hayPin() ? 'Cambiar o sacar el PIN' : 'Poner un PIN de 4 números';
+      bp.onclick = edPin;
+      document.getElementById('a-pin-h').textContent = hayPin()
+        ? 'La app pide el PIN al abrir, una vez por día.'
+        : 'Para que nadie más pueda abrir la app desde el teléfono.';
+
       pintarNube();
       const bn = document.getElementById('a-nube');
       bn.textContent = cred().u ? 'Cambiar clave' : 'Conectar';
@@ -2066,11 +2123,18 @@ async function nubeIniciar(){
   }
 }
 
+/* cuántos registros tiene un respaldo, para no pisar uno lleno con uno vacío */
+const cuenta = o => TABLAS.reduce((s,k) => s + ((o && o[k] && o[k].length) || 0), 0);
+
 async function nubeLeerMeta(){
   try{
     const d = await NUBE.sdk.db.collection('respaldo').doc('meta').get();
-    NUBE.ultima = d.exists ? (d.data().fecha || '') + (d.data().hora ? ' ' + d.data().hora : '') : '';
-  }catch(e){ NUBE.ultima = ''; }
+    if(d.exists){
+      const m = d.data();
+      NUBE.ultima = (m.fecha || '') + (m.hora ? ' ' + m.hora : '');
+      NUBE.cuenta = typeof m.cuenta === 'number' ? m.cuenta : null;
+    } else { NUBE.ultima = ''; NUBE.cuenta = null; }
+  }catch(e){ NUBE.ultima = ''; NUBE.cuenta = null; }
 }
 
 /* ---- subir ---- */
@@ -2078,6 +2142,18 @@ async function nubeSubir(silencioso){
   const sdk = NUBE.sdk || await nubeIniciar();
   if(!sdk) return false;
   if(NUBE.subiendo){ NUBE.pendiente = true; return false; }
+
+  /* red de seguridad: si acá hay MUCHO menos que en la nube, no pisar sin permiso */
+  const aca = cuenta(DB);
+  if(!NUBE.forzar && typeof NUBE.cuenta === 'number' && NUBE.cuenta > 0 &&
+     (aca === 0 || aca < NUBE.cuenta * 0.5)){
+    NUBE.estado = 'frenado';
+    NUBE.detalle = `Acá hay ${aca} cosas cargadas y en la nube hay ${NUBE.cuenta}. ` +
+                   `No se subió para no borrar lo de allá.`;
+    pintarNube();
+    return false;
+  }
+
   NUBE.subiendo = true; NUBE.estado = 'subiendo'; pintarNube();
   try{
     const txt = JSON.stringify(DB);
@@ -2088,7 +2164,7 @@ async function nubeSubir(silencioso){
     const lote = sdk.db.batch();
     partes.forEach((t, i) => lote.set(col.doc('p' + i), {i, t}));
     lote.set(col.doc('meta'), {
-      partes: partes.length, bytes: txt.length, v: ESQUEMA,
+      partes: partes.length, bytes: txt.length, v: ESQUEMA, cuenta: cuenta(DB),
       fecha: ahora.toISOString().slice(0,10),
       hora: String(ahora.getHours()).padStart(2,'0') + ':' + String(ahora.getMinutes()).padStart(2,'0'),
       ts: Date.now()
@@ -2104,7 +2180,8 @@ async function nubeSubir(silencioso){
     }
     NUBE.ultima = ahora.toISOString().slice(0,10) + ' ' +
       String(ahora.getHours()).padStart(2,'0') + ':' + String(ahora.getMinutes()).padStart(2,'0');
-    NUBE.estado = 'listo'; NUBE.detalle = '';
+    NUBE.estado = 'listo'; NUBE.detalle = ''; NUBE.forzar = false;
+    NUBE.cuenta = cuenta(DB);
     DB.cfg.ultimoRespaldo = hoyISO();
     try{ localStorage.setItem(KEY, JSON.stringify(DB)); }catch(e){}
     if(!silencioso) toast('Respaldo guardado en la nube.');
@@ -2145,6 +2222,14 @@ async function nubeBajar(){
     }
     const o = JSON.parse(partes.join(''));
     if(!o || !Array.isArray(o.productos)) throw new Error('el respaldo está incompleto');
+    const aca = cuenta(DB), alla = cuenta(o);
+    if(aca > alla){
+      const sigue = confirm(
+        `Ojo: en este teléfono hay ${aca} cosas cargadas y la copia de la nube tiene ${alla}.\n\n` +
+        `Si seguís, se reemplaza todo por la copia de la nube y se pierde lo que hay acá de más.\n\n` +
+        `¿Seguir igual?`);
+      if(!sigue) return toast('No se tocó nada.');
+    }
     DB = o; migrar(); guardar();
     cerrar(); ir('hoy');
     toast('Listo, se trajo el respaldo del ' + (meta.data().fecha || '') + '.');
@@ -2161,6 +2246,7 @@ const NUBE_TXT = {
   listo:     ['ok',   'Al día'],
   subiendo:  ['warn', 'Guardando…'],
   'sin-red': ['warn', 'Sin internet'],
+  frenado:   ['warn', 'Frenado a propósito'],
   error:     ['crit', 'Con problema'],
 };
 function pintarNube(){
@@ -2170,7 +2256,13 @@ function pintarNube(){
   const ult = NUBE.ultima ? `Última copia: ${dm(NUBE.ultima.slice(0,10))} ${NUBE.ultima.slice(11)}` : 'Todavía sin copia';
   cont.innerHTML = `<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
       <span class="pill ${cl}"><span class="dot"></span>${lab}</span></div>
-    <div class="hint">${esc(ult)}${NUBE.detalle ? '<br><span style="color:var(--crit)">' + esc(NUBE.detalle) + '</span>' : ''}</div>`;
+    <div class="hint">${esc(ult)}${NUBE.detalle ? '<br><span style="color:var(--crit)">' + esc(NUBE.detalle) + '</span>' : ''}</div>
+    ${NUBE.estado === 'frenado' ? '<button class="btn ghost" id="nube-forzar" style="margin-top:9px">Subir igual, sé lo que hago</button>' : ''}`;
+  const bf = document.getElementById('nube-forzar');
+  if(bf) bf.onclick = () => {
+    if(bf.dataset.ok !== '1'){ bf.dataset.ok = '1'; bf.textContent = 'Tocá otra vez para confirmar'; return; }
+    NUBE.forzar = true; nubeSubir(false);
+  };
 }
 
 /* ---- conectar / desconectar desde Ajustes ---- */
@@ -2227,6 +2319,170 @@ setTimeout(() => {
 window.addEventListener('online', () => {
   if(NUBE.estado === 'sin-red' || NUBE.estado === 'error'){ NUBE.sdk = null; nubeIniciar(); }
 });
+</script>
+
+<script>
+/* ===================== PIN DE 4 NÚMEROS ===================== */
+const K_PIN_OK = 'taller_lb_pin_ok';
+const PIN_HORAS = 12;                    // vuelve a pedirlo después de este rato
+
+const hayPin = () => !!(DB.cfg.pin && String(DB.cfg.pin).length === 4);
+function pinVigente(){
+  try{
+    const t = +localStorage.getItem(K_PIN_OK) || 0;
+    return Date.now() - t < PIN_HORAS * 3600 * 1000;
+  }catch(e){ return false; }
+}
+const marcarPinOk = () => { try{ localStorage.setItem(K_PIN_OK, Date.now()); }catch(e){} };
+
+function pantallaPin(modo, alSalir){
+  /* modo: 'abrir' (entrar a la app) · 'nuevo' (poner uno) · 'sacar' (confirmar para quitarlo) */
+  const cap = document.createElement('div');
+  cap.className = 'pinwrap';
+  let primero = '', paso = 1;
+  const titulo = () => modo === 'abrir' ? 'Poné tu PIN'
+                     : modo === 'sacar' ? 'Poné el PIN para sacarlo'
+                     : paso === 1 ? 'Elegí un PIN de 4 números' : 'Repetilo para confirmar';
+  const bajada = () => modo === 'abrir' ? 'Para entrar al taller'
+                     : modo === 'sacar' ? 'Después la app se abre sin pedir nada'
+                     : paso === 1 ? 'Te lo va a pedir al abrir, una vez por día' : '';
+  cap.innerHTML = `
+    <img class="pin-logo" src="${IMG.logo}" alt="La Bárbara">
+    <div class="pin-t" id="pin-t"></div>
+    <div class="pin-s" id="pin-s"></div>
+    <div class="pin-dots" id="pin-d">${'<i></i>'.repeat(4)}</div>
+    <div class="pin-err" id="pin-e"></div>
+    <div class="pin-pad">
+      ${[1,2,3,4,5,6,7,8,9].map(n => `<button data-n="${n}">${n}</button>`).join('')}
+      <button data-x="c" class="chico">Borrar</button>
+      <button data-n="0">0</button>
+      <button data-x="s" class="chico" ${modo === 'abrir' ? 'hidden' : ''}>Cancelar</button>
+    </div>`;
+  document.body.appendChild(cap);
+  document.documentElement.style.overflow = 'hidden';
+
+  let buf = '';
+  const dots = () => {
+    cap.querySelectorAll('#pin-d i').forEach((d,i) => d.classList.toggle('on', i < buf.length));
+    document.getElementById('pin-t').textContent = titulo();
+    document.getElementById('pin-s').textContent = bajada();
+  };
+  const error = msg => {
+    const e = document.getElementById('pin-e');
+    e.textContent = msg; cap.classList.add('tiembla');
+    setTimeout(() => cap.classList.remove('tiembla'), 420);
+    buf = ''; dots();
+    setTimeout(() => { if(e.textContent === msg) e.textContent = ''; }, 2600);
+  };
+  const salir = ok => {
+    cap.remove();
+    document.documentElement.style.overflow = '';
+    if(alSalir) alSalir(ok);
+  };
+  const listo = () => {
+    if(modo === 'abrir'){
+      if(buf === String(DB.cfg.pin)){ marcarPinOk(); salir(true); }
+      else error('Ese no es. Probá de nuevo.');
+      return;
+    }
+    if(modo === 'sacar'){
+      if(buf === String(DB.cfg.pin)){ salir(true); }
+      else error('Ese no es.');
+      return;
+    }
+    if(paso === 1){ primero = buf; paso = 2; buf = ''; dots(); return; }
+    if(buf === primero){ DB.cfg.pin = buf; guardar(); marcarPinOk(); salir(true); }
+    else { paso = 1; primero = ''; error('No coincidieron. Empezá de nuevo.'); }
+  };
+  cap.addEventListener('click', ev => {
+    const b = ev.target.closest('button'); if(!b) return;
+    if(b.dataset.x === 'c'){ buf = buf.slice(0,-1); dots(); return; }
+    if(b.dataset.x === 's'){ salir(false); return; }
+    if(buf.length >= 4) return;
+    buf += b.dataset.n; dots();
+    if(buf.length === 4) setTimeout(listo, 140);
+  });
+  dots();
+}
+
+function edPin(){
+  if(hayPin()){
+    pantallaPin('sacar', ok => {
+      if(!ok) return edAjustes();
+      abrir('PIN', `<div class="hint" style="margin-bottom:14px">Ya está, el PIN es correcto. ¿Qué querés hacer?</div>`,
+        `<div class="btnrow">
+           <button class="btn danger" id="p-off">Sacar el PIN</button>
+           <button class="btn" id="p-new">Cambiarlo</button></div>`,
+        () => {
+          document.getElementById('p-off').onclick = () => {
+            DB.cfg.pin = ''; guardar(); cerrar(); edAjustes(); toast('PIN sacado.');
+          };
+          document.getElementById('p-new').onclick = () => {
+            cerrar();
+            setTimeout(() => pantallaPin('nuevo', ok2 => { edAjustes(); if(ok2) toast('PIN cambiado.'); }), 260);
+          };
+        });
+    });
+  } else {
+    cerrar();
+    setTimeout(() => pantallaPin('nuevo', ok => { edAjustes(); if(ok) toast('Listo, ya tenés PIN.'); }), 260);
+  }
+}
+
+/* al arrancar: si hay PIN y venció el plazo, tapar todo hasta que lo pongan */
+if(hayPin() && !pinVigente()) pantallaPin('abrir');
+
+/* ===================== ¿HAY VERSIÓN NUEVA? ===================== */
+const K_VER_CHK = 'taller_lb_ver_chk';
+async function mirarVersion(forzar){
+  /* abierta como archivo local no hay nada que consultar */
+  if(!/^https?:$/.test(location.protocol)) return;
+  try{
+    const ult = +localStorage.getItem(K_VER_CHK) || 0;
+    if(!forzar && Date.now() - ult < 6 * 3600 * 1000) return;
+    localStorage.setItem(K_VER_CHK, Date.now());
+    const r = await fetch(location.pathname + '?chk=' + Date.now(), {cache:'no-store'});
+    if(!r.ok) return;
+    const txt = await r.text();
+    const m = txt.match(/APP_VER\s*=\s*(\d+)/);
+    if(!m) return;
+    const alla = +m[1];
+    if(alla > APP_VER) mostrarAvisoVersion(alla);
+  }catch(e){ /* sin internet: no pasa nada */ }
+}
+function actualizarA(n){
+  try{ localStorage.setItem('taller_lb_ver_puesta', n); }catch(e){}
+  location.replace(location.pathname + '?v=' + n);
+}
+function ocupado(){
+  /* está cargando algo: no cortarle el trabajo */
+  return !document.getElementById('sheet').hidden || !!document.querySelector('.pinwrap');
+}
+function mostrarAvisoVersion(n){
+  if(document.getElementById('vernueva')) return;
+  if(!ocupado()){ actualizarA(n); return; }     // libre: se pone al día sola
+
+  /* si está en medio de algo, espera a que termine y ahí se actualiza */
+  const d = document.createElement('div');
+  d.id = 'vernueva'; d.className = 'vernueva';
+  d.innerHTML = `<div><b>Hay una versión nueva</b><br>Se pone al día en cuanto termines. No perdés nada.</div>
+    <button id="ver-ok">Ahora</button>`;
+  document.body.appendChild(d);
+  document.getElementById('ver-ok').onclick = () => actualizarA(n);
+  const esperar = setInterval(() => {
+    if(!ocupado()){ clearInterval(esperar); actualizarA(n); }
+  }, 2000);
+}
+
+/* al volver de actualizar, avisa qué pasó */
+try{
+  const puesta = localStorage.getItem('taller_lb_ver_puesta');
+  if(puesta && +puesta <= APP_VER){
+    localStorage.removeItem('taller_lb_ver_puesta');
+    setTimeout(() => toast('La app se puso al día sola. Mirá Novedades.'), 1500);
+  }
+}catch(e){}
+setTimeout(() => mirarVersion(false), 4000);
 </script>
 
 <script>
