@@ -16,6 +16,17 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Ventas MCastro">
 <link rel="stylesheet" href="estilo.css">
+<!-- [stated] 17/9/2026: "Dice que enviara cuando tenga senal" + "pero tiene
+     senal si esta mandando wasap asi que hay algun problema". No era la senal:
+     esta pagina NO cargaba los programas de Google, asi que typeof firebase
+     daba undefined y el envio de precios quedaba siempre en la cola. Es el
+     mismo agujero que tenia la pagina de los repositores.
+     Van con defer: no frenan el dibujado y mantienen el orden (app antes que
+     firestore). Para cuando el vendedor toca "Mandar los precios" ya estan. -->
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
 <style>
 #alta{padding:26px 20px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0d1f3a;max-width:420px;margin:0 auto}
 #alta h1{font-size:21px;margin:0 0 6px}
