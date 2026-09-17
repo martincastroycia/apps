@@ -249,7 +249,20 @@ async function preVaciar(){
     try{ await preMandarUno(l[i]); n++; }catch(e){ l[i].err=String((e&&e.message)||e); q.push(l[i]); }
   }
   prePendSet(q);
-  return {n:n, falta:q.length};
+  return {n:n, falta:q.length, err:(q[0]&&q[0].err)||''};
+}
+function preMotivo(err){
+  var e=String(err||'');
+  if(/no cargaron los programas/i.test(e))
+    return 'No se pudieron cargar los programas de Google.\n\nCerr\u00e1 la app del todo y volv\u00e9 a abrirla. Si sigue igual, avisale a Mariano: falta publicar la versi\u00f3n nueva.';
+  if(/admin-restricted|operation-not-allowed|configuration-not-found/i.test(e))
+    return 'El sistema no acepta la conexi\u00f3n del tel\u00e9fono.\n\nPas\u00e1le esto a Mariano: hay que habilitar el ingreso an\u00f3nimo en Firebase (Authentication).\n\n(' + e + ')';
+  if(/permission|insufficient|PERMISSION_DENIED/i.test(e))
+    return 'El sistema rechaz\u00f3 el env\u00edo por permisos.\n\nPas\u00e1le esto a Mariano: hay que revisar las reglas de Firebase.\n\n(' + e + ')';
+  if(/mandar|timeout|tard/i.test(e))
+    return 'Qued\u00f3 guardado en el tel\u00e9fono: la conexi\u00f3n tard\u00f3 demasiado. Se manda solo cuando mejore.';
+  if(!e) return 'Qued\u00f3 guardado en el tel\u00e9fono: cuando haya se\u00f1al se manda solo.';
+  return 'No pudo salir. Qued\u00f3 guardado y se reintenta solo.\n\nMotivo: ' + e;
 }
 async function preAlSistema(){
   var t=preTexto(), P=G0();
@@ -261,9 +274,9 @@ async function preAlSistema(){
   prePendSet(l);
   try{
     var R=await preVaciar();
-    if(R.falta) alert('Qued\u00f3 guardado en el tel\u00e9fono: cuando haya se\u00f1al se manda solo. No hace falta que hagas nada.');
+    if(R.falta) alert(preMotivo(R.err));
     else alert('\u2705 Los precios llegaron al sistema.');
-  }catch(e){ alert('Qued\u00f3 guardado en el tel\u00e9fono y se reintenta solo.'); }
+  }catch(e){ alert(preMotivo(String((e&&e.message)||e))); }
   pintar();
 }
 try{ window.addEventListener('online', function(){ if(prePendL().length) preVaciar().then(function(R){ if(R.n) pintar(); }); }); }catch(e){}
