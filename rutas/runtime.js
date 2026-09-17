@@ -190,7 +190,19 @@ function preTexto(){
 /* Mandar los precios AL SISTEMA, por el mismo buzon que el parte de los
    repositores. Si no hay internet queda en el telefono y se reintenta
    solo; si el telefono no puede con esto, sigue estando WhatsApp. */
-var PREDB=null, PREAUTH=null;
+var PREDB=null, PREAUTH=null, PRESDK=null;
+function preSDK(){
+  if(typeof firebase !== 'undefined') return Promise.resolve(1);
+  if(PRESDK) return PRESDK;
+  var B='https://www.gstatic.com/firebasejs/10.12.2/firebase-';
+  function uno(n){ return new Promise(function(res,rej){
+    var e=document.createElement('script'); e.src=B+n+'-compat.js';
+    e.onload=function(){res(1);}; e.onerror=function(){rej(new Error('no cargaron los programas de Google'));};
+    document.head.appendChild(e); }); }
+  PRESDK=(async function(){ await uno('app'); await uno('firestore'); await uno('auth'); return 1; })();
+  PRESDK['catch'](function(){ PRESDK=null; });
+  return PRESDK;
+}
 function preFB(){
   if(PREDB) return true;
   try{
@@ -233,7 +245,7 @@ function prePendL(){ try{ return JSON.parse(lsGet('pre_pend')||'[]'); }catch(e){
 function prePendSet(l){ lsSet('pre_pend', JSON.stringify(l)); }
 async function preMandarUno(o){
   var P=G0();
-  if(!preFB()) throw new Error('no cargaron los programas de Google');
+  if(!preFB()){ await preSDK(); if(!preFB()) throw new Error('no cargaron los programas de Google'); }
   await preSes();
   var b64=await preCif(JSON.stringify({v:P.vnum, tipo:'precios', vend:o.vend, fecha:o.fecha, txt:o.txt}), P.cod, P.vnum, P.sal);
   await preTope(PREDB.collection(P.col).doc(o.id).set({

@@ -59,8 +59,22 @@ self.addEventListener("fetch", function(e){
   }
 
   /* El programa: primero lo guardado (abre al toque) y se actualiza atrás. */
+  /* [stated] 17/9/2026: index.html era el UNICO archivo que se servia de la copia
+     guardada y NUNCA se refrescaba solo. Los demas (runtime.js, app.js, estilo.css)
+     si, por el camino de abajo. Resultado: al telefono le llego el programa nuevo
+     con la pagina vieja, y las etiquetas que agregamos en la pagina no estaban.
+     Ahora se sirve lo guardado -sigue abriendo al toque y sin senal- y se pide la
+     version nueva por atras, para la proxima vez. */
   if(req.mode === "navigate"){
-    e.respondWith(caches.match("index.html").then(function(c){ return c || fetch(req); }));
+    e.respondWith(caches.match("index.html").then(function(c){
+      if(c){
+        fetch("index.html", {cache:"reload"}).then(function(r){
+          if(r && r.ok) caches.open(C_PROG).then(function(k){ k.put("index.html", r); });
+        }).catch(function(){});
+        return c;
+      }
+      return fetch(req);
+    }));
     return;
   }
   e.respondWith(caches.match(req).then(function(c){
