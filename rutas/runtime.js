@@ -103,7 +103,7 @@ function pfdia(D, v){
      + '<div class="pfdf">Le falta: '+c.pf.f.slice(0,4).map(function(i){return esc(T.sk[i]||'');}).join(' · ')+(c.pf.f.length>4?' y '+(c.pf.f.length-4)+' más':'')+'</div>'
      + '<div class="pfdm">Compra '+fmt(c.p)+'/mes</div>'
      + pfniv(c, T)
-     + prehtml(c, v, pfix++)
+     + (preToca(c, D, v) ? prehtml(c, v, 0) : '')
      + '</div>';
   });
   return h+'</div></details>';
@@ -113,26 +113,213 @@ function pfdia(D, v){
    oficina esta PRENDIDO. Con la campana apagada, esta hoja es igual a la
    de siempre. Lo tomado queda en el telefono (funciona sin senal) y se
    manda al final en un texto, igual que el parte de los repositores. */
+var PROMOS=[["","sin promo"],["cant","precio por cantidad (2x, 6x…)"],["esc","precio escalonado (x1, x3, x6)"],["combo","combo con otro producto"],["2x1","2x1"],["2da","2ª unidad al %"],["pct","% de descuento"],["pago","descuento con medio de pago"],["otra","promo sin detalle"]];
+var PIDEC={"cant":1,"esc":1};
+var PIDET={"cant":1,"esc":1,"combo":1};
+var AUS=[["","—"],["nf","no lo encontré"],["ss","sin stock"],["nt","no trabaja la marca"]];
+var PREGPS='';
+function preGPS(){
+  try{ var g=lsGet('rg_gps_'+hoyIso()); if(g){ PREGPS=g; return; } }catch(e){}
+  if(!navigator.geolocation) return;
+  try{
+    navigator.geolocation.getCurrentPosition(function(p){
+      var c=p.coords||{};
+      PREGPS=(Math.round(c.latitude*100000)/100000)+','+(Math.round(c.longitude*100000)/100000)+','+Math.round(c.accuracy||0);
+      lsSet('rg_gps_'+hoyIso(), PREGPS); preCont();
+    }, function(){}, {enableHighAccuracy:true, timeout:12000, maximumAge:300000});
+  }catch(e){}
+}
+function preGpsTxt(){
+  if(!PREGPS) return '';
+  var q=PREGPS.split(','), a=Number(q[2])||0;
+  return a ? ('ubicaci\u00f3n tomada \u00b7 \u00b1'+a+' m') : 'ubicaci\u00f3n tomada';
+}
+var PREFET=[['gondola','góndola'],['exhib','exhibición'],['promo','cartel de promo'],['lista','lista de precios']];
+var PREFTOPE=3;
+function preFotEt(k){ var n=k; PREFET.forEach(function(x){ if(x[0]===k) n=x[1]; }); return n; }
+function preLsPoner(k,v){ try{ localStorage.setItem(k,v); return 1; }catch(e){ return 0; } }
+function preFotClave(){ return 'rg_pfot_'+quien+'_'+hoyIso(); }
+function preFotLee(){ try{ return JSON.parse(lsGet(preFotClave())||'{}'); }catch(e){ return {}; } }
+function preFotGuarda(o){ lsSet(preFotClave(), JSON.stringify(o)); }
+function preFotDe(cli){ var F=preFotLee(); return F[String(cli)]||[]; }
+function preFotPend(){ var F=preFotLee(), n=0;
+  Object.keys(F).forEach(function(c){ (F[c]||[]).forEach(function(x){ if(!x.ok) n++; }); }); return n; }
+function preFotTotal(){ var F=preFotLee(), n=0;
+  Object.keys(F).forEach(function(c){ n+=(F[c]||[]).length; }); return n; }
+function preFotAchicar(file){ return new Promise(function(res,rej){
+  try{
+    var r=new FileReader();
+    r.onerror=function(){ rej(new Error('no pude leer la foto')); };
+    r.onload=function(){
+      var im=new Image();
+      im.onerror=function(){ rej(new Error('esa foto no se puede abrir')); };
+      im.onload=function(){
+        try{
+          var L=1600, w=im.width, h=im.height;
+          if(w>h && w>L){ h=Math.round(h*L/w); w=L; } else if(h>=w && h>L){ w=Math.round(w*L/h); h=L; }
+          var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+          cv.getContext('2d').drawImage(im,0,0,w,h);
+          var q=0.82, d=cv.toDataURL('image/jpeg',q);
+          while(d.length>520*1024 && q>0.3){ q-=0.1; d=cv.toDataURL('image/jpeg',q); }
+          if(d.length>520*1024){ rej(new Error('la foto queda muy grande')); return; }
+          res(d);
+        }catch(e){ rej(e); }
+      };
+      im.src=r.result;
+    };
+    r.readAsDataURL(file);
+  }catch(e){ rej(e); }
+}); }
+function preFotId(cli, et){ var P=G0();
+  return 'pf-'+(P.vnum||'0')+'-'+quien+'-'+hoyIso()+'-'+String(cli)+'-'+et+'-'+Math.random().toString(36).slice(2,7); }
+async function preFotSubir(id, dat){
+  if(!preFB()){ await preSDK(); if(!preFB()) throw new Error('no cargaron los programas de Google'); }
+  await preSes();
+  await preTope(PREDB.collection('flotafotos').doc(String(id)).set(
+    {f:dat, ts:firebase.firestore.FieldValue.serverTimestamp()}), 60000, 'mandar la foto');
+}
+async function preFotSacar(cli, et, inp){
+  var f=inp&&inp.files&&inp.files[0];
+  if(!f) return;
+  inp.value='';
+  var P=G0();
+  if(!P.cod){ alert('Esta hoja es vieja y no puede mandar fotos al sistema.\n\nPasalas por WhatsApp como siempre.'); return; }
+  if(preFotPend()>=PREFTOPE){ alert('Hay '+preFotPend()+' foto(s) sin mandar.\n\nBuscate un lugar con señal y tocá «Mandar los precios»: cuando salgan, podés sacar otra.'); return; }
+  var dat;
+  try{ dat=await preFotAchicar(f); }catch(e){ alert('No pude preparar la foto: '+((e&&e.message)||e)); return; }
+  var id=preFotId(cli, et), F=preFotLee(), k=String(cli);
+  if(!F[k]) F[k]=[];
+  F[k].push({id:id, et:et, ok:0, h:(typeof ahora==='function'?ahora():'')});
+  preFotGuarda(F);
+  if(!preLsPoner('rg_pfb_'+id, dat)){
+    F[k].pop(); preFotGuarda(F);
+    alert('El teléfono no tiene lugar para guardar la foto.\n\nMandá los precios y las fotos que ya sacaste, y probá de nuevo.');
+    return;
+  }
+  pintar();
+  try{
+    await preFotSubir(id, dat);
+    preFotMarcar(id);
+    try{ localStorage.removeItem('rg_pfb_'+id); }catch(e){}
+    pintar();
+  }catch(e){
+    pintar();
+    alert('La foto quedó guardada en el teléfono y sale sola cuando haya señal.\n\n('+((e&&e.message)||e)+')');
+  }
+}
+function preFotMarcar(id){ var F=preFotLee();
+  Object.keys(F).forEach(function(c){ (F[c]||[]).forEach(function(x){ if(x.id===id) x.ok=1; }); });
+  preFotGuarda(F); }
+function preFotBorrar(cli, id){
+  if(!confirm('¿Borrar esta foto?')) return;
+  var F=preFotLee(), k=String(cli);
+  F[k]=(F[k]||[]).filter(function(x){ return x.id!==id; });
+  if(!F[k].length) delete F[k];
+  preFotGuarda(F);
+  try{ localStorage.removeItem('rg_pfb_'+id); }catch(e){}
+  pintar();
+}
+async function preFotVaciar(){
+  var F=preFotLee(), fal=0, n=0;
+  var ids=[];
+  Object.keys(F).forEach(function(c){ (F[c]||[]).forEach(function(x){ if(!x.ok) ids.push(x.id); }); });
+  for(var i=0;i<ids.length;i++){
+    var d=lsGet('rg_pfb_'+ids[i]);
+    if(!d){ preFotMarcar(ids[i]); continue; }   /* sin el archivo no se puede: se da por perdida */
+    try{ await preFotSubir(ids[i], d); preFotMarcar(ids[i]); n++;
+      try{ localStorage.removeItem('rg_pfb_'+ids[i]); }catch(e){} }
+    catch(e){ fal++; }
+  }
+  return {n:n, falta:fal};
+}
+function preFotHtml(cli){
+  var P=G0();
+  if(!P.cod) return '';
+  var l=preFotDe(cli);
+  var h='<div class="preTit">Fotos de la góndola</div><div class="preFot">';
+  PREFET.forEach(function(x){
+    var ya=l.filter(function(z){ return z.et===x[0]; }).length;
+    h+='<label class="preFb'+(ya?' on':'')+'">'+esc(x[1])+(ya?' · '+ya:'')
+     + '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="preFotSacar('+cli+',\''+x[0]+'\',this)"></label>';
+  });
+  h+='</div>';
+  if(l.length){
+    h+='<div class="preFol">';
+    l.forEach(function(z){
+      h+='<span class="preFoi'+(z.ok?' ok':'')+'">'+esc(preFotEt(z.et))
+       + (z.ok?' ✓':' ⏳')
+       + ' <b onclick="preFotBorrar('+cli+',\''+z.id+'\')">×</b></span>';
+    });
+    h+='</div>';
+  }
+  return h;
+}
 function preLee(){ try{ return JSON.parse(lsGet('rg_pre_'+quien)||'{}'); }catch(e){ return {}; } }
 function preGuarda(o){ lsSet('rg_pre_'+quien, JSON.stringify(o)); }
+function preNum(val){ return Number(String(val).replace(/[^0-9,.]/g,'').replace(/\./g,'').replace(',','.'))||0; }
+function preRaro(cod, marca, n){
+  if(!(n>0)) return '';
+  var R=((G0().ref)||{})[cod+'|'+(marca||'')];
+  if(!R || !(R>0)) return '';
+  if(n < R/3) return 'Anotaste $'+n.toLocaleString('es-AR')+' y lo que se vio siempre ronda $'+Math.round(R).toLocaleString('es-AR')+'.\n\n\u00bfEst\u00e1 bien? Fijate que no te falte un cero.';
+  if(n > R*3) return 'Anotaste $'+n.toLocaleString('es-AR')+' y lo que se vio siempre ronda $'+Math.round(R).toLocaleString('es-AR')+'.\n\n\u00bfEst\u00e1 bien? Fijate que no te haya quedado un cero de m\u00e1s.';
+  return '';
+}
 function preSet(cli, cod, marca, campo, val){
   var P=preLee(), k=cli+'|'+cod+'|'+(marca||'');
   var z=P[k]||(P[k]={p:0,pr:'',m:marca||''});
-  if(campo==='p'){ var n=Number(String(val).replace(/[^0-9,.]/g,'').replace(/\./g,'').replace(',','.'))||0; z.p=n; }
+  if(campo==='p'){ var n=preNum(val);
+    if(n>0){ var av=preRaro(cod, marca, n); if(av && !confirm(av)){ preCont(); pintar(); return; } }
+    z.p=n; if(n>0) z.au=''; }
   else if(campo==='pr') z.pr=String(val||'').slice(0,24);
+  else if(campo==='tp'){ z.tp=String(val||''); if(!z.tp){ z.pq=0; z.pt=0; } }
+  else if(campo==='pq') z.pq=preNum(val);
+  else if(campo==='pt') z.pt=preNum(val);
+  else if(campo==='au'){ z.au=String(val||''); if(z.au){ z.p=0; z.tp=''; z.pq=0; z.pt=0; } }
   else if(campo==='m'){ delete P[k]; k=cli+'|'+cod+'|'+String(val||''); P[k]=z; z.m=String(val||''); }
-  if(!z.p && !z.pr && !z.m) delete P[k];
+  if(!z.p && !z.pr && !z.m && !z.au && !z.tp) delete P[k];
   preGuarda(P); preCont();
+  if(campo==='tp'||campo==='au') pintar();
 }
+function preLista(D, v){
+  if(!v || !v.pre || !D || !D.c) return [];
+  var l=D.c.slice().sort(function(a,b){ return (b.p||0)-(a.p||0); });
+  var m=Number(v.pre.m)||0;
+  return m ? l.slice(0,m) : l;
+}
+function preToca(c, D, v){
+  if(!c || !v || !v.pre) return 0;
+  var l=preLista(D, v);
+  for(var i=0;i<l.length;i++) if(String(l[i].n)===String(c.n)) return 1;
+  return 0;
+}
+function preEnVentana(c){ return !!(c && c.pf && !c.pf.nu && c.pf.f && c.pf.f.length); }
 function preCuantos(){ var P=preLee(), n=0; for(var k in P) if(P[k] && P[k].p>0) n++; return n; }
 function preCont(){ var e=document.getElementById('preN'); if(e) e.textContent=preCuantos(); var b=document.getElementById('preBar'); if(b) b.style.display=preCuantos()?'':'none'; }
 function preFila(c, cod, nom, marca, i){
-  var P=preLee(), z=P[c.n+'|'+cod+'|'+(marca||'')]||{p:0,pr:''};
-  return '<div class="preF">'
+  var P=preLee(), z=P[c.n+'|'+cod+'|'+(marca||'')]||{p:0,pr:'',tp:'',pq:0,pt:0,au:''};
+  var A=function(cp,v){ return 'preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\''+cp+'\',this.value)'; };
+  var h='<div class="preF">'
    + '<span class="preN">'+esc(nom)+'</span>'
    + '<input class="preI" type="number" inputmode="decimal" placeholder="$" value="'+(z.p||'')+'" onchange="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'p\',this.value)">'
-   + '<input class="prePr" placeholder="promo" value="'+esc(z.pr||'')+'" onchange="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'pr\',this.value)">'
    + '</div>';
+  h+='<div class="preF preF2">'   + '<select class="preTp" onchange="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'tp\',this.value)">'   + PROMOS.map(function(x){ return '<option value="'+x[0]+'"'+(String(z.tp||'')===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')   + '</select>';
+  if(z.tp && (PIDEC[z.tp]||PIDET[z.tp])){
+   if(PIDEC[z.tp]) h+='<input class="prePq" type="number" inputmode="numeric" placeholder="cu\u00e1ntas" value="'+(z.pq||'')+'" onchange="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'pq\',this.value)">';
+   if(PIDET[z.tp]) h+='<input class="prePt" type="number" inputmode="decimal" placeholder="total $" value="'+(z.pt||'')+'" onchange="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'pt\',this.value)">';
+  }
+  if(z.tp==='pct'||z.tp==='2da'||z.tp==='pago'||z.tp==='otra'||z.tp==='combo')
+   h+='<input class="prePr" placeholder="detalle" value="'+esc(z.pr||'')+'" onchange="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'pr\',this.value)">';
+  h+='</div>';
+  var un=(Number(z.pq)>0&&Number(z.pt)>0)?Math.round(Number(z.pt)/Number(z.pq)):0;
+  if(un) h+='<div class="preUn">sale <b>$'+un.toLocaleString('es-AR')+'</b> cada una</div>';
+  if(!(z.p>0)){
+   h+='<div class="preAu">';
+   AUS.forEach(function(x){ if(!x[0]) return;
+    h+='<button class="preAb'+(String(z.au||'')===x[0]?' on':'')+'" onclick="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'au\',\''+(String(z.au||'')===x[0]?'':x[0])+'\')">'+x[1]+'</button>'; });
+   h+='</div>';
+  }
+  return h;
 }
 function prehtml(c, v, ix){
   if(!v.pre || !v.pre.p || !v.pre.p.length) return '';
@@ -162,6 +349,7 @@ function prehtml(c, v, ix){
      + v.pre.p.map(function(x){ return '<option value="'+x[0]+'"'+(String(x[0])===primCod?' selected':'')+'>'+esc(x[1])+'</option>'; }).join('')+'</select>'
      + '<button class="preMas" onclick="preSumar('+c.n+')">+ agregar</button></div>';
   }
+  h += preFotHtml(c.n);
   h += '</div></details>';
   return h;
 }
@@ -180,12 +368,18 @@ function preSumar(n){
   pintar();
 }
 function preTexto(){
-  var P=preLee(), v=elVend(quien), l=[], hoy=hoyIso();
+  var P=preLee(), l=[], hoy=hoyIso();
   var d=hoy.slice(8,10)+'/'+hoy.slice(5,7)+'/'+hoy.slice(2,4);
-  for(var k in P){ var z=P[k]; if(!z||!(z.p>0)) continue; var q=k.split('|');
-    l.push(q[0]+';'+q[1]+';'+z.p+';'+(z.pr||'')+';'+(q[2]||'')); }
+  var g=PREGPS||'';
+  for(var k in P){ var z=P[k]; if(!z) continue;
+    if(!(z.p>0) && !z.au) continue;
+    var q=k.split('|');
+    l.push([q[0], q[1], (z.p||0), (z.pr||''), (q[2]||''), (z.tp||''), (z.pq||''), (z.pt||''), (z.au||''), (z.ho||''), g].join(';')); }
+  var F=preFotLee();
+  Object.keys(F).forEach(function(cl){ (F[cl]||[]).forEach(function(z){
+    if(z.ok) l.push('FOTO;'+cl+';'+z.et+';'+z.id); }); });
   if(!l.length) return '';
-  return 'PRECIOS \u00b7 '+quien+' \u00b7 '+d+'\n'+l.join('\n');
+  return 'PRECIOS \u00b7 '+((G0().q)||'')+quien+' \u00b7 '+d+'\n'+l.join('\n');
 }
 /* Mandar los precios AL SISTEMA, por el mismo buzon que el parte de los
    repositores. Si no hay internet queda en el telefono y se reintenta
@@ -213,7 +407,10 @@ function preFB(){
     return true;
   }catch(e){ return false; }
 }
-function G0(){ var v=elVend(quien); return (v&&v.pre)||{}; }
+function G0(){ var v=null;
+  try{ if(typeof elVend==='function') v=elVend(quien); }catch(e){}
+  try{ if(!v && typeof elRepo==='function') v=elRepo(quien); }catch(e){}
+  return (v&&v.pre)||{}; }
 function preSes(){
   if(PREAUTH) return PREAUTH;
   PREAUTH=(async function(){
@@ -248,10 +445,20 @@ async function preMandarUno(o){
   if(!preFB()){ await preSDK(); if(!preFB()) throw new Error('no cargaron los programas de Google'); }
   await preSes();
   var b64=await preCif(JSON.stringify({v:P.vnum, tipo:'precios', vend:o.vend, fecha:o.fecha, txt:o.txt}), P.cod, P.vnum, P.sal);
-  await preTope(PREDB.collection(P.col).doc(o.id).set({
-    v:P.vnum, b:b64, nf:0, estado:'nuevo',
-    ts:firebase.firestore.FieldValue.serverTimestamp(), fecha_carga:new Date().toISOString()
-  }), 30000, 'mandar');
+  var cuerpo={v:P.vnum, b:b64, nf:0, estado:'nuevo',
+    ts:firebase.firestore.FieldValue.serverTimestamp(), fecha_carga:new Date().toISOString()};
+  try{
+    await preTope(PREDB.collection(P.col).doc(o.id).set(cuerpo), 30000, 'mandar');
+  }catch(e){
+    var m=String((e&&(e.code||e.message))||e);
+    if(!/permission|insufficient/i.test(m)) throw e;
+    var base=String(o.id).replace(/-[2-9]$/,''), ok=0, ult=e;
+    for(var k=2;k<=9 && !ok;k++){
+      try{ await preTope(PREDB.collection(P.col).doc(base+'-'+k).set(cuerpo), 30000, 'mandar'); o.id=base+'-'+k; ok=1; }
+      catch(e2){ ult=e2; }
+    }
+    if(!ok) throw ult;
+  }
 }
 async function preVaciar(){
   var l=prePendL();
@@ -285,6 +492,10 @@ async function preAlSistema(){
   l.push({id:id, vend:String(quien), fecha:hoyIso(), txt:t});
   prePendSet(l);
   try{
+    if(preFotPend()) await preFotVaciar();
+    l=prePendL().filter(function(x){ return x.id!==id; });
+    l.push({id:id, vend:String(quien), fecha:hoyIso(), txt:preTexto()});
+    prePendSet(l);
     var R=await preVaciar();
     if(R.falta) alert(preMotivo(R.err));
     else alert('\u2705 Los precios llegaron al sistema.');
@@ -522,6 +733,9 @@ function copiarPedido(n){
 }
 function pintar(){
   if(PAN && (VISTA==='pan' || VISTA==='tv' || VISTA==='tvtb' || !G.vs || !G.vs.length)){ pintarPanel(); return; }
+  if(PREPANT && quien){ var _pv=elVend(quien);
+    if(_pv && _pv.pre){ document.body.innerHTML=preHojaHtml(_pv); preGPS(); return; }
+    PREPANT=0; }
   try{ document.body.className = ''; document.body.style.background = ''; }catch(e){}
   var v = quien ? elVend(quien) : null;
   var h = '';
@@ -544,6 +758,12 @@ function pintar(){
   if(PAN && PAN.cta) h += '<div class="pwrap" style="padding-bottom:0">' + ppanCuenta() + '</div>';
   if(G.rec) h += '<div class="recado"><b>Aviso:</b> ' + esc(G.rec) + '</div>';
   if(viejoDias !== null && viejoDias > 2) h += '<div class="viejo">⚠ Estos datos son del ' + fcorta(G.gen) + '. Abrí la app con señal y se actualiza sola.</div>';
+  if(v.pre){
+    h += '<button class="preIr" onclick="prePantalla(1)">💲 Tomar precios'
+      + '<span class="preIrCh">'+preCuantos()+'</span>'
+      + '<span class="preIrSub">'+esc(v.pre.n||'')
+      + (preFotTotal()?(' · '+preFotTotal()+' foto(s)'):'')
+      + (prePendL().length?(' · ⚠ '+prePendL().length+' sin mandar'):'')+'</span></button>'; }
   if(tieneDias){
     var tabs = '<div class="tabs">';
     DIAS.forEach(function(d){ tabs += '<button class="tab' + (d===diaAct?' act':'') + '" onclick="cambiaDia(\'' + d + '\')">' + DNOM[d].slice(0,3) + '</button>'; });
@@ -586,7 +806,8 @@ function pintar(){
     + (v.pre.cod ? '<button class="preSec" onclick="preMandar()">Por WhatsApp</button>' : '')
     + '<button class="preSec" onclick="preBorrarTodo()">Borrar</button>'
     + (pnd2 ? '<span class="rpest">\u26a0 '+pnd2+' env\u00edo(s) sin salir \u2014 se mandan solos cuando haya se\u00f1al</span>' : '')
-    + '</div>'; }
+    + (preGpsTxt() ? '<span class="preGps">\ud83d\udccd '+preGpsTxt()+'</span>' : '')
+    + '</div>'; preGPS(); }
   if(!tieneDias){
    D.c = D.c.slice().sort(function(a,b){
     var da = dias(a.u), db = dias(b.u);
@@ -625,6 +846,7 @@ function pintar(){
     h += reposicionHtml(c);
     if(c.rp.length) h += '<div class="repo">Reponer: ' + c.rp.map(function(y){ return esc(y[0]) + ' ' + fmt(y[1]); }).join(' · ') + '</div>';
     h += uvhtml(c) + cohtml(c);
+    if(v.pre && !preEnVentana(c) && preToca(c, D, v)) h += prehtml(c, v, 0);
     h += phtml(c,'CELUSAL') + phtml(c,'5 HISPANOS') + fhtml(c);
     if(v.ag){ var ag=agenda(v.id), z=ag[c.n]||{}, opts=[['pendiente','Pendiente'],['visitado','Visitado'],['no_atendio','No atendió'],['reagendado','Reagendado']]; h += '<div class="agenda"><strong>Visita del mes</strong><label class="aglabel">Fecha prevista</label><div class="agfila"><input type="date" value="'+esc(z.f||'')+'" onchange="agendaFecha('+c.n+',this.value)"><select onchange="agendaEstado('+c.n+',this.value)">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(z.e===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></div><label class="aglabel">Nueva fecha de reprogramación</label><div class="agfila"><input type="date" value="'+esc(z.r||'')+'" onchange="agendaRefecha('+c.n+',this.value)"></div></div>'; }
     if(!c.f.length && !c.rp.length) h += '<div class="fperd">Ya te compra todo lo que trabajamos</div>';
@@ -661,6 +883,49 @@ function pintar(){
 }
 function elegir(vid){ quien = vid; lsSet('rg_quien_'+(G.titulo||'x'), vid); pintar(); window.scrollTo(0,0); }
 function cambiaDia(d){ diaAct = d; pintar(); window.scrollTo(0,0); }
+var PREPANT=0;
+function prePantalla(v){ PREPANT=v?1:0; pintar(); window.scrollTo(0,0); }
+function preHojaHtml(v){
+  var D = (v.dias && v.dias[diaAct]) ? v.dias[diaAct] : (v.cartera || {c:[]});
+  var l = preLista(D, v);
+  var tope = Number(v.pre.m) || 0;
+  var h = '<div class="enc preEnc"><div class="encTxt"><h1>💲 Precios</h1>'
+   + '<div class="sub">'+esc(v.pre.n||'Relevamiento')+' · '+esc(v.nom)
+   + ((v.dias&&DNOM[diaAct])?(' · '+DNOM[diaAct]):'')+'</div></div>'
+   + '<img class="logo" src="'+LOGO+'" alt=""></div>';
+  h += '<button class="preVolver" onclick="prePantalla(0)">← Volver a la ruta</button>';
+  if(v.dias){
+    var tabs = '<div class="tabs">';
+    DIAS.forEach(function(d){ tabs += '<button class="tab'+(d===diaAct?' act':'')+'" onclick="cambiaDia(\''+d+'\')">'+DNOM[d].slice(0,3)+'</button>'; });
+    h += tabs + '</div>';
+  }
+  var pnd=prePendL().length;
+  h += '<div class="preBar" id="preBar" style="display:flex"><b>💲 Precios tomados: <span id="preN">'+preCuantos()+'</span></b>'
+   + (v.pre.cod ? '<button onclick="preAlSistema()">Mandar los precios</button>' : '<button onclick="preMandar()">Mandar los precios</button>')
+   + (v.pre.cod ? '<button class="preSec" onclick="preMandar()">Por WhatsApp</button>' : '')
+   + '<button class="preSec" onclick="preBorrarTodo()">Borrar</button>'
+   + (pnd ? '<span class="rpest">⚠ '+pnd+' envío(s) sin salir — se mandan solos cuando haya señal</span>' : '')
+   + (preFotPend() ? '<span class="rpest">⚠ '+preFotPend()+' foto(s) sin salir</span>' : '')
+   + (preGpsTxt() ? '<span class="preGps">📍 '+preGpsTxt()+'</span>' : '')+'</div>';
+  if(tope) h += '<div class="preNota">Se piden los <b>primeros '+tope+'</b> clientes del día, ordenados por lo que compran. Los demás no hace falta.</div>';
+  var n=0, P=preLee();
+  l.forEach(function(c){
+    var hechos=0, tot=(v.pre.p||[]).length;
+    (v.pre.p||[]).forEach(function(x){ if((P[c.n+'|'+x[0]+'|']||{}).p>0) hechos++; });
+    var col = (tot && hechos>=tot) ? '#198754' : hechos ? '#b8860b' : '#c0392b';
+    var fs=preFotDe(c.n).length;
+    h += '<div class="preCli"><div class="preCliTop">'
+      + '<span class="preCliN">'+esc(c.c)+'</span>'
+      + (fs?'<span class="preCliF">📷 '+fs+'</span>':'')
+      + '<span class="preCliCh" style="border-color:'+col+';color:'+col+'">'+hechos+'/'+tot+'</span></div>'
+      + (c.i?'<div class="preCliDir">'+esc(c.i)+'</div>':'')
+      + String(prehtml(c, v, n)).replace('<details class="preBox"','<details open class="preBox"')
+      + '</div>';
+    n++;
+  });
+  if(!n) h += '<div class="preNota">En este día no hay clientes para relevar. Probá otro día arriba.</div>';
+  return h;
+}
 function fil(q){ q = q.toLowerCase(); var t = document.querySelectorAll('#hoy details.cli'); for(var i=0;i<t.length;i++){ t[i].style.display = t[i].getAttribute('data-n').indexOf(q) >= 0 ? '' : 'none'; } }
 function visita(n, si){ var m = marcas(quien); if(!m[n]) m[n] = {}; m[n].v = si ? 1 : 0; guardaMarcas(quien, m); var el = document.getElementById('cli' + n); if(el){ el.classList.toggle('vis', si); } }
 function nota(n, t){ var m = marcas(quien); if(!m[n]) m[n] = {}; m[n].t = t; guardaMarcas(quien, m); }
