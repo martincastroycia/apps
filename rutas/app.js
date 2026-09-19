@@ -100,22 +100,44 @@ async function bajarVersion(){
 /* El programa del vendedor hace body.innerHTML = ... cada vez que pinta, así
    que lo que colguemos del body desaparece. Estas barras van pegadas al
    <html> y en posición fija, por eso sobreviven. */
-function barra(id, texto, fondo, letra, alTocar){
+/* El sexto parametro pone la barra ARRIBA en vez de abajo.
+   [stated] 19/9/2026: "el aviso de que hay informacion nueva que le aparece
+   alla abajo, cambiarlo arriba". Abajo, contra el borde del telefono, el
+   cartel verde queda fuera de la mirada: el vendedor entra, mira los numeros
+   de arriba y trabaja con datos viejos sin enterarse.
+   La barra de arriba TAPA el encabezado, asi que ademas se le empuja el
+   cuerpo hacia abajo con un padding del alto real de la barra -medido, no
+   adivinado, porque el texto envuelve en dos renglones en pantallas chicas-.
+   La de "sin senal" NO se toca: esa es informativa y abajo esta bien. */
+function barraAjustar(d){
+  if(!d || d.getAttribute("data-arriba") !== "1") return;
+  try{ document.body.style.paddingTop = d.offsetHeight + "px"; }catch(e){}
+}
+function barra(id, texto, fondo, letra, alTocar, arriba){
   var d = $(id);
   if(!d){
     d = document.createElement("div");
     d.id = id;
-    d.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:99999;padding:11px 14px;"
+    d.style.cssText = "position:fixed;left:0;right:0;z-index:99999;padding:11px 14px;"
       + "text-align:center;font:600 14px/1.35 -apple-system,Segoe UI,Roboto,Arial,sans-serif;"
-      + "box-shadow:0 -2px 10px rgba(0,0,0,.18);padding-bottom:calc(11px + env(safe-area-inset-bottom))";
+      + (arriba
+         ? "top:0;box-shadow:0 2px 10px rgba(0,0,0,.18);padding-top:calc(11px + env(safe-area-inset-top))"
+         : "bottom:0;box-shadow:0 -2px 10px rgba(0,0,0,.18);padding-bottom:calc(11px + env(safe-area-inset-bottom))");
+    if(arriba) d.setAttribute("data-arriba", "1");
     document.documentElement.appendChild(d);
+    if(arriba){ try{ window.addEventListener("resize", function(){ barraAjustar($(id)); }); }catch(e){} }
   }
   d.style.background = fondo; d.style.color = letra;
   d.textContent = texto;
   d.style.cursor = alTocar ? "pointer" : "default";
   d.onclick = alTocar || null;
+  barraAjustar(d);
 }
-function sacarBarra(id){ var d = $(id); if(d) d.remove(); }
+function sacarBarra(id){
+  var d = $(id); if(!d) return;
+  if(d.getAttribute("data-arriba") === "1"){ try{ document.body.style.paddingTop = ""; }catch(e){} }
+  d.remove();
+}
 
 function linda(iso){ return String(iso||"").slice(0,10).split("-").reverse().join("/"); }
 function genDe(json){ try{ return String(JSON.parse(json).gen||"").slice(0,10); }catch(e){ return ""; } }
@@ -157,7 +179,7 @@ async function traerNuevo(id, keyBytes, gen, ver, sel, hayDatos){
          del cache haya fallado por lo que sea. Se usa una sola vez. */
       guardar(LS_FZ, "1");
       location.reload();
-    });
+    }, 1);
   }catch(e){}
 }
 

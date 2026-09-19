@@ -117,17 +117,33 @@ var PROMOS=[["","sin promo"],["cant","precio por cantidad (2x, 6x…)"],["esc","
 var PIDEC={"cant":1,"esc":1};
 var PIDET={"cant":1,"esc":1,"combo":1};
 var AUS=[["","—"],["nf","no lo encontré"],["ss","sin stock"],["nt","no trabaja la marca"]];
-var PREGPS='';
+var PREGPS='', PREGPSEST='';
 function preGPS(){
-  try{ var g=lsGet('rg_gps_'+hoyIso()); if(g){ PREGPS=g; return; } }catch(e){}
-  if(!navigator.geolocation) return;
+  try{ var g=lsGet('rg_gps_'+hoyIso()); if(g){ PREGPS=g; PREGPSEST='ok'; return; } }catch(e){}
+  if(!navigator.geolocation){ PREGPSEST='sin'; return; }
+  try{ if(navigator.permissions&&navigator.permissions.query){
+    navigator.permissions.query({name:'geolocation'}).then(function(st){
+      if(st.state==='denied'){ PREGPSEST='no'; try{ pintar(); }catch(e){} }
+      try{ st.onchange=function(){ if(st.state!=='denied'){ PREGPSEST=''; preGPS(); } }; }catch(e){}
+    })['catch'](function(){});
+  } }catch(e){}
   try{
     navigator.geolocation.getCurrentPosition(function(p){
       var c=p.coords||{};
       PREGPS=(Math.round(c.latitude*100000)/100000)+','+(Math.round(c.longitude*100000)/100000)+','+Math.round(c.accuracy||0);
+      PREGPSEST='ok';
       lsSet('rg_gps_'+hoyIso(), PREGPS); preCont();
-    }, function(){}, {enableHighAccuracy:true, timeout:12000, maximumAge:300000});
+      try{ pintar(); }catch(e){}
+    }, function(e){ PREGPSEST=(e&&e.code===1)?'no':''; try{ pintar(); }catch(e2){} },
+      {enableHighAccuracy:true, timeout:12000, maximumAge:300000});
   }catch(e){}
+}
+function preGpsAviso(){
+  if(PREGPSEST!=='no') return '';
+  return '<div class="gpsav"><b>⚠ Falta habilitar la ubicación.</b>'
+   +' Queda constancia de la visita, igual que un remito. Tocá el <b>candadito</b> al lado de la dirección, arriba '
+   +'de todo &rarr; <b>Permisos</b> &rarr; <b>Ubicación</b> &rarr; <b>Permitir</b>, y volvé a abrir la hoja.'
+   +'<div class="gpsav2">Si no la habilitás, el resto funciona igual: se manda todo sin la ubicación.</div></div>';
 }
 function preGpsTxt(){
   if(!PREGPS) return '';
@@ -337,30 +353,39 @@ function prehtml(c, v, ix){
   if(marcas.length){
    h += '<div class="preTit">La competencia</div>';
    var abiertos={};
-   for(var k in P){ var pz=k.split('|'); if(pz[0]==String(c.n) && pz[2]) abiertos[pz[1]+'|'+pz[2]]=1; }
-   for(var kk in abiertos){ var pp=kk.split('|'); var nm=''; v.pre.p.forEach(function(x){ if(x[0]==pp[0]) nm=x[1]; });
-     h += preFila(c, pp[0], pp[1]+' \u00b7 '+nm, pp[1]); }
-   var prim = marcas[0], primCod = prim ? String(prim[1]||'') : '';
-   h += '<div class="preAdd">'
-     + '<select id="preM'+c.n+'" onchange="preMarcaCambio('+c.n+')">'
-     + marcas.map(function(m){ return '<option data-cod="'+esc(String(m[1]||''))+'">'+esc(String(m[0]||''))+'</option>'; }).join('')
-     + '<option value="__otra__" data-cod="">otra...</option></select>'
-     + '<select id="preP'+c.n+'"'+(primCod?' style="display:none"':'')+'>'
-     + v.pre.p.map(function(x){ return '<option value="'+x[0]+'"'+(String(x[0])===primCod?' selected':'')+'>'+esc(x[1])+'</option>'; }).join('')+'</select>'
-     + '<button class="preMas" onclick="preSumar('+c.n+')">+ agregar</button></div>';
+   for(var k in P){ var pz=k.split('|'); if(pz[0]==String(c.n) && pz[2]) (abiertos[pz[1]]=abiertos[pz[1]]||[]).push(pz[2]); }
+   var gr={}, ord=[];
+   marcas.forEach(function(m){ var cd=String(m[1]||''); if(!gr[cd]){ gr[cd]=[]; ord.push(cd); } gr[cd].push(m); });
+   Object.keys(abiertos).forEach(function(cd){ if(ord.indexOf(cd)<0){ ord.push(cd); gr[cd]=[]; } });
+   ord.forEach(function(cd, gi){
+     var nm=''; v.pre.p.forEach(function(x){ if(String(x[0])===cd) nm=x[1]; });
+     if(ord.length>1) h += '<div class="preSub2">'+(nm?('contra '+esc(nm)):'otras marcas')+'</div>';
+     (abiertos[cd]||[]).forEach(function(mk){ h += preFila(c, cd, mk+(nm?(' \u00b7 '+nm):''), mk); });
+     var L=gr[cd]||[];
+     h += '<div class="preAdd">'
+       + '<select id="preM'+c.n+'_'+gi+'" onchange="preMarcaCambio('+c.n+','+gi+')">'
+       + L.map(function(m){ return '<option data-cod="'+esc(String(m[1]||''))+'">'+esc(String(m[0]||''))+'</option>'; }).join('')
+       + '<option value="__otra__" data-cod="'+esc(cd)+'">otra...</option></select>'
+       + '<select id="preP'+c.n+'_'+gi+'"'+(cd?' style="display:none"':'')+'>'
+       + v.pre.p.map(function(x){ return '<option value="'+x[0]+'"'+(String(x[0])===cd?' selected':'')+'>'+esc(x[1])+'</option>'; }).join('')+'</select>'
+       + '<button class="preMas" onclick="preSumar('+c.n+','+gi+')">+ agregar</button></div>';
+   });
   }
   h += preFotHtml(c.n);
   h += '</div></details>';
   return h;
 }
-function preMarcaCambio(n){
-  var b=document.getElementById('preM'+n), a=document.getElementById('preP'+n);
+function preSfx(gi){ return (gi===undefined||gi===null)?'':('_'+gi); }
+function preMarcaCambio(n, gi){
+  var sx=preSfx(gi);
+  var b=document.getElementById('preM'+n+sx), a=document.getElementById('preP'+n+sx);
   if(!b||!a) return;
   var o=b.options[b.selectedIndex], cod=o?String(o.getAttribute('data-cod')||''):'';
   if(cod){ a.value=cod; a.style.display='none'; } else { a.style.display=''; }
 }
-function preSumar(n){
-  var a=document.getElementById('preP'+n), b=document.getElementById('preM'+n);
+function preSumar(n, gi){
+  var sx=preSfx(gi);
+  var a=document.getElementById('preP'+n+sx), b=document.getElementById('preM'+n+sx);
   if(!a||!b) return;
   var m=b.value;
   if(m==='__otra__'){ m=prompt('\u00bfQu\u00e9 marca?',''); if(!m) return; }
@@ -512,6 +537,44 @@ function preMandar(){
 function preBorrarTodo(){
   if(!confirm('\u00bfBorrar los precios que cargaste? Hacelo despu\u00e9s de mandarlos.')) return;
   lsSet('rg_pre_'+quien, '{}'); pintar();
+}
+var ABMAND=0, ABYA=0;
+function abDiaReal(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function abEstado(){ try{ return JSON.parse(lsGet('ab_est')||'{}'); }catch(e){ return {}; } }
+function abGuardar(E){ try{ lsSet('ab_est', JSON.stringify(E)); }catch(e){} }
+function abAnotar(q){
+  if(!G.ab || !q) return;
+  var E=abEstado(), h=abDiaReal();
+  if(String(E.q||'') !== String(q)){ E={q:String(q), d:[]}; }
+  if(!E.d) E.d=[];
+  if(E.d.indexOf(h)<0) E.d.push(h);
+  if(E.d.length>60) E.d=E.d.slice(-60);
+  E.u=(new Date()).toISOString(); E.ver=String(G.ab.ver||''); E.p=1;
+  abGuardar(E);
+}
+async function abMandar(){
+  var E=abEstado();
+  if(ABMAND || !E.p || !E.q || !G.ab) return;
+  ABMAND=1;
+  try{
+    if(typeof firebase==='undefined') await preSDK();
+    try{ firebase.app(); }catch(e){ firebase.initializeApp(G.ab.fb); }
+    if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
+    var o={q:String(E.q), nom:String(G.ab.nom||''), u:String(E.u||''), d:(E.d||[]), ver:String(E.ver||'')};
+    var by=new TextEncoder().encode(JSON.stringify(o)), b='';
+    for(var i=0;i<by.length;i++) b+=String.fromCharCode(by[i]);
+    var cuerpo={v:String(G.ab.vnum), b:btoa(b), nf:0, estado:'nuevo',
+      ts:firebase.firestore.FieldValue.serverTimestamp(), fecha_carga:new Date().toISOString()};
+    await firebase.firestore().collection(G.ab.col).doc(String(G.ab.vnum)+'-'+String(E.q)).set(cuerpo);
+    E.p=0; abGuardar(E);
+  }catch(e){}
+  ABMAND=0;
+}
+function abArrancar(q){
+  if(ABYA || !G.ab || !q) return; ABYA=1;
+  try{ abAnotar(q); }catch(e){}
+  setTimeout(function(){ try{ abMandar(); }catch(e){} }, 4000);
+  try{ window.addEventListener('online', function(){ setTimeout(function(){ try{ abMandar(); }catch(e){} }, 1500); }); }catch(e){}
 }
 function pfchip(c){
   var p=c.pf; if(!p||p.nu) return '';
@@ -732,10 +795,14 @@ function copiarPedido(n){
   copiar(t);
 }
 function pintar(){
+  try{ if(quien) abArrancar(quien); }catch(e){}
   if(PAN && (VISTA==='pan' || VISTA==='tv' || VISTA==='tvtb' || !G.vs || !G.vs.length)){ pintarPanel(); return; }
   if(PREPANT && quien){ var _pv=elVend(quien);
     if(_pv && _pv.pre){ document.body.innerHTML=preHojaHtml(_pv); preGPS(); return; }
     PREPANT=0; }
+  if(FALTPANT && quien){ var _fv=elVend(quien);
+    if(_fv && faltCli(_fv).length){ document.body.innerHTML=faltHojaHtml(_fv); return; }
+    FALTPANT=0; }
   try{ document.body.className = ''; document.body.style.background = ''; }catch(e){}
   var v = quien ? elVend(quien) : null;
   var h = '';
@@ -789,10 +856,11 @@ function pintar(){
   if(atr && BL.avi) h += '<div class="aviso">' + atr + (tieneDias ? ' de tu ruta de hoy' : ' de tu cartera') + ' hace más de ' + v.al + ' días que no te compran</div>';
   if(v.ag) h += '<div class="top3"><b>Agenda mensual:</b> abrí cada cliente, elegí su fecha y estado. Si no te atendió, marcá <b>No atendió</b> y después cambiá la fecha para reagendarlo.</div>';
   if(v.ag){ var ah=agenda(v.id), nh=D.c.filter(function(c){var z=ah[c.n]||{};return z.e!=='visitado'&&(z.r||z.f)===hoyIso();}).length; if(nh)h+='<div class="aviso">📅 '+nh+' cliente(s) agendado(s) para hoy aparecen primero.</div>'; }
-  var conF = D.c.filter(function(c){ return c.fg; });
-  if(conF.length){ h += '<details class="avisoF"><summary><b>🛒 '+conF.length+(conF.length===1?' cliente con la góndola vacía':' clientes con la góndola vacía')+'</b> <span>tocá para ver qué falta</span></summary>';
-   conF.forEach(function(c){ h += '<div class="avisoFl"><b>'+esc(c.c)+'</b> — '+c.fg.f.map(esc).join(' · ')+'</div>'; });
-   h += '</details>'; }
+  var conF = faltCli(v);
+  if(conF.length){ var _nf=0; conF.forEach(function(c){ _nf+=(c.fg.f||[]).length; });
+   h += '<button class="faltIr" onclick="faltPantalla(1)">🛒 <b>Faltantes en tus clientes</b>'
+    +'<span>'+conF.length+(conF.length===1?' cliente':' clientes')+' · '+_nf+(_nf===1?' producto':' productos')+'</span>'
+    +'<em>lo marcó el repositor · tocá para verlos</em></button>'; }
   var _arr = D.c.filter(function(c){ return !esGenerico(c.c); });
   if(_arr.length >= 3 && BL.top){
     h += '<div class="top3"><b>Arrancá por estos 3:</b> ';
@@ -883,6 +951,34 @@ function pintar(){
 }
 function elegir(vid){ quien = vid; lsSet('rg_quien_'+(G.titulo||'x'), vid); pintar(); window.scrollTo(0,0); }
 function cambiaDia(d){ diaAct = d; pintar(); window.scrollTo(0,0); }
+var FALTPANT=0;
+function faltPantalla(v){ FALTPANT=v?1:0; pintar(); window.scrollTo(0,0); }
+function faltCli(v){
+  var out=[], vis={};
+  function mirar(l){ (l||[]).forEach(function(c){ if(c.fg && !vis[c.n]){ vis[c.n]=1; out.push(c); } }); }
+  if(v.dias) DIAS.forEach(function(d){ if(v.dias[d]) mirar(v.dias[d].c); });
+  if(v.cartera) mirar(v.cartera.c);
+  out.sort(function(a,b){ return String(b.fg.fecha||'') < String(a.fg.fecha||'') ? -1 : 1; });
+  return out;
+}
+function faltHojaHtml(v){
+  var l=faltCli(v), n=0; l.forEach(function(c){ n+=(c.fg.f||[]).length; });
+  var h='<div class="enc faltEnc"><div class="encTxt"><h1>🛒 Faltantes</h1>'
+   +'<div class="sub">'+l.length+(l.length===1?' cliente':' clientes')+' · '+n+(n===1?' producto':' productos')+' · '+esc(v.nom)+'</div></div></div>';
+  h+='<button class="preVolver" onclick="faltPantalla(0)">← Volver a la ruta</button>';
+  h+='<div class="faltNota">Esto lo marcó el repositor cuando pasó por la góndola. '
+   +'Es venta que está esperando: el cliente ya lo vende y no lo tiene en el estante.</div>';
+  l.forEach(function(c){
+   h+='<div class="faltC"><div class="faltCn">'+esc(c.c)+'</div>';
+   if(c.i) h+='<div class="faltDir">'+esc(c.i)+'</div>';
+   h+='<div class="faltL">';
+   (c.fg.f||[]).forEach(function(a){ h+='<span class="faltIt">'+esc(a)+'</span>'; });
+   h+='</div><div class="faltM">'+esc(c.fg.repo||'')+' · '+fcorta(c.fg.fecha||'')+'</div>';
+   h+='<button class="faltVer" onclick="faltPantalla(0);irCli(\''+c.n+'\')">Abrir el cliente</button>';
+   h+='</div>';
+  });
+  return h;
+}
 var PREPANT=0;
 function prePantalla(v){ PREPANT=v?1:0; pintar(); window.scrollTo(0,0); }
 function preHojaHtml(v){
@@ -1431,6 +1527,8 @@ function ppanPortafolio(){
     h += '<div class="ppft">Lo que más falta en todo el grupo</div>';
     G2.forEach(function(z){ h += '<div class="ppfl"><span>' + esc(z[0]) + '</span><b>' + pmil(z[1]) + ' clientes</b></div>'; });
   }
+  var FU = (PAN.vs || []).filter(function(x){ return x.pfoff; }).map(function(x){ return x.nom; });
+  if(FU.length) h += '<div class="ppfd" style="margin-top:6px">No entran en esta cuenta: <b>' + FU.map(esc).join(', ') + '</b> — no tienen Branca para vender.</div>';
   L.forEach(function(x){ h += ppfUno(x); });
   return h + '</div>';
 }
