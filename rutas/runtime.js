@@ -571,7 +571,9 @@ async function abMandar(){
   ABMAND=0;
 }
 function abArrancar(q){
-  if(ABYA || !G.ab || !q) return; ABYA=1;
+  if(ABYA || !G.ab || !q) return;
+  try{ if(window.top !== window.self) return; }catch(e){ return; }
+  ABYA=1;
   try{ abAnotar(q); }catch(e){}
   setTimeout(function(){ try{ abMandar(); }catch(e){} }, 4000);
   try{ window.addEventListener('online', function(){ setTimeout(function(){ try{ abMandar(); }catch(e){} }, 1500); }); }catch(e){}
@@ -821,6 +823,7 @@ function pintar(){
   h += '<div class="enc"><div class="encTxt"><h1>' + esc(v.nom) + ' — ' + titSec + '</h1></div>'     + '<img class="logo" src="' + LOGO + '" alt=""></div>';
   h += '<div class="sub">Datos al ' + fcorta(G.gen) + ' · ' + (D.c.length + D.p.length + D.x.length) + ' clientes</div>';
   h += ppestanas();
+  h += indBloque(v);
   h += msgHoy(v);
   if(PAN && PAN.cta) h += '<div class="pwrap" style="padding-bottom:0">' + ppanCuenta() + '</div>';
   if(G.rec) h += '<div class="recado"><b>Aviso:</b> ' + esc(G.rec) + '</div>';
@@ -953,6 +956,22 @@ function elegir(vid){ quien = vid; lsSet('rg_quien_'+(G.titulo||'x'), vid); pint
 function cambiaDia(d){ diaAct = d; pintar(); window.scrollTo(0,0); }
 var FALTPANT=0;
 function faltPantalla(v){ FALTPANT=v?1:0; pintar(); window.scrollTo(0,0); }
+function indBloque(v){
+  var o = v.ind; if(!o) return '';
+  var cc = o.pctCli >= 70 ? '#1f6b3b' : (o.pctCli >= 45 ? '#8a6d1a' : '#c0392b');
+  var cd = o.devPct === null ? '' : (o.devPct >= 4 ? '#c0392b' : (o.devPct >= 2 ? '#8a6d1a' : '#1f6b3b'));
+  var h = '<details class="indB"><summary><b>\ud83d\udcca C\u00f3mo ven\u00eds este mes</b>'
+    + '<span class="indCh">' + o.sku + ' art. por cliente\u00a0\u00b7\u00a0' + o.pctCli + '% de tu cartera' + (o.devPct === null ? '' : ('\u00a0\u00b7\u00a0' + o.devPct + '% devuelto')) + '</span></summary>';
+  h += '<div class="indIn">';
+  h += '<div class="indIt"><span>Art\u00edculos distintos por cliente</span><b>' + o.sku + '</b></div>';
+  h += '<div class="indIt"><span>Clientes atendidos</span><b>' + o.visitas + ' en ' + o.dias + ' d\u00edas</b></div>';
+  h += '<div class="indIt"><span>Te compraron</span><b style="color:' + cc + '">' + o.si + ' de ' + o.cart + ' (' + o.pctCli + '%)</b></div>';
+  h += '<div class="indIt"><span>No te compraron todav\u00eda</span><b>' + o.no + '</b></div>';
+  if(o.devPct !== null) h += '<div class="indIt"><span>Devoluci\u00f3n</span><b style="color:' + cd + '">' + o.devPct + '% \u00b7 ' + fmt(o.dev) + '</b></div>';
+  h += '<div class="indNo">Art\u00edculos distintos por cliente es cu\u00e1ntos productos diferentes le entr\u00e1s a cada uno que atend\u00e9s. '
+    + 'Subirlo de dos a tres es la venta m\u00e1s barata que hay: ya estabas ah\u00ed.</div>';
+  return h + '</div></details>';
+}
 function faltCli(v){
   var out=[], vis={};
   function mirar(l){ (l||[]).forEach(function(c){ if(c.fg && !vis[c.n]){ vis[c.n]=1; out.push(c); } }); }
@@ -973,7 +992,9 @@ function faltHojaHtml(v){
    if(c.i) h+='<div class="faltDir">'+esc(c.i)+'</div>';
    h+='<div class="faltL">';
    (c.fg.f||[]).forEach(function(a){ h+='<span class="faltIt">'+esc(a)+'</span>'; });
-   h+='</div><div class="faltM">'+esc(c.fg.repo||'')+' · '+fcorta(c.fg.fecha||'')+'</div>';
+   h+='</div>';
+   if(c.fg.suc && c.fg.suc.length) h+='<div class="faltDir">en: '+c.fg.suc.map(esc).join(' · ')+'</div>';
+   h+='<div class="faltM">'+esc(c.fg.repo||'')+' · '+fcorta(c.fg.fecha||'')+'</div>';
    h+='<button class="faltVer" onclick="faltPantalla(0);irCli(\''+c.n+'\')">Abrir el cliente</button>';
    h+='</div>';
   });
@@ -1507,6 +1528,27 @@ function ppfClientes(x){
   }
   return h + '</details>';
 }
+function ppanInd(){
+  var L = (PAN.vs || []).filter(function(x){ return x.ind && (x.ind.visitas || x.ind.venta); });
+  if(!L.length) return '';
+  var tS = 0, tV = 0, tVe = 0, tD = 0, tSi = 0, tC = 0;
+  L.forEach(function(x){ var o = x.ind; tS += o.sku * o.visitas; tV += o.visitas; tVe += (o.venta||0); tD += (o.dev||0); tSi += o.si; tC += o.cart; });
+  var h = '<div class="pcard"><div class="pct">Cómo viene cada uno este mes</div>'
+        + '<div class="phint">Artículos distintos por cliente atendido, lo que devolvieron los fleteros, y a cuántos de su cartera le vendieron.</div>';
+  h += '<div class="ppfres"><b>' + (tV ? (Math.round(tS/tV*100)/100) : 0) + '</b> artículos por cliente · <b>' + (tVe ? (Math.round(tD/tVe*1000)/10) : 0) + '%</b> de devolución · <b>' + (tC ? Math.round(tSi/tC*100) : 0) + '%</b> de la cartera compró</div>';
+  L.sort(function(a, b){ return (b.ind.venta||0) - (a.ind.venta||0); });
+  L.forEach(function(x){
+    var o = x.ind;
+    var cc = o.pctCli >= 70 ? 'pbueno' : (o.pctCli >= 45 ? 'pmedio' : 'pflojo');
+    var cd = o.devPct === null ? '' : (o.devPct >= 4 ? '#c0392b' : (o.devPct >= 2 ? '#8a6d1a' : '#1f6b3b'));
+    h += '<div class="ppfv"><div class="ppfvn">' + esc(x.nom) + ' <b>' + o.sku + ' art./cliente</b></div>'
+       + '<div class="ppfd">' + pmil(o.visitas) + ' clientes atendidos en ' + o.dias + ' días'
+       + (o.devPct === null ? '' : (' · devolución <b style="color:' + cd + '">' + o.devPct + '%</b> (' + pmil(o.dev) + ')'))
+       + ' · le compraron <b>' + pmil(o.si) + '</b> de ' + pmil(o.cart) + ', faltan <b>' + pmil(o.no) + '</b></div>'
+       + '<span class="ppfb"><i class="' + cc + '" style="width:' + Math.max(2, o.pctCli) + '%"></i></span></div>';
+  });
+  return h + '</div>';
+}
 function ppanPortafolio(){
   var L = (PAN.vs || []).filter(function(x){ return !!x.pf; });
   if(!L.length) return '';
@@ -1892,6 +1934,7 @@ function pintarPanel(){
   h += ppanPortada();
   if(PAN.tipo === 'branca'){
     h += ppanBranca();
+    h += ppanInd();
     h += ppanPortafolio();
     h += ppanCaidos();
   } else {
@@ -1914,6 +1957,7 @@ function pintarPanel(){
          + '<div class="phint">Sacado artículo por artículo. Es dato exacto.</div>'
          + pcols(PAN.lem, function(v){ return pmil(v/1000)+'k'; }, 'pc21') + '</div>';
     }
+    h += ppanInd();
     h += ppanPortafolio();
     h += ppanCaidos();
     h += ppanAlertas();
