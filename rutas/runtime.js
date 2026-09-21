@@ -189,6 +189,7 @@ function preFotAchicar(file){ return new Promise(function(res,rej){
 function preFotId(cli, et){ var P=G0();
   return 'pf-'+(P.vnum||'0')+'-'+quien+'-'+hoyIso()+'-'+String(cli)+'-'+et+'-'+Math.random().toString(36).slice(2,7); }
 async function preFotSubir(id, dat){
+  if(enVistaPrevia()) throw new Error(AVISO_PREVIA);
   if(!preFB()){ await preSDK(); if(!preFB()) throw new Error('no cargaron los programas de Google'); }
   await preSes();
   await preTope(PREDB.collection('flotafotos').doc(String(id)).set(
@@ -409,6 +410,9 @@ function preTexto(){
 /* Mandar los precios AL SISTEMA, por el mismo buzon que el parte de los
    repositores. Si no hay internet queda en el telefono y se reintenta
    solo; si el telefono no puede con esto, sigue estando WhatsApp. */
+function enVistaPrevia(){ try{ return window.top !== window.self; }catch(e){ return true; } }
+var AVISO_PREVIA = 'Esto es la vista previa de la oficina: desde ac\u00e1 no se manda.\n\nLa hoja est\u00e1 dibujada adentro del programa y comparte la conexi\u00f3n con \u00e9l, as\u00ed que el env\u00edo chocar\u00eda con los buzones.\n\nPara probarlo de verdad, abr\u00ed el link en el tel\u00e9fono o en otra ventana.';
+try{ if(enVistaPrevia()){ localStorage.removeItem('rp_pend'); localStorage.removeItem('pre_pend'); } }catch(e){}
 var PREDB=null, PREAUTH=null, PRESDK=null;
 function preSDK(){
   if(typeof firebase !== 'undefined') return Promise.resolve(1);
@@ -466,6 +470,7 @@ function preTope(pr,ms,q){ return Promise.race([pr,new Promise(function(_,rj){ s
 function prePendL(){ try{ return JSON.parse(lsGet('pre_pend')||'[]'); }catch(e){ return []; } }
 function prePendSet(l){ lsSet('pre_pend', JSON.stringify(l)); }
 async function preMandarUno(o){
+  if(enVistaPrevia()) throw new Error(AVISO_PREVIA);
   var P=G0();
   if(!preFB()){ await preSDK(); if(!preFB()) throw new Error('no cargaron los programas de Google'); }
   await preSes();
@@ -497,6 +502,7 @@ async function preVaciar(){
 }
 function preMotivo(err){
   var e=String(err||'');
+  if(/vista previa/i.test(e)) return e;
   if(/no cargaron los programas/i.test(e))
     return 'No se pudieron cargar los programas de Google.\n\nCerr\u00e1 la app del todo y volv\u00e9 a abrirla. Si sigue igual, avisale a Mariano: falta publicar la versi\u00f3n nueva.';
   if(/admin-restricted|operation-not-allowed|configuration-not-found/i.test(e))
@@ -509,6 +515,7 @@ function preMotivo(err){
   return 'No pudo salir. Qued\u00f3 guardado y se reintenta solo.\n\nMotivo: ' + e;
 }
 async function preAlSistema(){
+  if(enVistaPrevia()){ alert(AVISO_PREVIA); return; }
   var t=preTexto(), P=G0();
   if(!t){ alert('Todav\u00eda no cargaste ning\u00fan precio.'); return; }
   if(!P.cod){ preMandar(); return; }                 /* hoja vieja: sigue por WhatsApp */
@@ -968,6 +975,14 @@ function indBloque(v){
   h += '<div class="indIt"><span>Te compraron</span><b style="color:' + cc + '">' + o.si + ' de ' + o.cart + ' (' + o.pctCli + '%)</b></div>';
   h += '<div class="indIt"><span>No te compraron todav\u00eda</span><b>' + o.no + '</b></div>';
   if(o.devPct !== null) h += '<div class="indIt"><span>Devoluci\u00f3n</span><b style="color:' + cd + '">' + o.devPct + '% \u00b7 ' + fmt(o.dev) + '</b></div>';
+  if(o.devL && o.devL.length){
+    h += '<details class="indDev"><summary>Qué te devolvieron · ' + o.devL.length + '</summary><div>';
+    o.devL.forEach(function(z){
+      h += '<div class="indDevIt"><div><b>' + esc(z[2] || ('Cliente ' + z[1])) + '</b> <span class="indDevF">' + fcorta(z[0]) + '</span></div>'
+        + '<div class="indDevA">' + esc(z[4]) + ' · ' + z[6] + ' u. · ' + fmt(z[5]) + '</div></div>';
+    });
+    h += '</div></details>';
+  }
   h += '<div class="indNo">Art\u00edculos distintos por cliente es cu\u00e1ntos productos diferentes le entr\u00e1s a cada uno que atend\u00e9s. '
     + 'Subirlo de dos a tres es la venta m\u00e1s barata que hay: ya estabas ah\u00ed.</div>';
   return h + '</div></details>';
@@ -1392,6 +1407,18 @@ function ppanResto(){
    boton para taparla si ese dia no la quiere mostrar. Lo que NO va nunca
    es el total del grupo ni la comparacion de plata entre companeros. ---- */
 function verImp(x){ VERIMP = x; lsSet('rg_verimp', x ? '1' : '0'); pintar(); }
+function ptvInd(x){
+  var o = x && x.ind; if(!o || !(o.visitas || o.venta)) return '';
+  var cd = (o.devPct === null || o.devPct === undefined) ? '#9db6d4' : (o.devPct >= 4 ? '#ff8a80' : (o.devPct >= 2 ? '#ffd166' : '#8ee6a7'));
+  var h = '<div class="ptvc"><div class="ptvt">CÓMO VIENE ESTE MES</div><div class="ptvchips">'
+        + '<span class="ptvch"><b>' + o.sku + '</b> artículos por cliente</span>'
+        + ((o.devPct === null || o.devPct === undefined) ? '' : ('<span class="ptvch" style="color:' + cd + '"><b>' + o.devPct + '%</b> de devolución' + (VERIMP && o.dev ? (' · ' + fmt(o.dev)) : '') + '</span>'))
+        + '<span class="ptvch pv2"><b>' + pmil(o.si) + '</b> le compraron</span>'
+        + '<span class="ptvch"><b>' + pmil(o.no) + '</b> todavía no</span>'
+        + '</div><div class="ptvv">' + pmil(o.visitas) + ' clientes atendidos en ' + o.dias + ' días'
+        + ' · de ' + pmil(o.cart) + ' de cartera le compró el <b>' + (o.pctCli || 0) + '%</b></div></div>';
+  return h;
+}
 function ptv(){
   if(TVI === 0) return ptvPortada();
   if(TVI > PAN.vs.length) return ptvCaidos();
@@ -1420,6 +1447,7 @@ function ptv(){
      + '<span class="ptvch">' + x.cart + ' en cartera</span><span class="ptvch pv2">' + x.act + ' compraron este mes</span>'
      + '<span class="ptvch' + (x.atr > x.cart*0.35 ? ' pr2' : '') + '">' + x.atr + ' caídos (+' + x.dias + ' días)</span>'
      + '<span class="ptvch">' + x.per + ' perdidos</span></div></div>';
+  h += ptvInd(x);
   if(x.cai && x.cai.length){
     h += '<div class="ptvc"><div class="ptvt">A QUIÉN HAY QUE IR A BUSCAR</div><div class="ptvl">';
     x.cai.slice(0,12).forEach(function(z){ h += '<div class="ptvli"><span>' + esc(z[0]) + (z[4] ? ' <i style="font-style:normal;color:#9db6d4;font-size:.75em">última ' + fcorta(z[4]) + '</i>' : '') + '</span><b>' + (z[1] ? qshort(z[1]) + '/mes · ' : '') + z[2] + ' d</b></div>'; });
@@ -1660,6 +1688,17 @@ function ptvCaidos(){
   h += '<button class="ptvsal" onclick="verVista(\'pan\')">Salir del modo pantalla</button></div>';
   return h;
 }
+function ptvIndGrupo(){
+  var L = (PAN.vs || []).filter(function(z){ return z.ind && (z.ind.visitas || z.ind.venta); });
+  if(!L.length) return '';
+  var tS=0,tV=0,tVe=0,tD=0,tSi=0,tC=0;
+  L.forEach(function(z){ var o=z.ind; tS += o.sku*o.visitas; tV += o.visitas; tVe += (o.venta||0); tD += (o.dev||0); tSi += o.si; tC += o.cart; });
+  return '<div class="ptvc"><div class="ptvt">CÓMO VIENE EL GRUPO ESTE MES</div><div class="ptvchips">'
+       + '<span class="ptvch"><b>' + (tV ? (Math.round(tS/tV*100)/100) : 0) + '</b> artículos por cliente</span>'
+       + '<span class="ptvch"><b>' + (tVe ? (Math.round(tD/tVe*1000)/10) : 0) + '%</b> de devolución' + (VERIMP && tD ? (' · ' + fmt(tD)) : '') + '</span>'
+       + '<span class="ptvch pv2"><b>' + (tC ? Math.round(tSi/tC*100) : 0) + '%</b> de la cartera compró</span>'
+       + '</div></div>';
+}
 function ptvPortada(){
   var B = PAN.bue;
   var h = '<div class="ptv"><div class="ptvtop"><button class="ptvb" onclick="tvIr(' + (TVI-1) + ')">&#8592;</button>'
@@ -1675,6 +1714,7 @@ function ptvPortada(){
     h += '<div class="ptvportt">Arrancamos</div><div class="ptvports">Todav\u00eda no hay venta cargada de estos d\u00edas.</div>';
   }
   h += '</div>';
+  h += ptvIndGrupo();
   h += '<div class="ptvnav"><button class="ptvgo" onclick="tvIr(1)">Empezar con los vendedores \u2192</button></div>';
   h += '<button class="ptvsal" onclick="verVista(\'pan\')">Salir del modo pantalla</button></div>';
   return h;
@@ -1695,7 +1735,8 @@ function tbtvTot(){ return tbtvOrden().length; }
    pantalla». Por eso, al que le corresponde lo gerencial, la pantalla grande
    ARRANCA por ahi: Resumen Ejecutivo, Mix, y despues las tres del supervisor.
    Al 206 y al 308 les arranca por Cumplimiento, que es lo que tienen. */
-function tbtvOrden(){ return tbGer() ? ['ger', 'mix', 'cumpl', 'ries', 'seg'] : ['cumpl', 'ries', 'seg']; }
+function tbtvHayInd(){ return !!((PAN.vs || []).filter(function(z){ return z.ind && (z.ind.visitas || z.ind.venta); }).length); }
+function tbtvOrden(){ var o = tbGer() ? ['ger', 'mix', 'cumpl'] : ['cumpl']; if(tbtvHayInd()) o.push('ind'); return o.concat(['ries', 'seg']); }
 var TBI = 0;
 var TBTV = false;
 function tbtvIr(i){ var n = tbtvTot(); TBI = ((i % n) + n) % n; pintar(); window.scrollTo(0,0); }
@@ -1892,10 +1933,11 @@ function ppanTb(){
 /* ---------- el modo pantalla del tablero ---------- */
 function ptvTb(){
   var TIT = {cumpl:'Cumplimiento comercial', ries:'Clientes en riesgo', seg:'Segmentación de cartera',
-             ger:'Resumen ejecutivo', mix:'Mix y portafolio'};
+             ger:'Resumen ejecutivo', mix:'Mix y portafolio', ind:'Cómo viene cada uno este mes'};
   var O = tbtvOrden(), n = O.length, k = O[TBI], cuerpo = '';
   TBTV = true;
   if(k === 'cumpl') cuerpo = ptbCumpl();
+  else if(k === 'ind') cuerpo = ppanInd();
   else if(k === 'ries') cuerpo = ptbRiesgo();
   else if(k === 'seg') cuerpo = ptbSeg();
   else if(k === 'ger') cuerpo = ptbResumen();
