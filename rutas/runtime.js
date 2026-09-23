@@ -1159,10 +1159,13 @@ var TVI = 0;
 var TVC = 0;
 var VERIMP = lsGet('rg_verimp') !== '0';
 function verVista(x){ VISTA = x; lsSet('rg_vista_' + (G.pre || 'x'), x); pintar(); window.scrollTo(0,0); }
-function tvTot(){ return 1 + PAN.vs.length + (pcaiTodos().length ? 1 : 0); }
+function tvHayFalt(){ return !!((PAN.vs || []).filter(function(z){ return z.fg && z.fg.length; }).length); }
+function tvIxFalt(){ return tvHayFalt() ? (PAN.vs.length + 1) : -1; }
+function tvIxCai(){ return PAN.vs.length + (tvHayFalt() ? 2 : 1); }
+function tvTot(){ return 1 + PAN.vs.length + (tvHayFalt() ? 1 : 0) + (pcaiTodos().length ? 1 : 0); }
 function tvIr(i){ var n = tvTot(); TVI = ((i % n) + n) % n; TVC = 0; pintar(); window.scrollTo(0,0); }
 function tvCai(i){ TVC = i; pintar(); window.scrollTo(0,0); }
-function tvCaiIr(){ TVI = PAN.vs.length + 1; TVC = 0; verVista('tv'); }
+function tvCaiIr(){ TVI = tvIxCai(); TVC = 0; verVista('tv'); }
 function tvPg(i){ TVC = i; pintar(); window.scrollTo(0,0); }
 function tvPfIr(i){ TVI = i; TVC = 0; verVista('tv'); }
 function pmil(n){ return Math.round(Number(n)||0).toLocaleString('es-AR'); }
@@ -1492,6 +1495,7 @@ function ptvInd(x){
 }
 function ptv(){
   if(TVI === 0) return ptvPortada();
+  if(TVI === tvIxFalt()) return ptvFaltGrupo();
   if(TVI > PAN.vs.length) return ptvCaidos();
   var n = PAN.vs.length, x = PAN.vs[TVI-1], b = x.b;
   var h = '<div class="ptv"><div class="ptvtop"><button class="ptvb" onclick="tvIr(' + (TVI-1) + ')">&#8592;</button>'
@@ -1524,11 +1528,13 @@ function ptv(){
     x.cai.slice(0,12).forEach(function(z){ h += '<div class="ptvli"><span>' + esc(z[0]) + (z[4] ? ' <i style="font-style:normal;color:#9db6d4;font-size:.75em">última ' + fcorta(z[4]) + '</i>' : '') + '</span><b>' + (z[1] ? qshort(z[1]) + '/mes · ' : '') + z[2] + ' d</b></div>'; });
     h += '</div></div>';
   }
+  h += ptvFaltUno(x);
   h += ptvPortafolio(x);
   h += '<div class="ptvnav">';
   h += '<button class="ptvn' + (TVI===0?' act':'') + '" onclick="tvIr(0)">⌂</button>';
   for(var i=1;i<=n;i++) h += '<button class="ptvn' + (i===TVI?' act':'') + '" onclick="tvIr(' + i + ')">' + i + '</button>';
-  if(pcaiTodos().length) h += '<button class="ptvn ptvcaib' + (TVI>n?' act':'') + '" onclick="tvIr(' + (n+1) + ')">caídos</button>';
+  if(tvHayFalt()) h += '<button class="ptvn"' + (TVI===tvIxFalt()?' style="background:#d98a4a;color:#fff"':'') + ' onclick="tvIr(' + tvIxFalt() + ')">góndola</button>';
+  if(pcaiTodos().length) h += '<button class="ptvn ptvcaib' + (TVI===tvIxCai()?' act':'') + '" onclick="tvIr(' + tvIxCai() + ')">caídos</button>';
   h += '</div><button class="ptvsal" onclick="verVista(\'pan\')">Salir del modo pantalla</button></div>';
   return h;
 }
@@ -1645,6 +1651,34 @@ function ppanInd(){
        + (o.devPct === null ? '' : (' · devolución <b style="color:' + cd + '">' + o.devPct + '%</b> (' + pmil(o.dev) + ')'))
        + ' · le compraron <b>' + pmil(o.si) + '</b> de ' + pmil(o.cart) + ', faltan <b>' + pmil(o.no) + '</b></div>'
        + '<span class="ppfb"><i class="' + cc + '" style="width:' + Math.max(2, o.pctCli) + '%"></i></span></div>';
+  });
+  return h + '</div>';
+}
+function ppanFaltantes(){
+  var L = (PAN.vs || []).filter(function(x){ return x.fg && x.fg.length; });
+  if(!L.length) return '';
+  var tc = 0, tp = 0, tk = 0;
+  L.forEach(function(x){ x.fg.forEach(function(z){ if(z.p.length) tc++; tp += z.p.length; tk += z.k.length; }); });
+  if(!tp && !tk) return '';
+  var h = '<div class="pcard"><div class="pct">La góndola: lo que hay que salir a vender</div>'
+    + '<div class="phint">Lo que los repositores encontraron faltando, por vendedor. Es venta esperando: el cliente ya lo vende y no lo tiene en el estante.</div>';
+  h += '<div class="ppfres"><b>' + pmil(tc) + '</b> cliente(s) con la góndola vacía · <b>' + pmil(tp) + '</b> producto(s) sin resolver'
+     + (tk ? (' · <b>' + pmil(tk) + '</b> que el vendedor dice que ya vendió') : '') + '</div>';
+  L.sort(function(a, b){ var pa=0, pb=0; a.fg.forEach(function(z){ pa += z.p.length; }); b.fg.forEach(function(z){ pb += z.p.length; }); return pb - pa; });
+  L.forEach(function(x){
+    var cl = 0, pr = 0, ok = 0, viejo = 0;
+    x.fg.forEach(function(z){ if(z.p.length){ cl++; pr += z.p.length; if((z.d||0) > viejo) viejo = z.d||0; } ok += z.k.length; });
+    h += '<details class="pdet"' + (TBTV ? ' open' : '') + '><summary><b>' + esc(x.nom) + '</b> — ' + pmil(cl) + (cl===1?' cliente':' clientes') + ' · ' + pmil(pr) + (pr===1?' producto':' productos')
+       + (viejo ? (' · el más viejo hace ' + viejo + ' días') : '')
+       + (ok ? (' · ' + pmil(ok) + ' ya vendido(s)') : '') + '</summary><div class="plista">';
+    x.fg.forEach(function(z){
+      if(!z.p.length && !z.k.length) return;
+      h += '<div class="pfalti"><div class="pfaltn">' + esc(z.c) + (z.s ? (' <i>· ' + esc(z.s) + '</i>') : '') + '</div>';
+      if(z.p.length) h += '<div class="pfaltp">' + z.p.map(esc).join(' · ') + '</div>';
+      if(z.k.length) h += '<div class="pfaltk">✔ ya vendido: ' + z.k.map(esc).join(' · ') + '</div>';
+      h += '<div class="pfaltm">' + esc(z.r) + (z.d === null || z.d === undefined ? '' : (' · hace ' + z.d + (z.d===1?' día':' días'))) + '</div></div>';
+    });
+    h += '</div></details>';
   });
   return h + '</div>';
 }
@@ -1770,6 +1804,30 @@ function ptvIndGrupo(){
        + '<span class="ptvch pv2"><b>' + (tC ? Math.round(tSi/tC*100) : 0) + '%</b> de la cartera compró</span>'
        + '</div></div>';
 }
+function ptvFaltUno(x){
+  var L = (x.fg || []).filter(function(z){ return z.p.length; });
+  if(!L.length) return '';
+  var pr = 0; L.forEach(function(z){ pr += z.p.length; });
+  var h = '<div class="ptvc"><div class="ptvt">LA GÓNDOLA — ' + L.length + (L.length===1?' CLIENTE':' CLIENTES') + ' · ' + pr + (pr===1?' PRODUCTO':' PRODUCTOS') + '</div><div class="ptvl">';
+  L.slice(0, 10).forEach(function(z){
+    h += '<div class="ptvli"><span>' + esc(z.c) + (z.s ? (' <i style="font-style:normal;color:#9db6d4;font-size:.75em">' + esc(z.s) + '</i>') : '') + '</span>'
+       + '<b>' + z.p.map(esc).join(' · ') + (z.d === null || z.d === undefined ? '' : (' — ' + z.d + ' d')) + '</b></div>';
+  });
+  return h + '</div></div>';
+}
+function ptvFaltGrupo(){
+  var n = PAN.vs.length;
+  var h = '<div class="ptv"><div class="ptvtop"><button class="ptvb" onclick="tvIr(' + (TVI-1) + ')">&#8592;</button>'
+    + '<div class="ptvnom">La góndola</div><button class="ptvb" onclick="tvIr(' + (TVI+1) + ')">&#8594;</button></div>'
+    + '<div class="ptvsub">Lo que hay que salir a vender · lo marcó el repositor en el estante</div>';
+  TBTV = true; h += '<div class="ptvc ptvtb">' + ppanFaltantes() + '</div>'; TBTV = false;
+  h += '<div class="ptvnav"><button class="ptvn" onclick="tvIr(0)">⌂</button>';
+  for(var i = 1; i <= n; i++) h += '<button class="ptvn" onclick="tvIr(' + i + ')">' + i + '</button>';
+  h += '<button class="ptvn" style="background:#d98a4a;color:#fff" onclick="tvIr(' + tvIxFalt() + ')">góndola</button>';
+  if(pcaiTodos().length) h += '<button class="ptvn ptvcaib" onclick="tvIr(' + tvIxCai() + ')">caídos</button>';
+  h += '</div><button class="ptvsal" onclick="verVista(\'pan\')">Salir del modo pantalla</button></div>';
+  return h;
+}
 function ptvPortada(){
   var B = PAN.bue;
   var h = '<div class="ptv"><div class="ptvtop"><button class="ptvb" onclick="tvIr(' + (TVI-1) + ')">&#8592;</button>'
@@ -1807,6 +1865,7 @@ function tbtvTot(){ return tbtvOrden().length; }
    ARRANCA por ahi: Resumen Ejecutivo, Mix, y despues las tres del supervisor.
    Al 206 y al 308 les arranca por Cumplimiento, que es lo que tienen. */
 function tbtvHayInd(){ return !!((PAN.vs || []).filter(function(z){ return z.ind && (z.ind.visitas || z.ind.venta); }).length); }
+function tbtvHayFalt(){ return !!((PAN.vs || []).filter(function(z){ return z.fg && z.fg.length; }).length); }
 function tbtvOrden(){ var o = tbGer() ? ['ger', 'mix', 'cumpl'] : ['cumpl']; if(tbtvHayInd()) o.push('ind'); return o.concat(['ries', 'seg']); }
 var TBI = 0;
 var TBTV = false;
@@ -2004,7 +2063,8 @@ function ppanTb(){
 /* ---------- el modo pantalla del tablero ---------- */
 function ptvTb(){
   var TIT = {cumpl:'Cumplimiento comercial', ries:'Clientes en riesgo', seg:'Segmentación de cartera',
-             ger:'Resumen ejecutivo', mix:'Mix y portafolio', ind:'Cómo viene cada uno este mes'};
+             ger:'Resumen ejecutivo', mix:'Mix y portafolio', ind:'Cómo viene cada uno este mes',
+             };
   var O = tbtvOrden(), n = O.length, k = O[TBI], cuerpo = '';
   TBTV = true;
   if(k === 'cumpl') cuerpo = ptbCumpl();
@@ -2048,6 +2108,7 @@ function pintarPanel(){
   if(PAN.tipo === 'branca'){
     h += ppanBranca();
     h += ppanInd();
+    h += ppanFaltantes();
     h += ppanPortafolio();
     h += ppanCaidos();
   } else {
@@ -2071,6 +2132,7 @@ function pintarPanel(){
          + pcols(PAN.lem, function(v){ return pmil(v/1000)+'k'; }, 'pc21') + '</div>';
     }
     h += ppanInd();
+    h += ppanFaltantes();
     h += ppanPortafolio();
     h += ppanCaidos();
     h += ppanAlertas();
