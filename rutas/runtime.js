@@ -1431,6 +1431,9 @@ function ppanTotal(tit, sub){
         + '<div class="psb">de '+qshort(T.meta)+' de objetivo · '+sub+'</div>'
         + pbar(T.real, T.meta)
         + '<div class="pfr"><b class="'+e[1]+'">'+fr+'</b> La rayita marca dónde tendrían que ir hoy.</div>';
+  if(T.otros && T.otros.n){
+    h += '<div class="potr">Este total es la facturaci\u00f3n <b>completa</b> de la empresa. Adem\u00e1s de los '+PAN.vs.length+' vendedores del tablero incluye '+esc(T.otros.noms.join(', '))+': '+qshort(T.otros.real)+'.</div>';
+  }
   if(T.antDia > 0){
     var d = T.real - T.antDia;
     h += '<div class="pcmp">A esta altura del mes pasado iban <b>'+qshort(T.antDia)+'</b> · <b class="'+(d>=0?'moktxt':'mbadtxt')+'">'+(d>=0?'+':'')+Math.round((T.real/T.antDia-1)*100)+'%</b></div>';
