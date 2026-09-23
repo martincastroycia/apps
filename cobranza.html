@@ -134,6 +134,17 @@
 <div id="supWrap"></div>
 <div id="daniWrap"></div>
 
+<!-- v125: tamaño de la letra, elegido por el que usa el telefono. Queda guardado en ESE telefono. -->
+<div id="letraCaja" style="margin:26px 0 30px;background:#fff;border:1px solid #d7dfea;border-radius:12px;padding:12px 14px">
+  <div style="font-weight:800;font-size:16px;margin-bottom:8px">Tamaño de la letra</div>
+  <div style="display:flex;gap:10px;align-items:center">
+    <button class="btn" onclick="letraMenos()" style="font-size:20px;font-weight:800;padding:10px 18px">A &minus;</button>
+    <div id="letraQ" style="flex:1;text-align:center;font-weight:800;font-size:17px">100%</div>
+    <button class="btn" onclick="letraMas()" style="font-size:24px;font-weight:800;padding:10px 18px">A +</button>
+  </div>
+  <div style="font-size:14px;color:#5b6b7d;margin-top:8px">Agranda o achica TODA la pantalla. Queda guardado en este teléfono. <a href="#" onclick="letraNormal();return false;">Volver al normal</a></div>
+</div>
+
 <script>
 'use strict';
 /* ====== BLOQUES CIFRADOS (uno por vendedor). Lo pone el programa al generar. ====== */
@@ -143,6 +154,25 @@ var firebaseConfig={apiKey:"AIzaSyDXqLbTAA9TCkUgMJpKrDxkvDMNBzmjTIQ",authDomain:
 var db,st,LISTOS=[],fotoFile=null,AUTHP=null;
 var CLIENTES=[], VNUM=null, VETIQ='', VNOM='', CODIGO='';
 
+/* ====== v125: TAMANO DE LETRA. Zoom de toda la pagina, guardado en ESTE telefono.
+   No toca ningun dato: es solo como se ve. Si el navegador no entiende 'zoom', no pasa nada. ====== */
+var LETRA = 1;
+function letraKey(){ return 'castro_cob_letra'; }
+function letraAplicar(){
+  try{ if(document.body) document.body.style.zoom = (LETRA===1 ? '' : String(LETRA)); }catch(e){}
+  var q=document.getElementById('letraQ'); if(q) q.textContent = Math.round(LETRA*100)+'%';
+}
+function letraPoner(v){
+  LETRA = Math.min(1.8, Math.max(0.8, Math.round(v*100)/100));
+  try{ localStorage.setItem(letraKey(), String(LETRA)); }catch(e){}
+  letraAplicar();
+}
+function letraMas(){ letraPoner(LETRA+0.1); }
+function letraMenos(){ letraPoner(LETRA-0.1); }
+function letraNormal(){ letraPoner(1); }
+(function(){ try{ var v=parseFloat(localStorage.getItem(letraKey())); if(v>0) LETRA=v; }catch(e){}
+  try{ letraAplicar(); }catch(e){}
+  try{ document.addEventListener('DOMContentLoaded', letraAplicar); }catch(e){} })();
 function $(id){return document.getElementById(id);}
 function money(n){n=Math.round(n||0);return '$'+n.toLocaleString('es-AR');}
 function numAR(v){v=String(v==null?'':v).replace(/[^\d.,-]/g,'');if(!v)return 0;var ld=v.lastIndexOf('.'),lc=v.lastIndexOf(',');if(ld>=0&&lc>=0){if(lc>ld)v=v.replace(/\./g,'').replace(',','.');else v=v.replace(/,/g,'');}else if(lc>=0){v=v.replace(',','.');}var n=parseFloat(v);return isNaN(n)?0:n;}
@@ -291,16 +321,18 @@ function supDeuBolHTML(x,g,c){
   var bot = '';
   if(g){
     bot = pap
-      ? '<button class="btn" onclick="papQuitar('+g.v+',\''+papSan(x.n)+'\');event.stopPropagation()" style="font-size:15px;padding:7px 10px;border-color:#94a3b8;color:#64748b">\u21a9\ufe0e Deshacer<\/button>'
-      : '<button class="btn" onclick="papDar('+g.v+',\''+papSan(x.n)+'\');event.stopPropagation()" style="font-size:15px;padding:7px 10px">\ud83e\udd1d Se la di<\/button>';
+      ? '<button class="btn" onclick="papQuitar('+g.v+',\''+papSan(x.n)+'\');event.stopPropagation()" style="font-size:16px;padding:9px 12px;border-color:#94a3b8;color:#64748b">\u21a9\ufe0e Deshacer<\/button>'
+      : '<button class="btn" onclick="papDar('+g.v+',\''+papSan(x.n)+'\');event.stopPropagation()" style="font-size:16px;padding:9px 12px">\ud83e\udd1d Se la di<\/button>';
   }
-  return '<div style="font-size:15px;padding:7px 10px 7px 26px;background:#f8fafc;border-top:1px solid #eef1f5">'
-       + '<div style="display:flex;gap:8px;align-items:center">'
+  return '<div style="font-size:17px;padding:9px 10px 9px 20px;background:#f8fafc;border-top:1px solid #eef1f5">'
+       + '<div style="display:flex;gap:8px;align-items:baseline">'
        +   '<span style="flex:1;min-width:0"><span style="color:#64748b">'+supFe(x.fe)+'<\/span> &nbsp; N '+x.n+'<\/span>'
        +   '<span style="font-weight:700;white-space:nowrap">'+money2(x.imp)+'<\/span>'
-       +   bot
        + '<\/div>'
-       + (pap ? '<div style="background:#e0edff;color:#0E5A9B;font-weight:800;font-size:14px;padding:3px 9px;border-radius:8px;margin-top:5px">\ud83e\udd1d se la di el '+supFe(pap.d)+' \u00b7 '+papDiasTxt(pap.d)+'<\/div>' : '')
+       + (g ? '<div style="display:flex;gap:8px;align-items:center;margin-top:6px">'
+       +   (pap ? '<div style="flex:1;min-width:0;background:#e0edff;color:#0E5A9B;font-weight:800;font-size:16px;padding:4px 10px;border-radius:8px">\ud83e\udd1d se la di el '+supFe(pap.d)+' \u00b7 '+papDiasTxt(pap.d)+'<\/div>'
+              : '<div style="flex:1"><\/div>')
+       +   bot + '<\/div>' : '')
        + '<\/div>';
 }
 function supDeuCliHTML(g,c,i,conVend){
@@ -310,10 +342,10 @@ function supDeuCliHTML(g,c,i,conVend){
           + (c.mo!=null ? ' · '+c.mo+' días' : '') + (c.vz ? ' · VENCIDO' : '');
   var h = '<div style="display:flex;gap:8px;align-items:flex-start;padding:7px 10px;background:#fff;border-top:1px solid #eef1f5;cursor:pointer" onclick="supDeuTog(\''+k+'\')">'
         + '<div style="flex:1;min-width:0">'
-        +   '<div style="font-weight:700">'+(ab?'\u25be':'\u25b8')+' '+c.n+'<\/div>'
-        +   '<div style="font-size:12px;color:#64748b">'+pie+'<\/div>'
+        +   '<div style="font-weight:700;font-size:19px">'+(ab?'\u25be':'\u25b8')+' '+c.n+'<\/div>'
+        +   '<div style="font-size:14.5px;color:#64748b">'+pie+'<\/div>'
         + '<\/div>'
-        + '<div style="font-weight:800;white-space:nowrap;color:'+col+'">'+money2(c.s)+'<\/div><\/div>';
+        + '<div style="font-weight:800;font-size:19px;white-space:nowrap;color:'+col+'">'+money2(c.s)+'<\/div><\/div>';
   if(ab) h += c.b.map(function(x){ return supDeuBolHTML(x,g,c); }).join('');
   return h;
 }
@@ -339,10 +371,10 @@ function supDeuPintar(){
       var k='v'+g.v, ab=!!SUPDEU_ABRE[k];
       var t='<div style="display:flex;gap:8px;align-items:flex-start;padding:9px 10px;background:#f4f7fb;border-top:1px solid #dbe3ec;cursor:pointer" onclick="supDeuTog(\''+k+'\')">'
           + '<div style="flex:1;min-width:0">'
-          +   '<div style="font-weight:800;color:#0E5A9B">'+(ab?'\u25be':'\u25b8')+' Vendedor '+g.v+'<\/div>'
-          +   '<div style="font-size:12px;color:#64748b">'+g.nc+' cliente'+(g.nc===1?'':'s')+' \u00b7 '+g.nb+' boleta'+(g.nb===1?'':'s')+'<\/div>'
+          +   '<div style="font-weight:800;font-size:20px;color:#0E5A9B">'+(ab?'\u25be':'\u25b8')+' Vendedor '+g.v+'<\/div>'
+          +   '<div style="font-size:14.5px;color:#64748b">'+g.nc+' cliente'+(g.nc===1?'':'s')+' \u00b7 '+g.nb+' boleta'+(g.nb===1?'':'s')+'<\/div>'
           + '<\/div>'
-          + '<div style="font-weight:800;white-space:nowrap">'+money2(g.tot)+'<\/div><\/div>';
+          + '<div style="font-weight:800;font-size:19px;white-space:nowrap">'+money2(g.tot)+'<\/div><\/div>';
       if(ab) t += g.cl.map(function(c,i){ return supDeuCliHTML(g,c,i,false); }).join('');
       return t;
     }).join('');
@@ -613,7 +645,7 @@ function pintarSup(){
       +  '<\/div>'
       +  '<div id="supDeuCuerpo" style="display:'+(SUPDEU_VISTA?'block':'none')+'">'
       +    '<input id="supDeuQ" oninput="supDeuPintar()" placeholder="Buscar cliente\u2026" '
-      +      'style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font-size:15px;margin-bottom:8px">'
+      +      'style="width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid #cbd5e1;border-radius:10px;font-size:18px;margin-bottom:8px">'
       +    '<div class="lista" id="supDeuLista"><\/div>'
       +    '<div style="display:flex;gap:8px;margin-top:8px"><button class="btn" onclick="supCopiar(\'deu\')">Copiar<\/button><button class="btn" onclick="supWhats(\'deu\')">Mandar por WhatsApp<\/button><\/div>'
       +  '<\/div>';
