@@ -846,6 +846,7 @@ function pintar(){
     DIAS.forEach(function(d){ tabs += '<button class="tab' + (d===diaAct?' act':'') + '" onclick="cambiaDia(\'' + d + '\')">' + DNOM[d].slice(0,3) + '</button>'; });
     h += tabs + '</div>';
   }
+  h += faltTopHtml(v);
   var pct = v.o.meta > 0 ? Math.round(v.o.real/v.o.meta*100) : 0;
   var oe = qest(v.o.real, v.o.meta, v.o.frac);
   var ofr = oe[0]==='mok' ? 'Vas bien.' : oe[0]==='mwarn' ? 'Vas un poco abajo.' : 'Vas atrasado.';
@@ -866,11 +867,6 @@ function pintar(){
   if(atr && BL.avi) h += '<div class="aviso">' + atr + (tieneDias ? ' de tu ruta de hoy' : ' de tu cartera') + ' hace más de ' + v.al + ' días que no te compran</div>';
   if(v.ag) h += '<div class="top3"><b>Agenda mensual:</b> abrí cada cliente, elegí su fecha y estado. Si no te atendió, marcá <b>No atendió</b> y después cambiá la fecha para reagendarlo.</div>';
   if(v.ag){ var ah=agenda(v.id), nh=D.c.filter(function(c){var z=ah[c.n]||{};return z.e!=='visitado'&&(z.r||z.f)===hoyIso();}).length; if(nh)h+='<div class="aviso">📅 '+nh+' cliente(s) agendado(s) para hoy aparecen primero.</div>'; }
-  var conF = faltCli(v);
-  if(conF.length){ var _nf=0; conF.forEach(function(c){ _nf+=(c.fg.f||[]).length; });
-   h += '<button class="faltIr" onclick="faltPantalla(1)">🛒 <b>Faltantes en tus clientes</b>'
-    +'<span>'+conF.length+(conF.length===1?' cliente':' clientes')+' · '+_nf+(_nf===1?' producto':' productos')+'</span>'
-    +'<em>lo marcó el repositor · tocá para verlos</em></button>'; }
   var _arr = D.c.filter(function(c){ return !esGenerico(c.c); });
   if(_arr.length >= 3 && BL.top){
     h += '<div class="top3"><b>Arrancá por estos 3:</b> ';
@@ -995,21 +991,96 @@ function faltCli(v){
   out.sort(function(a,b){ return String(b.fg.fecha||'') < String(a.fg.fecha||'') ? -1 : 1; });
   return out;
 }
+var FVMAND=0;
+function fvHoy(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fvLocal(){ try{ return JSON.parse(lsGet('fv_ok')||'{}'); }catch(e){ return {}; } }
+function fvLocalSet(o){ try{ lsSet('fv_ok', JSON.stringify(o)); }catch(e){} }
+function fvCl(cli, art){ return String(cli)+'|'+String(art); }
+function fvDicho(cli, art, fg){
+  var L=fvLocal(), k=fvCl(cli,art);
+  if(L[k]) return L[k];
+  if(fg && fg.ok && fg.ok[art]) return fg.ok[art].d || 'ya';
+  return '';
+}
+function fvMarcar(cli, art){
+  if(enVistaPrevia()){ alert(AVISO_PREVIA); return; }
+  if(!confirm('\u00bfYa se lo vendiste?\n\n' + art + '\n\nSe le avisa al repositor para que lo mire en la pr\u00f3xima visita. Si no est\u00e1 en la g\u00f3ndola, lo vuelve a poner.\n\nEsto no se puede deshacer.')) return;
+  var L=fvLocal(); L[fvCl(cli,art)] = fvHoy(); fvLocalSet(L);
+  pintar();
+  setTimeout(function(){ try{ fvMandar(); }catch(e){} }, 400);
+}
+async function fvMandar(){
+  var L=fvLocal(), ks=Object.keys(L);
+  if(FVMAND || !ks.length || !G.fv || !quien) return;
+  try{ if(window.top !== window.self) return; }catch(e){ return; }
+  FVMAND=1;
+  try{
+    if(typeof firebase==='undefined') await preSDK();
+    try{ firebase.app(); }catch(e){ firebase.initializeApp(G.fv.fb); }
+    if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
+    var it=[]; ks.forEach(function(k){ var p=k.indexOf('|'); if(p>0) it.push({c:k.slice(0,p), a:k.slice(p+1), d:L[k]}); });
+    var o={q:String(quien), i:it.slice(-200)};
+    var by=new TextEncoder().encode(JSON.stringify(o)), b='';
+    for(var i=0;i<by.length;i++) b+=String.fromCharCode(by[i]);
+    var cuerpo={v:String(G.fv.vnum), b:btoa(b), nf:0, estado:'nuevo',
+      ts:firebase.firestore.FieldValue.serverTimestamp(), fecha_carga:new Date().toISOString()};
+    await firebase.firestore().collection(G.fv.col).doc(String(G.fv.vnum)+'-'+String(quien)+'-'+fvHoy()).set(cuerpo);
+  }catch(e){}
+  FVMAND=0;
+}
+try{ window.addEventListener('online', function(){ setTimeout(function(){ try{ fvMandar(); }catch(e){} }, 1500); }); }catch(e){}
+function fvPend(c){ return (c.fg.f||[]).filter(function(a){ return !fvDicho(c.n, a, c.fg); }); }
+var FALT_TOP_N = 6;
+function faltBotones(c){
+  var h = '', dichos = [];
+  (c.fg.f||[]).forEach(function(a){
+    var dd = fvDicho(c.n, a, c.fg);
+    if(dd){ dichos.push(esc(a) + (dd && dd !== 'ya' ? (' (' + fcorta(dd) + ')') : '')); return; }
+    h += '<button class="fvBt" data-a="' + esc(a) + '" onclick="fvMarcar(\'' + c.n + '\', this.getAttribute(\'data-a\'))">\u2714 Ya se lo vend\u00ed: ' + esc(a) + '</button> ';
+  });
+  if(dichos.length) h += '<div class="fvDicho">\u2714 Dijiste que ya vendiste <b>' + dichos.join('</b>, <b>') + '</b>. El repositor lo confirma en la pr\u00f3xima visita; si no est\u00e1 en la g\u00f3ndola, lo vuelve a poner.</div>';
+  return h;
+}
+function faltTopHtml(v){
+  var l = faltCli(v).filter(function(c){ return fvPend(c).length; });
+  if(!l.length) return '';
+  var n = 0; l.forEach(function(c){ n += fvPend(c).length; });
+  var h = '<details class="faltTop" open><summary>🛒 <b>Faltantes en tus clientes</b>'
+    + '<span>' + l.length + (l.length===1?' cliente':' clientes') + ' · ' + n + (n===1?' producto':' productos') + '</span>'
+    + '<em>lo marcó el repositor en la góndola — es venta esperando</em></summary>'
+    + '<div class="faltTopC">';
+  l.slice(0, FALT_TOP_N).forEach(function(c){
+    h += '<div class="faltC"><div class="faltCn">' + esc(c.c) + '</div>';
+    if(c.i) h += '<div class="faltDir">' + esc(c.i) + '</div>';
+    h += '<div class="faltL">';
+    (c.fg.f||[]).forEach(function(a){ var dd = fvDicho(c.n, a, c.fg);
+      h += '<span class="faltIt' + (dd?' fvok':'') + '">' + esc(a) + '</span>'; });
+    h += '</div>';
+    if(c.fg.suc && c.fg.suc.length) h += '<div class="faltDir">en: ' + c.fg.suc.map(esc).join(' · ') + '</div>';
+    h += '<div class="faltM">' + esc(c.fg.repo||'') + ' · ' + fcorta(c.fg.fecha||'') + '</div>';
+    h += faltBotones(c);
+    h += '<button class="faltVer" onclick="irCli(\'' + c.n + '\')">Abrir el cliente</button></div>';
+  });
+  h += '<button class="faltTodos" onclick="faltPantalla(1)">'
+    + (l.length > FALT_TOP_N ? ('Ver los ' + l.length + ' clientes') : 'Verlos en pantalla completa') + '</button>';
+  return h + '</div></details>';
+}
 function faltHojaHtml(v){
-  var l=faltCli(v), n=0; l.forEach(function(c){ n+=(c.fg.f||[]).length; });
+  var l=faltCli(v), n=0; l.forEach(function(c){ n+=fvPend(c).length; });
   var h='<div class="enc faltEnc"><div class="encTxt"><h1>🛒 Faltantes</h1>'
    +'<div class="sub">'+l.length+(l.length===1?' cliente':' clientes')+' · '+n+(n===1?' producto':' productos')+' · '+esc(v.nom)+'</div></div></div>';
   h+='<button class="preVolver" onclick="faltPantalla(0)">← Volver a la ruta</button>';
   h+='<div class="faltNota">Esto lo marcó el repositor cuando pasó por la góndola. '
    +'Es venta que está esperando: el cliente ya lo vende y no lo tiene en el estante.</div>';
   l.forEach(function(c){
-   h+='<div class="faltC"><div class="faltCn">'+esc(c.c)+'</div>';
+   h+='<div class="faltC'+(fvPend(c).length?'':' fvlisto')+'"><div class="faltCn">'+esc(c.c)+'</div>';
    if(c.i) h+='<div class="faltDir">'+esc(c.i)+'</div>';
    h+='<div class="faltL">';
-   (c.fg.f||[]).forEach(function(a){ h+='<span class="faltIt">'+esc(a)+'</span>'; });
+   (c.fg.f||[]).forEach(function(a){ var dd=fvDicho(c.n,a,c.fg); h+='<span class="faltIt'+(dd?' fvok':'')+'">'+esc(a)+'</span>'; });
    h+='</div>';
    if(c.fg.suc && c.fg.suc.length) h+='<div class="faltDir">en: '+c.fg.suc.map(esc).join(' · ')+'</div>';
    h+='<div class="faltM">'+esc(c.fg.repo||'')+' · '+fcorta(c.fg.fecha||'')+'</div>';
+   h+=faltBotones(c);
    h+='<button class="faltVer" onclick="faltPantalla(0);irCli(\''+c.n+'\')">Abrir el cliente</button>';
    h+='</div>';
   });
