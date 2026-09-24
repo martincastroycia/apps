@@ -809,6 +809,9 @@ function pintar(){
   if(PREPANT && quien){ var _pv=elVend(quien);
     if(_pv && _pv.pre){ document.body.innerHTML=preHojaHtml(_pv); preGPS(); return; }
     PREPANT=0; }
+  if(BFPANT && quien){ var _bv=elVend(quien);
+    if(_bv && _bv.bf){ document.body.innerHTML=bfHojaHtml(_bv); return; }
+    BFPANT=0; }
   if(FALTPANT && quien){ var _fv=elVend(quien);
     if(_fv && faltCli(_fv).length){ document.body.innerHTML=faltHojaHtml(_fv); return; }
     FALTPANT=0; }
@@ -835,6 +838,11 @@ function pintar(){
   if(PAN && PAN.cta) h += '<div class="pwrap" style="padding-bottom:0">' + ppanCuenta() + '</div>';
   if(G.rec) h += '<div class="recado"><b>Aviso:</b> ' + esc(G.rec) + '</div>';
   if(viejoDias !== null && viejoDias > 2) h += '<div class="viejo">⚠ Estos datos son del ' + fcorta(G.gen) + '. Abrí la app con señal y se actualiza sola.</div>';
+  if(v.bf && v.bf.cli && v.bf.cli.length){
+    var _bfp = bfSinCompra(v.bf);
+    h += '<button class="bfIr" onclick="bfPantalla(1)">🏭 Branca Fábrica'
+      + '<span class="preIrCh">'+v.bf.cli.length+'</span>'
+      + '<span class="preIrSub">'+(_bfp? (_bfp+' sin comprar hace más de 60 días') : 'lo que le compran directo a la fábrica')+'</span></button>'; }
   if(v.pre){
     h += '<button class="preIr" onclick="prePantalla(1)">💲 Tomar precios'
       + '<span class="preIrCh">'+preCuantos()+'</span>'
@@ -959,6 +967,101 @@ function elegir(vid){ quien = vid; lsSet('rg_quien_'+(G.titulo||'x'), vid); pint
 function cambiaDia(d){ diaAct = d; pintar(); window.scrollTo(0,0); }
 var FALTPANT=0;
 function faltPantalla(v){ FALTPANT=v?1:0; pintar(); window.scrollTo(0,0); }
+var BFPANT=0, BFMES='', BFABIER={}, BFU12=[];
+function bfPantalla(v){ BFPANT=v?1:0; pintar(); window.scrollTo(0,0); }
+function bfMes(m){ BFMES=m; pintar(); }
+function bfAbrir(i){ BFABIER[i]=!BFABIER[i]; pintar(); }
+function bfMesNomT(m){
+  var N=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return N[parseInt(String(m).slice(5,7),10)-1]+" "+String(m).slice(2,4);
+}
+function bfSinCompra(B){
+  var n=0; (B.cli||[]).forEach(function(c){ if(c.d!==null && c.d>60) n++; }); return n;
+}
+function bfNumT(n){ return String(Math.round(Number(n)||0)).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
+function bfHojaHtml(v){
+  var B=v.bf, ms=B.ms||[];
+  BFU12=B.u12||[];
+  if(!BFMES || (BFMES!=='ANIO' && ms.indexOf(BFMES)<0)) BFMES=ms[ms.length-1];
+  var h='<div class="enc preEnc"><div class="encTxt"><h1>🏭 Branca Fábrica</h1>'
+       +'<div class="sub">'+esc(v.nom)+' · '+B.cli.length+(B.cli.length===1?' cliente':' clientes')+' que compran directo a la fábrica</div></div></div>';
+  h+='<button class="preVolver" onclick="bfPantalla(0)">← Volver a mi cartera</button>';
+  h+='<div class="tabs bfmes">';
+  ms.forEach(function(m){ h+='<button class="tab'+(m===BFMES?' act':'')+'" onclick="bfMes(\''+m+'\')">'+bfMesNomT(m)+'</button>'; });
+  h+='<button class="tab'+(BFMES==='ANIO'?' act':'')+'" onclick="bfMes(\'ANIO\')">12 meses</button></div>';
+  var tc=0, tl=0, comp=0;
+  B.cli.forEach(function(c){
+    var z=bfDeCli(c,BFMES);
+    tc+=z.c; tl+=z.l; if(z.c) comp++;
+  });
+  h+='<div class="bfres"><b>'+bfNumT(tl)+' litros</b><span> '+(BFMES==='ANIO'?'en los últimos 12 meses':('en '+bfMesNomT(BFMES)))+' · '+bfNumT(tc)+' cajas</span>'
+    +'<div class="bfres2">Compraron <b>'+comp+'</b> de tus <b>'+B.cli.length+'</b> clientes</div></div>';
+  var lista=B.cli.slice();
+  lista.sort(function(a,b){ return bfDeCli(b,BFMES).l - bfDeCli(a,BFMES).l; });
+  lista.forEach(function(c,i){
+    var z=bfDeCli(c,BFMES), rojo=(c.d!==null && c.d>60);
+    h+='<div class="bfcli'+(z.c?' con':' sin')+'">';
+    h+='<div class="bfnom">'+esc(c.n)+(c.t?('<span class="bftip">'+esc(c.t)+'</span>'):'')+'</div>';
+    h+='<div class="bfmeta">Última compra '+(c.u?fcorta(c.u):'—')
+      +(c.d!==null?(' · <span class="'+(rojo?'bfal':'bfok')+'">hace '+c.d+' días</span>'):'')+'</div>';
+    if(z.c){
+      h+='<div class="bfnums"><div><b>'+bfNumT(z.c)+'</b><span>cajas</span></div>'
+        +'<div><b>'+bfNumT(z.l)+'</b><span>litros</span></div>'
+        +'<div><b>'+Object.keys(z.s).length+'</b><span>variedades</span></div></div>';
+      h+='<div class="bfrot">QUÉ COMPRÓ</div>';
+      (B.ord||[]).forEach(function(cat){
+        var ks=Object.keys(z.s).filter(function(k){ return (B.sk[k]||{}).c===cat; });
+        if(!ks.length) return;
+        ks.sort(function(a,b){ return z.s[b][0]-z.s[a][0]; });
+        h+='<div class="bfcat">'+esc(cat.toUpperCase())+'</div>';
+        ks.forEach(function(k){
+          h+='<div class="bflin"><span>'+esc((B.sk[k]||{}).s||k)+'</span><b>'+bfNumT(z.s[k][0])+' cj</b></div>';
+        });
+      });
+      (z.o||[]).forEach(function(o){
+        h+='<div class="bflin otro"><span>'+esc(o[0])+'</span><b>'+bfNumT(o[1])+' cj</b></div>';
+      });
+    } else {
+      h+='<div class="bfnada">No compró en '+(BFMES==='ANIO'?'todo el año':bfMesNomT(BFMES))+'.'
+        +(c.u?(' Lo último fue el '+fcorta(c.u)+'.'):'')+'</div>';
+    }
+    if(!c.cn){
+      h+='<div class="bfsin">Falta decir de qué tipo es este cliente en la oficina, así te digo qué le falta.</div>';
+    }
+    if((c.f||[]).length){
+      h+='<button class="bfmas" onclick="bfAbrir('+i+')">'+(BFABIER[i]?'▾ Ocultar':'▸ Le falta tener ('+c.f.length+')')+'</button>';
+      if(BFABIER[i]){
+        h+='<div class="bfrot" style="margin-top:2px">PRIORITARIOS QUE NO LLEVA — AHÍ ESTÁ LA VENTA</div>';
+        c.f.forEach(function(k){ h+='<span class="bfchip">'+esc((B.sk[k]||{}).s||k)+'</span>'; });
+        if((c.r||[]).length){
+          h+='<div class="bfrot">Y los recomendados</div>';
+          c.r.forEach(function(k){ h+='<span class="bfchip rec">'+esc((B.sk[k]||{}).s||k)+'</span>'; });
+        }
+        h+='<div class="bfcanal">Según el portafolio de <b>'+esc(c.cn||'')+'</b>, que es lo que le corresponde a un '+esc((c.t||'').toLowerCase())+'.</div>';
+      }
+    }
+    h+='</div>';
+  });
+  h+='<div class="bfpie">Son clientes que le compran <b>directo a la fábrica</b>: no están en tu cartera y no suman a tu objetivo. '
+    +'Están acá porque vos los atendés.</div>';
+  return h;
+}
+function bfDeCli(c, mes){
+  if(mes==='ANIO'){
+    var s={}, o=[], tc=0, tl=0;
+    var U=(BFU12&&BFU12.length)?BFU12:Object.keys(c.ms||{});
+    U.forEach(function(m){
+      if(!(c.ms||{})[m]) return;
+      var z=c.ms[m]; tc+=z.c; tl+=z.l;
+      Object.keys(z.s||{}).forEach(function(k){ var y=s[k]||[0,0]; y[0]+=z.s[k][0]; y[1]+=z.s[k][1]; s[k]=y; });
+      (z.o||[]).forEach(function(x){ o.push(x); });
+    });
+    return {c:tc, l:tl, s:s, o:o};
+  }
+  var z2=(c.ms||{})[mes];
+  return z2 ? {c:z2.c, l:z2.l, s:z2.s||{}, o:z2.o||[]} : {c:0, l:0, s:{}, o:[]};
+}
+
 function indBloque(v){
   var o = v.ind; if(!o) return '';
   var cc = o.pctCli >= 70 ? '#1f6b3b' : (o.pctCli >= 45 ? '#8a6d1a' : '#c0392b');
@@ -2095,6 +2198,8 @@ function ppestanas(){
        + '<button class="tab'+(VISTA==='pan'?' act':'')+'" onclick="verVista(\'pan\')">'+ot+'</button></div>';
 }
 function pintarPanel(){
+  if(BFPANT && PAN && PAN.bf){ document.body.style.background=''; document.body.className='';
+    document.body.innerHTML = bfHojaHtml({nom:(PAN.tit||'Dirección'), bf:PAN.bf}); return; }
   if(VISTA === 'tvtb'){ document.body.style.background = '#0d1f3a'; document.body.className = 'tvon';
     document.body.innerHTML = ptvTb(); aplicarEsc(); return; }
   if(VISTA === 'tv'){ document.body.style.background = '#0d1f3a'; document.body.className = 'tvon';
@@ -2117,6 +2222,11 @@ function pintarPanel(){
   } else {
     var n = PAN.vs.length;
     h += ppanTotal(PAN.tipo === 'duenio' ? 'Facturación de la empresa' : 'Facturación del grupo', n + ' vendedores');
+    if(PAN.bf && PAN.bf.cli && PAN.bf.cli.length){
+      h += '<button class="bfIr" onclick="bfPantalla(1)">🏭 Branca Fábrica'
+        + '<span class="preIrCh">'+PAN.bf.cli.length+'</span>'
+        + '<span class="preIrSub">Los clientes que Branca factura directo — aparte de la facturación de la empresa</span></button>';
+    }
     h += '<div class="pcard pazulc"><b>Para revisar con cada vendedor</b>'
        + '<div class="phint">Letra grande, uno por pantalla, sin la facturación de la empresa. Para el televisor o la computadora.</div>'
        + '<button class="pbtn" onclick="verVista(\'tv\')">Abrir modo pantalla</button></div>';
