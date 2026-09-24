@@ -1000,50 +1000,77 @@ function bfHojaHtml(v){
   lista.sort(function(a,b){ return bfDeCli(b,BFMES).l - bfDeCli(a,BFMES).l; });
   lista.forEach(function(c,i){
     var z=bfDeCli(c,BFMES), rojo=(c.d!==null && c.d>60);
+    var P=c.pf||null, np=P?(P.s.length+P.f.length):0, ti=P?P.s.length:0;
+    var pc=np?Math.round(100*ti/np):0, cl=np?(pc>=80?'v':(pc>=50?'a':'r')):'';
+    var ab=!!BFABIER[i];
     h+='<div class="bfcli'+(z.c?' con':' sin')+'">';
-    h+='<div class="bfnom">'+esc(c.n)+(c.t?('<span class="bftip">'+esc(c.t)+'</span>'):'')+'</div>';
-    h+='<div class="bfmeta">Última compra '+(c.u?fcorta(c.u):'—')
-      +(c.d!==null?(' · <span class="'+(rojo?'bfal':'bfok')+'">hace '+c.d+' días</span>'):'')+'</div>';
+    h+='<button class="bfcab" onclick="bfAbrir('+i+')">';
+    h+='<div class="bftop"><div class="bfnom">'+esc(c.n)+(c.t?('<span class="bftip">'+esc(c.t)+'</span>'):'')+'</div>';
+    h+='<span class="bfpct '+(np?cl:'')+'">'+(np?(ti+'/'+np):'—')+' '+(ab?'▾':'▸')+'</span>';
+    h+='</div>';
     if(z.c){
-      h+='<div class="bfnums"><div><b>'+bfNumT(z.c)+'</b><span>cajas</span></div>'
-        +'<div><b>'+bfNumT(z.l)+'</b><span>litros</span></div>'
-        +'<div><b>'+Object.keys(z.s).length+'</b><span>variedades</span></div></div>';
-      h+='<div class="bfrot">QUÉ COMPRÓ</div>';
-      (B.ord||[]).forEach(function(cat){
-        var ks=Object.keys(z.s).filter(function(k){ return (B.sk[k]||{}).c===cat; });
-        if(!ks.length) return;
-        ks.sort(function(a,b){ return z.s[b][0]-z.s[a][0]; });
-        h+='<div class="bfcat">'+esc(cat.toUpperCase())+'</div>';
-        ks.forEach(function(k){
-          h+='<div class="bflin"><span>'+esc((B.sk[k]||{}).s||k)+'</span><b>'+bfNumT(z.s[k][0])+' cj</b></div>';
-        });
-      });
-      (z.o||[]).forEach(function(o){
-        h+='<div class="bflin otro"><span>'+esc(o[0])+'</span><b>'+bfNumT(o[1])+' cj</b></div>';
-      });
+      h+='<div class="bfmini"><b>'+bfNumT(z.c)+'</b> cajas · <b>'+bfNumT(z.l)+'</b> L'
+        +(c.d!==null?(' · <span class="'+(rojo?'bfal':'bfok')+'">'+(c.d?('hace '+c.d+' días'):'hoy mismo')+'</span>'):'')+'</div>';
     } else {
-      h+='<div class="bfnada">No compró en '+(BFMES==='ANIO'?'todo el año':bfMesNomT(BFMES))+'.'
-        +(c.u?(' Lo último fue el '+fcorta(c.u)+'.'):'')+'</div>';
+      h+='<div class="bfmini"><span style="color:#b4342a;font-weight:700">No compró en '+(BFMES==='ANIO'?'12 meses':bfMesNomT(BFMES))+'</span>'
+        +(c.u?(' · lo último el '+fcorta(c.u)):'')+'</div>';
     }
-    if(!c.cn){
-      h+='<div class="bfsin">Falta decir de qué tipo es este cliente en la oficina, así te digo qué le falta.</div>';
-    }
-    if((c.f||[]).length){
-      h+='<button class="bfmas" onclick="bfAbrir('+i+')">'+(BFABIER[i]?'▾ Ocultar':'▸ Le falta tener ('+c.f.length+')')+'</button>';
-      if(BFABIER[i]){
-        h+='<div class="bfrot" style="margin-top:2px">PRIORITARIOS QUE NO LLEVA — AHÍ ESTÁ LA VENTA</div>';
-        c.f.forEach(function(k){ h+='<span class="bfchip">'+esc((B.sk[k]||{}).s||k)+'</span>'; });
-        if((c.r||[]).length){
-          h+='<div class="bfrot">Y los recomendados</div>';
-          c.r.forEach(function(k){ h+='<span class="bfchip rec">'+esc((B.sk[k]||{}).s||k)+'</span>'; });
+    if(!c.cn) h+='<div class="bfmini" style="color:#7a5512;font-weight:700">Falta decir de qué tipo es, en la oficina</div>';
+    else if(P && P.f.length) h+='<div class="bfmini" style="color:#8d2820;font-weight:700">Le faltan '+P.f.length+' prioritarios</div>';
+    else if(P) h+='<div class="bfmini" style="color:#1a7f4b;font-weight:700">Tiene todos sus prioritarios</div>';
+    h+='</button>';
+    if(ab){
+      if(z.c){
+        h+='<div class="bfnums"><div><b>'+bfNumT(z.c)+'</b><span>cajas</span></div>'
+          +'<div><b>'+bfNumT(z.l)+'</b><span>litros</span></div>'
+          +'<div><b>'+Object.keys(z.s).length+'</b><span>variedades</span></div></div>';
+        h+='<div class="bfrot">QUÉ COMPRÓ</div>';
+        (B.ord||[]).forEach(function(cat){
+          var ks=Object.keys(z.s).filter(function(k){ return (B.sk[k]||{}).c===cat; });
+          if(!ks.length) return;
+          ks.sort(function(a,b){ return z.s[b][0]-z.s[a][0]; });
+          h+='<div class="bfcat">'+esc(cat.toUpperCase())+'</div>';
+          ks.forEach(function(k){
+            h+='<div class="bflin"><span>'+esc((B.sk[k]||{}).s||k)+'</span><b>'+bfNumT(z.s[k][0])+' cj</b></div>';
+          });
+        });
+        (z.o||[]).forEach(function(o){
+          h+='<div class="bflin otro"><span>'+esc(o[0])+'</span><b>'+bfNumT(o[1])+' cj</b></div>';
+        });
+      }
+      if(!c.cn){
+        h+='<div class="bfsin">Falta decir de qué tipo es este cliente en la oficina, así te digo qué le falta.</div>';
+      } else if(P){
+        if(c.pa && c.pa.n){
+          var _pa=c.pa, _pc2=Math.round(100*_pa.t/_pa.n);
+          h+='<div class="bfanio"><b>En '+(B.anio||'')+' lleva '+_pa.t+' de '+_pa.n+'</b> <span>('+_pc2+'% de sus prioritarios)</span>';
+          h+='<div class="bfanio2">'+bfNumT(_pa.cj)+' cajas · '+bfNumT(_pa.lt)+' L en '+_pa.m+(_pa.m===1?' mes':' meses')+'</div>';
+          if(_pa.d.length){
+            h+='<div class="bfanio3">Los ten\u00eda y este a\u00f1o todav\u00eda no se los llev\u00f3:</div>';
+            _pa.d.forEach(function(k){ h+='<span class="bfchip">'+esc((B.sk[k]||{}).s||k)+'</span>'; });
+          }
+          h+='</div>';
         }
-        h+='<div class="bfcanal">Según el portafolio de <b>'+esc(c.cn||'')+'</b>, que es lo que le corresponde a un '+esc((c.t||'').toLowerCase())+'.</div>';
+        h+=bfLista('Prioritarios', P.s, P.f, B)
+         + bfLista('Recomendados', P.rs, P.rf, B)
+         + bfLista('Complementarios', P.xs, P.xf, B);
+        h+='<div class="bfcanal">En rojo lo que no le vende la fábrica, con tilde lo que ya trabaja. '
+          +'Sale del portafolio de <b>'+esc(c.cn||'')+'</b>, que es lo que le corresponde a un '+esc((c.t||'').toLowerCase())+'. '
+          +'El '+ti+'/'+np+' de arriba se mide con los prioritarios de los <b>\u00faltimos 12 meses</b>, as\u00ed en enero nadie arranca en cero. '
+          +'El recuadro azul es la cobertura del <b>a\u00f1o en curso</b>, que se vuelve a llenar desde enero.</div>';
       }
     }
     h+='</div>';
   });
   h+='<div class="bfpie">Son clientes que le compran <b>directo a la fábrica</b>: no están en tu cartera y no suman a tu objetivo. '
     +'Están acá porque vos los atendés.</div>';
+  return h;
+}
+function bfLista(tit, ti, fa, B){
+  if(!(ti||[]).length && !(fa||[]).length) return '';
+  var h='<div class="bfnt">'+tit+' <i>'+(ti||[]).length+' de '+((ti||[]).length+(fa||[]).length)+'</i></div>';
+  (fa||[]).forEach(function(k){ h+='<span class="bfchip">'+esc((B.sk[k]||{}).s||k)+'</span>'; });
+  (ti||[]).forEach(function(k){ h+='<span class="bfti">'+esc((B.sk[k]||{}).s||k)+' ✓</span>'; });
   return h;
 }
 function bfDeCli(c, mes){

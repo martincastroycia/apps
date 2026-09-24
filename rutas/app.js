@@ -185,6 +185,25 @@ async function traerNuevo(id, keyBytes, gen, ver, sel, hayDatos){
 
 async function inicio(){
   if("serviceWorker" in navigator){
+    /* [stated] 24/9/2026: «publique y en el telefono sigue sin aparecer».
+       El programa se sirve de la copia guardada para abrir sin internet, asi
+       que el dia que se publica algo nuevo la primera apertura todavia dibuja
+       el programa viejo y recien se ve a la segunda. Con esto, cuando el
+       service worker nuevo toma el control, la pagina se recarga UNA sola vez
+       y ya se ve lo nuevo. El candado de sesion evita el ciclo infinito. */
+    try{
+      /* si NO habia un programa tomando el control, es la primera instalacion:
+         ahi no hay nada viejo en pantalla y recargar seria al pedo */
+      var _habia = !!navigator.serviceWorker.controller;
+      navigator.serviceWorker.addEventListener("controllerchange", function(){
+        if(!_habia) return;
+        try{
+          if(sessionStorage.getItem("rt_recarga") === "1") return;
+          sessionStorage.setItem("rt_recarga", "1");
+        }catch(e){}
+        location.reload();
+      });
+    }catch(e){}
     try{ await navigator.serviceWorker.register("sw.js"); }catch(e){}
   }
   var cod = leer(LS_COD), keyB64 = leer(LS_KEY);
