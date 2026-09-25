@@ -968,6 +968,8 @@ function cambiaDia(d){ diaAct = d; pintar(); window.scrollTo(0,0); }
 var FALTPANT=0;
 function faltPantalla(v){ FALTPANT=v?1:0; pintar(); window.scrollTo(0,0); }
 var BFPANT=0, BFMES='', BFABIER={}, BFU12=[];
+var BFUNI=(lsGet('bf_uni')==='cj')?'cj':'lt';
+function bfUni(u){ BFUNI=u; lsSet('bf_uni',u); pintar(); }
 function bfPantalla(v){ BFPANT=v?1:0; pintar(); window.scrollTo(0,0); }
 function bfMes(m){ BFMES=m; pintar(); }
 function bfAbrir(i){ BFABIER[i]=!BFABIER[i]; pintar(); }
@@ -989,12 +991,16 @@ function bfHojaHtml(v){
   h+='<div class="tabs bfmes">';
   ms.forEach(function(m){ h+='<button class="tab'+(m===BFMES?' act':'')+'" onclick="bfMes(\''+m+'\')">'+bfMesNomT(m)+'</button>'; });
   h+='<button class="tab'+(BFMES==='ANIO'?' act':'')+'" onclick="bfMes(\'ANIO\')">12 meses</button></div>';
+  h+='<div class="bfuni"><span>VER EN</span>'
+    +'<button class="'+(BFUNI==='lt'?'act':'')+'" onclick="bfUni(\'lt\')">Litros</button>'
+    +'<button class="'+(BFUNI==='cj'?'act':'')+'" onclick="bfUni(\'cj\')">Cajas</button></div>';
   var tc=0, tl=0, comp=0;
   B.cli.forEach(function(c){
     var z=bfDeCli(c,BFMES);
     tc+=z.c; tl+=z.l; if(z.c) comp++;
   });
-  h+='<div class="bfres"><b>'+bfNumT(tl)+' litros</b><span> '+(BFMES==='ANIO'?'en los últimos 12 meses':('en '+bfMesNomT(BFMES)))+' · '+bfNumT(tc)+' cajas</span>'
+  h+='<div class="bfres"><b>'+bfNumT(BFUNI==='cj'?tc:tl)+(BFUNI==='cj'?' cajas':' litros')+'</b>'
+    +'<span> '+(BFMES==='ANIO'?'en los últimos 12 meses':('en '+bfMesNomT(BFMES)))+' · '+bfNumT(BFUNI==='cj'?tl:tc)+(BFUNI==='cj'?' litros':' cajas')+'</span>'
     +'<div class="bfres2">Compraron <b>'+comp+'</b> de tus <b>'+B.cli.length+'</b> clientes</div></div>';
   var lista=B.cli.slice();
   lista.sort(function(a,b){ return bfDeCli(b,BFMES).l - bfDeCli(a,BFMES).l; });
@@ -1028,14 +1034,16 @@ function bfHojaHtml(v){
         (B.ord||[]).forEach(function(cat){
           var ks=Object.keys(z.s).filter(function(k){ return (B.sk[k]||{}).c===cat; });
           if(!ks.length) return;
-          ks.sort(function(a,b){ return z.s[b][0]-z.s[a][0]; });
+          var U=(BFUNI==='lt')?1:0, un=(BFUNI==='lt')?' L':' cj';
+          ks.sort(function(a,b){ return z.s[b][U]-z.s[a][U]; });
           h+='<div class="bfcat">'+esc(cat.toUpperCase())+'</div>';
           ks.forEach(function(k){
-            h+='<div class="bflin"><span>'+esc((B.sk[k]||{}).s||k)+'</span><b>'+bfNumT(z.s[k][0])+' cj</b></div>';
+            h+='<div class="bflin"><span>'+esc((B.sk[k]||{}).s||k)+'</span><b>'+bfNumT(z.s[k][U])+un+'</b></div>';
           });
         });
         (z.o||[]).forEach(function(o){
-          h+='<div class="bflin otro"><span>'+esc(o[0])+'</span><b>'+bfNumT(o[1])+' cj</b></div>';
+          h+='<div class="bflin otro"><span>'+esc(o[0])+'</span><b>'
+            +bfNumT((BFUNI==='lt' && o[2]!==undefined)?o[2]:o[1])+((BFUNI==='lt' && o[2]!==undefined)?' L':' cj')+'</b></div>';
         });
       }
       if(!c.cn){
