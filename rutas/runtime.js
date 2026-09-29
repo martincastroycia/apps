@@ -1590,6 +1590,48 @@ function ppanTotal(tit, sub){
   }
   return h + '</div>';
 }
+/* el stock en pesos, solo en la hoja de direccion. El importe del listado
+   es COSTO DE REPOSICION; el interno se muestra aparte, no se resta. */
+var STK_AB = 0;
+function pstkFecha(f){
+  var s = String(f || ''); if(s.length < 10) return s;
+  return s.slice(8,10) + '/' + s.slice(5,7) + '/' + s.slice(2,4);
+}
+function pstkPc(n){ return String(Math.round(n * 10) / 10).replace('.', ','); }
+function ppanStkVer(){
+  STK_AB = STK_AB ? 0 : 1;
+  var e = document.getElementById('stkFams'), b = document.getElementById('stkBtn');
+  if(e) e.style.display = STK_AB ? 'block' : 'none';
+  if(b) b.textContent = STK_AB ? 'Ocultar el detalle por fábrica' : 'Ver fábrica por fábrica';
+}
+function ppanStock(){
+  var S = PAN.stk;
+  if(!S || !S.tot) return '';
+  var pct = S.tot ? (S.int / S.tot * 100) : 0;
+  var h = '<div class="pcard pazulc"><div class="pct">STOCK EN EL DEPÓSITO</div>'
+        + '<div class="pbig">' + qshort(S.tot) + '</div>'
+        + '<div class="psb">a costo de reposición · al ' + pstkFecha(S.fecha) + ' · ' + pmil(S.arts) + ' artículos, ' + pmil(S.un) + ' unidades</div>';
+  h += '<div class="pimp">'
+     + '<div class="pil"><span>Plata parada en el depósito</span><b>' + qshort(S.tot) + '</b></div>'
+     + '<div class="pil"><span>De eso, impuesto interno (Branca)</span><b>' + qshort(S.int) + '</b></div>'
+     + '<div class="pil pit"><span>LO QUE ES MERCADERÍA</span><b>' + qshort(S.tot - S.int) + '</b></div>'
+     + '<div class="pinota">El <b>' + pstkPc(pct) + '%</b> de lo que hay en el depósito es impuesto interno: plata ya pagada que se recupera recién al vender. '
+     + 'Sale de la lista de Branca vigente al día del stock. Este cuadro sale solamente acá.</div>'
+     + '</div>';
+  if(S.neg) h += '<div class="potr">Hay <b>' + S.neg + '</b> artículo(s) con stock en negativo. No es un error del teléfono: viene así en el listado.</div>';
+  if(S.sinFam > 0) h += '<div class="potr">' + qshort(S.sinFam) + ' es de artículos sin fábrica cargada, así que no figuran en el detalle de abajo.</div>';
+  h += '<button class="pbtn" id="stkBtn" onclick="ppanStkVer()">Ver fábrica por fábrica</button>';
+  h += '<div id="stkFams" style="display:none;margin-top:8px">';
+  S.fams.forEach(function(x){
+    var p2 = S.tot ? Math.round(x.i / S.tot * 100) : 0;
+    h += '<div class="prow"><span class="prn">' + esc(x.f)
+       + '<i style="display:block;font-style:normal;opacity:.65;font-size:11.5px">'
+       + x.n + ' artículos' + (x.ii > 0 ? (' · interno ' + qshort(x.ii)) : '') + '</i></span>'
+       + '<span class="prv"><b>' + qshort(x.i) + '</b> <i>' + p2 + '%</i></span></div>';
+  });
+  h += '</div></div>';
+  return h;
+}
 function ppanAlertas(){
   var xs = PAN.vs.slice();
   var ab = xs.filter(function(x){ return x.meta; }).sort(function(a,b){ return (a.real/a.meta) - (b.real/b.meta); }).slice(0,3);
@@ -2257,6 +2299,7 @@ function pintarPanel(){
   } else {
     var n = PAN.vs.length;
     h += ppanTotal(PAN.tipo === 'duenio' ? 'Facturación de la empresa' : 'Facturación del grupo', n + ' vendedores');
+    if(PAN.tipo === 'duenio') h += ppanStock();
     if(PAN.bf && PAN.bf.cli && PAN.bf.cli.length){
       h += '<button class="bfIr" onclick="bfPantalla(1)">🏭 Branca Fábrica'
         + '<span class="preIrCh">'+PAN.bf.cli.length+'</span>'
