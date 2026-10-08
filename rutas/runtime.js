@@ -1632,6 +1632,36 @@ function ppanStock(){
   h += '</div></div>';
   return h;
 }
+var PFL = 'l';
+function pflVer(k){ PFL = k; pintar(); }
+function pfl100(l, km){ return (km > 0 && l > 0) ? (l * 100 / km).toFixed(1) : '—'; }
+function ppanFlota(){
+  var F = PAN.flt;
+  if(!F || !F.vs || !F.vs.length) return '';
+  var ROT = {l:'Litros', km:'Kilómetros', c:'Litros cada 100 km'};
+  var h = '<div class="pcard"><div class="pct">GASOIL DE LA FLOTA, CAMIÓN POR CAMIÓN</div>'
+        + '<div class="psb">últimos 12 meses · ' + pmil(F.l) + ' litros · ' + pmil(F.k) + ' km · '
+        + pfl100(F.lk, F.k) + ' litros cada 100 km</div>';
+  h += '<div class="phint">Lo que gasta cada uno en litros y en kilómetros. La plata de la flota se mira en la computadora, no viaja al teléfono.</div>';
+  h += '<div class="tabs" style="margin:6px 0 8px">'
+     + ['l','km','c'].map(function(k){ return '<button class="tab'+(PFL===k?' act':'')+'" onclick="pflVer(\''+k+'\')">'+ROT[k]+'</button>'; }).join('')
+     + '</div>';
+  F.vs.forEach(function(x){
+    var cab = PFL === 'l'  ? pmil(x.l) + ' L'
+            : PFL === 'km' ? (x.sk ? 'no lleva km' : pmil(x.k) + ' km')
+            :                (x.sk ? 'no lleva km' : pfl100(x.lk, x.k) + ' L/100');
+    var se = x.s.map(function(z){
+      return [z[0], PFL === 'l' ? z[1] : PFL === 'km' ? z[2] : (z[2] > 0 && z[3] > 0 ? Math.round(z[3] * 1000 / z[2]) / 10 : 0)];
+    });
+    h += '<details class="pdet"><summary>' + esc(x.n) + ' <span class="pgris">' + cab + '</span></summary>'
+       + '<div class="pln pgris">' + pmil(x.l) + ' litros' + (x.sk ? '' : (' · ' + pmil(x.k) + ' km · ' + pfl100(x.lk, x.k) + ' litros cada 100')) + '</div>'
+       + (pcols(se, function(v){ return PFL === 'c' ? String(v).replace('.', ',') : pmil(v); }, 'pc21')
+          || '<div class="pln pgris">Un solo mes con datos: no hay con qué comparar todavía.</div>')
+       + '</details>';
+  });
+  h += '</div>';
+  return h;
+}
 function ppanAlertas(){
   var xs = PAN.vs.slice();
   var ab = xs.filter(function(x){ return x.meta; }).sort(function(a,b){ return (a.real/a.meta) - (b.real/b.meta); }).slice(0,3);
@@ -2300,6 +2330,7 @@ function pintarPanel(){
     var n = PAN.vs.length;
     h += ppanTotal(PAN.tipo === 'duenio' ? 'Facturación de la empresa' : 'Facturación del grupo', n + ' vendedores');
     if(PAN.tipo === 'duenio') h += ppanStock();
+    if(PAN.tipo === 'duenio') h += ppanFlota();
     if(PAN.bf && PAN.bf.cli && PAN.bf.cli.length){
       h += '<button class="bfIr" onclick="bfPantalla(1)">🏭 Branca Fábrica'
         + '<span class="preIrCh">'+PAN.bf.cli.length+'</span>'
