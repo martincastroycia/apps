@@ -597,6 +597,68 @@ function bschip(c){
   if(!n) return '';
   return ' <span class="bschip" style="background:'+col+'">'+esc(n)+(b[1]?' · '+esc(b[1]):'')+'</span>';
 }
+/* LOS QUE NO PODES PERDER. [stated] 16/10/2026, despues de ver las
+   pantallas dibujadas: «armamos la 3 y la 4». La ventana de Branca sirve
+   para SUMAR productos y solo nombra al que le falta algo; el Defender que
+   ya tiene todo el portafolio y dejo de comprar no aparece en ninguna
+   parte. Estos dos bloques son para NO PERDER, que es otra cosa. */
+function defFec(iso){ if(!iso) return ''; var p=String(iso).split('-'); return (+p[2])+'/'+(+p[1]); }
+function defDiaNom(d){
+  var L = (d && d.join) ? d.slice() : (d ? [d] : []);
+  L = L.map(function(x){ return DNOM[x]||x; });
+  return L.length>1 ? (L.slice(0,-1).join(', ')+' y '+L[L.length-1]) : (L[0]||'');
+}
+function defMotivo(c){
+  var b=c.bd||[], dd=b[0], ci=b[1], at=b[2], u=b[3];
+  if(!u) return ['Nunca llevó una botella de Branca.', 0];
+  if(at) return ['Sin Branca desde el '+defFec(u)+' — '+dd+' días. Suele comprar cada '+ci+'.', 1];
+  if(ci) return ['Llevó Branca el '+defFec(u)+'. Compra cada '+ci+' días: va bien.', 0];
+  return ['Llevó Branca el '+defFec(u)+'.', 0];
+}
+function defHoy(D, v){
+  if(!D||!D.c||!D.c.length) return '';
+  var l=D.c.filter(function(c){ return c.bs && c.bs[0]==='D'; });
+  if(!l.length) return '';
+  l=l.slice().sort(function(a,b){ var aa=(a.bd&&a.bd[2])?1:0, bb=(b.bd&&b.bd[2])?1:0;
+    if(aa!==bb) return bb-aa; return (b.p||0)-(a.p||0); });
+  var mes=String((G&&G.gen)||'').slice(0,7);
+  var mal=0, sinMes=0;
+  l.forEach(function(c){ var b=c.bd||[];
+    if(b[2] || !b[3]) mal++;
+    if(!b[3] || String(b[3]).slice(0,7)!==mes) sinMes++; });
+  var sub = mal ? (mal===1?'1 está flojo con Branca':mal+' están flojos con Branca')
+          : sinMes ? (sinMes===1?'1 todavía no compró Branca este mes':sinMes+' todavía no compraron Branca este mes')
+          : 'todos compraron Branca este mes';
+  var h='<details class="defNP"'+(mal?' open':'')+'><summary><span><b>Los que no podés perder: '+l.length+'</b>'
+   +'<span class="defSub">'+sub+'</span></span></summary><div class="defL">';
+  l.forEach(function(c){
+   var m=defMotivo(c), bb=c.bd||[], chip = m[1] ? ('<span class="defX">'+(bb[0]>=0?bb[0]+' d sin Branca':'atrasado')+'</span>')
+     : (!bb[3] ? '<span class="defX">nunca llevó</span>'
+        : (String(bb[3]).slice(0,7)===mes ? '<span class="defD">compró este mes</span>' : '<span class="defD">dentro de su ritmo</span>'));
+   h+='<div class="defI'+(m[1]?'':' ok')+'" onclick="irCli('+c.n+')">'
+    + '<div class="defN">'+esc(c.c)+' '+chip+'</div>'
+    + '<div class="defR">'+esc((c.pf&&c.pf.t)||'')+(c.bs[1]?' · Defender '+esc(c.bs[1]):' · Defender')+'</div>'
+    + '<div class="defF">'+esc(m[0])+'</div>'
+    + '<div class="defM">Compra '+fmt(c.p)+'/mes</div></div>';
+  });
+  return h+'</div></details>';
+}
+function defBarra(v){
+  var R=v.df; if(!R||!R.t) return '';
+  var h='<details class="defBar"><summary><span class="defC">'+R.t+'</span>'
+   +'<span>Tus <b>'+R.t+' Defender</b> de Branca · <b>'+R.c+'</b> compr'+(R.c===1?'ó':'aron')+' este mes</span></summary>';
+  if(R.f && R.f.length){
+   h+='<div class="defBL">';
+   R.f.forEach(function(z){
+    h+='<div><b>'+esc(z.c)+'</b> — '+(z.u ? ('sin Branca desde el <i>'+defFec(z.u)+'</i>'+(z.dd>=0?' · '+z.dd+' días':''))
+      : '<i>nunca</i> llevó Branca')+(defDiaNom(z.d)?' · '+defDiaNom(z.d):'')+'</div>';
+   });
+   if(R.mas) h+='<div>y '+R.mas+' más</div>';
+   h+='</div>';
+  } else { h+='<div class="defBL"><div>Los '+R.t+' llevaron Branca este mes. Bien ahí.</div></div>'; }
+  h+='<div class="defNota">El mes va hasta el día de los datos. Cuando uno compra, sale solo de la lista.</div>';
+  return h+'</details>';
+}
 function pfchip(c){
   var p=c.pf; if(!p||p.nu) return '';
   var n=p.s.length, tot=p.s.length+p.f.length; if(!tot) return '';
@@ -867,6 +929,8 @@ function pintar(){
     h += tabs + '</div>';
   }
   h += faltTopHtml(v);
+  h += defHoy(D, v);
+  h += defBarra(v);
   var pct = v.o.meta > 0 ? Math.round(v.o.real/v.o.meta*100) : 0;
   var oe = qest(v.o.real, v.o.meta, v.o.frac);
   var ofr = oe[0]==='mok' ? 'Vas bien.' : oe[0]==='mwarn' ? 'Vas un poco abajo.' : 'Vas atrasado.';
