@@ -98,7 +98,7 @@ function pfdia(D, v){
    var n=c.pf.s.length, tot=c.pf.s.length+c.pf.f.length;
    var pc=Math.round(100*n/tot), col= pc>=80?'#198754':(pc>=50?'#b8860b':'#c0392b');
    h+='<div class="pfdi" onclick="irCli('+c.n+')">'
-     + '<div class="pfdn">'+esc(c.c)+' <span class="pfchip" style="border-color:'+col+';color:'+col+'"><span class="pfpt" style="background:'+col+'"></span>'+n+'/'+tot+'</span></div>'
+     + '<div class="pfdn">'+esc(c.c)+bschip(c)+' <span class="pfchip" style="border-color:'+col+';color:'+col+'"><span class="pfpt" style="background:'+col+'"></span>'+n+'/'+tot+'</span></div>'
      + '<div class="pfdr">' + esc(c.pf.t) + '</div>'
      + '<div class="pfdf">Le falta: '+c.pf.f.slice(0,4).map(function(i){return esc(T.sk[i]||'');}).join(' · ')+(c.pf.f.length>4?' y '+(c.pf.f.length-4)+' más':'')+'</div>'
      + '<div class="pfdm">Compra '+fmt(c.p)+'/mes</div>'
@@ -680,7 +680,7 @@ function pfsug(D){
   var h='<details class="sec pfsug"><summary><span class="fl">&#9656;</span><span class="tit">Todavía no le vendés Branca — para abrir</span><span class="cnt">'+l.length+'</span></summary><div class="pfdl">';
   l.forEach(function(c){
    h+='<div class="pfdi" onclick="irCli('+c.n+')">'
-     + '<div class="pfdn">'+esc(c.c)+'</div>'
+     + '<div class="pfdn">'+esc(c.c)+bschip(c)+'</div>'
      + '<div class="pfdr">' + esc(c.pf.t) + '</div>'
      + '<div class="pfdf">Empezá por: '+c.pf.f.slice(0,3).map(function(i){return esc(T.sk[i]||'');}).join(' · ')+'</div>'
      + '<div class="pfdm">Compra '+fmt(c.p)+'/mes de otras cosas</div></div>';
