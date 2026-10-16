@@ -585,6 +585,18 @@ function abArrancar(q){
   setTimeout(function(){ try{ abMandar(); }catch(e){} }, 4000);
   try{ window.addEventListener('online', function(){ setTimeout(function(){ try{ abMandar(); }catch(e){} }, 1500); }); }catch(e){}
 }
+/* el cuadrante de Branca, al lado del nombre. [stated] 16/10/2026:
+   «si eso le tiene que salir a los vendedores tb, agregado a lo que
+   tengan». No saca nada de lo que ya estaba. A los de Corrientes no
+   les llega, porque no venden Branca. */
+var BSNOM={C:'Conquistar',E:'Eficientizar',D:'Defender',M:'Mantener'};
+var BSCOL={C:'#12467f',E:'#8a6d1a',D:'#1a7f4b',M:'#5c6b7a'};
+function bschip(c){
+  var b=c.bs; if(!b||!b[0]) return '';
+  var n=BSNOM[b[0]]||'', col=BSCOL[b[0]]||'#5c6b7a';
+  if(!n) return '';
+  return ' <span class="bschip" style="background:'+col+'">'+esc(n)+(b[1]?' · '+esc(b[1]):'')+'</span>';
+}
 function pfchip(c){
   var p=c.pf; if(!p||p.nu) return '';
   var n=p.s.length, tot=p.s.length+p.f.length; if(!tot) return '';
@@ -915,7 +927,7 @@ function pintar(){
                      : '<span class="cmeta">le toca en ' + (ci - d) + ' d</span>'; }
     if(v.ag){ var az=agenda(v.id)[c.n]||{}, af=az.r||az.f||''; if(az.e!=='visitado'&&af===hoyIso())meta='<span class="cmeta hoy">VISITAR HOY</span>'; else if(az.e!=='visitado'&&af&&af<hoyIso())meta='<span class="cmeta rojo">ATRASADO</span>'; }
     h += '<details class="cli' + (m.v ? ' vis' : '') + '" id="cli' + c.n + '" data-n="' + esc(c.c).toLowerCase() + '">';
-    h += '<summary><span class="sem s' + c.s + '"></span>' + (ix < 3 ? '<span class="estr">★</span>' : '') + '<span class="cnom">' + esc(c.c) + (c.au ? ' <span class="nvo">nuevo</span>' : '') + (c.rg ? ' <span class="foq">★</span>' : '') + '</span>' + pfchip(c) + '<span class="tick">✓</span>' + meta + '</summary>';
+    h += '<summary><span class="sem s' + c.s + '"></span>' + (ix < 3 ? '<span class="estr">★</span>' : '') + '<span class="cnom">' + esc(c.c) + (c.au ? ' <span class="nvo">nuevo</span>' : '') + (c.rg ? ' <span class="foq">★</span>' : '') + '</span>' + bschip(c) + pfchip(c) + '<span class="tick">✓</span>' + meta + '</summary>';
     h += focohtml(c);
     if(c.fg) h += '<div class="falt">⚠ El repositor encontró faltando en góndola: <b>'+c.fg.f.map(esc).join(' · ')+'</b><div class="faltm">'+esc(c.fg.repo)+' · '+fcorta(c.fg.fecha)+'</div></div>';
     h += '<div class="cuerpo">';
