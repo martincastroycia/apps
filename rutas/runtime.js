@@ -1943,32 +1943,54 @@ function ppanInd(){
   });
   return h + '</div>';
 }
+function pfDiaTxt(d){ return d<=0?'desde hoy':(d===1?'desde ayer':('hace '+d+' días')); }
+function pfDiaCol(d){ return d>=10?'#b4342a':(d>=4?'#8a6d1a':'#5c6b7a'); }
+function pfEntra(z){ return (PAN.tipo!=='branca') || z[2]===1 || z[2]===2; }
 function ppanFaltantes(){
-  var L = (PAN.vs || []).filter(function(x){ return x.fg && x.fg.length; });
-  if(!L.length) return '';
-  var tc = 0, tp = 0, tk = 0;
-  L.forEach(function(x){ x.fg.forEach(function(z){ if(z.p.length) tc++; tp += z.p.length; tk += z.k.length; }); });
+  var F = PAN.fgt; if(!F || !F.v || !F.v.length) return '';
+  var V = [], tc = 0, tp = 0, tk = 0, man = [];
+  F.v.forEach(function(x){
+    var cl = [];
+    x.cl.forEach(function(C){
+      var ps = (C.p||[]).filter(pfEntra);
+      if(!ps.length && !(C.k||[]).length) return;
+      cl.push({c:C.c, s:C.s, r:C.r, p:ps, k:C.k||[]});
+      if(ps.length){ tc++; tp += ps.length; }
+      tk += (C.k||[]).length;
+      ps.forEach(function(z){ if(z[2]===2) man.push([z[0], C.c]); });
+    });
+    if(cl.length) V.push({v:x.v, cl:cl});
+  });
   if(!tp && !tk) return '';
-  var h = '<div class="pcard"><div class="pct">La góndola: lo que hay que salir a vender</div>'
-    + '<div class="phint">Lo que los repositores encontraron faltando, por vendedor. Es venta esperando: el cliente ya lo vende y no lo tiene en el estante.</div>';
-  h += '<div class="ppfres"><b>' + pmil(tc) + '</b> cliente(s) con la góndola vacía · <b>' + pmil(tp) + '</b> producto(s) sin resolver'
-     + (tk ? (' · <b>' + pmil(tk) + '</b> que el vendedor dice que ya vendió') : '') + '</div>';
-  L.sort(function(a, b){ var pa=0, pb=0; a.fg.forEach(function(z){ pa += z.p.length; }); b.fg.forEach(function(z){ pb += z.p.length; }); return pb - pa; });
-  L.forEach(function(x){
-    var cl = 0, pr = 0, ok = 0, viejo = 0;
-    x.fg.forEach(function(z){ if(z.p.length){ cl++; pr += z.p.length; if((z.d||0) > viejo) viejo = z.d||0; } ok += z.k.length; });
-    h += '<details class="pdet"' + (TBTV ? ' open' : '') + '><summary><b>' + esc(x.nom) + '</b> — ' + pmil(cl) + (cl===1?' cliente':' clientes') + ' · ' + pmil(pr) + (pr===1?' producto':' productos')
-       + (viejo ? (' · el más viejo hace ' + viejo + ' días') : '')
-       + (ok ? (' · ' + pmil(ok) + ' ya vendido(s)') : '') + '</summary><div class="plista">';
-    x.fg.forEach(function(z){
-      if(!z.p.length && !z.k.length) return;
-      h += '<div class="pfalti"><div class="pfaltn">' + esc(z.c) + (z.s ? (' <i>· ' + esc(z.s) + '</i>') : '') + '</div>';
-      if(z.p.length) h += '<div class="pfaltp">' + z.p.map(esc).join(' · ') + '</div>';
-      if(z.k.length) h += '<div class="pfaltk">✔ ya vendido: ' + z.k.map(esc).join(' · ') + '</div>';
-      h += '<div class="pfaltm">' + esc(z.r) + (z.d === null || z.d === undefined ? '' : (' · hace ' + z.d + (z.d===1?' día':' días'))) + '</div></div>';
+  function viejo(ls){ var m=-1; ls.forEach(function(C){ if(C.p.length && C.p[0][1]>m) m=C.p[0][1]; }); return m; }
+  var vj = viejo([].concat.apply([], V.map(function(x){ return x.cl; })));
+  var h = '<div class="pcard"><div class="pct">⚠ Faltantes en góndola</div>'
+    + '<div class="ppfres"><b>' + pmil(tc) + '</b> cliente(s) · <b>' + pmil(tp) + '</b> producto(s)'
+    + (vj > 1 ? (' · el más viejo ' + pfDiaTxt(vj)) : '') + '</div>'
+    + '<div class="phint">Lo que los repositores encontraron faltando en el estante, de <b>todos</b> los vendedores.'
+    + (PAN.tipo==='branca' ? ' Acá salen solo los de Branca.' : '') + ' Es venta esperando: el cliente ya lo vende y no lo tiene.</div>';
+  V.forEach(function(x){
+    var np = 0, vv = viejo(x.cl);
+    x.cl.forEach(function(C){ np += C.p.length; });
+    h += '<details class="pdet"' + (TBTV ? ' open' : '') + '><summary><b>' + esc(x.v) + '</b> — '
+       + pmil(x.cl.length) + (x.cl.length===1?' cliente':' clientes') + ' · ' + pmil(np) + (np===1?' producto':' productos')
+       + (vv > 1 ? (' · el más viejo ' + pfDiaTxt(vv)) : '') + '</summary><div class="plista">';
+    x.cl.forEach(function(C){
+      h += '<div class="pfalti"><div class="pfaltn">' + esc(C.c) + (C.s ? (' <i>· ' + esc(C.s) + '</i>') : '') + '</div>';
+      C.p.forEach(function(z){
+        h += '<div class="pfpr"><span class="pfpn">' + esc(z[0]) + (z[2]===2 ? ' <em>a mano</em>' : '') + '</span>'
+           + '<span class="pfdd" style="color:' + pfDiaCol(z[1]) + ';border-color:' + pfDiaCol(z[1]) + '">' + pfDiaTxt(z[1]) + '</span></div>';
+      });
+      if(C.k.length) h += '<div class="pfaltk">✔ ya vendido: ' + C.k.map(esc).join(' · ') + '</div>';
+      if(C.r) h += '<div class="pfaltm">lo anotó ' + esc(C.r) + '</div>';
+      h += '</div>';
     });
     h += '</div></details>';
   });
+  if(man.length){
+    h += '<div class="pfman"><b>' + man.length + ' anotado(s) a mano</b> — no sé de qué fábrica son<br>'
+       + man.map(function(z){ return esc(z[0]) + ' <span>(' + esc(z[1]) + ')</span>'; }).join('<br>') + '</div>';
+  }
   return h + '</div>';
 }
 function ppanPortafolio(){
