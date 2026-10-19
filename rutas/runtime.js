@@ -2255,6 +2255,34 @@ function ptbSeg(){
     h += '<div class="prow"><span class="prn">' + TB_RELN[i] + '</span><span class="prv"><b>' + pmil(n) + '</b></span></div>'
        + tbbar(n, mr, ['#7f8c9b', '#4a86c5', '#2f6fb3', '#c89b3c'][i]);
   });
+  if(S.br){
+   var B = S.br, tot = B.con + B.sin;
+   h += '<div class="psub">LO QUE CLASIFICÓ BRANCA' + (B.al ? (' · archivo del ' + esc(fcorta(B.al))) : '') + '</div>';
+   h += '<div class="phint">' + pmil(B.con) + ' de ' + pmil(tot) + ' clientes'
+      + (tot ? (' (' + Math.round(B.con / tot * 100) + '%)') : '') + '. '
+      + (B.sin ? ('<b>' + pmil(B.sin) + ' sin clasificar</b> — Branca segmentó el canal tradicional, así que los supermercados y mayoristas grandes quedan afuera.') : 'Están todos.') + '</div>';
+   if(B.cu && B.cu.length){
+    var mc = Math.max.apply(null, B.cu.map(function(z){ return z[1]; }));
+    var COL = {Conquistar:'#12467f', Eficientizar:'#8a6d1a', Defender:'#1a7f4b', Mantener:'#5c6b7a'};
+    B.cu.forEach(function(z){
+     h += '<div class="prow"><span class="prn">' + esc(z[0]) + '</span><span class="prv"><b>' + pmil(z[1]) + '</b>'
+        + (B.con ? ' <i>' + Math.round(z[1] / B.con * 100) + '%</i>' : '') + '</span></div>'
+        + tbbar(z[1], mc, COL[z[0]] || '#7f8c9b');
+    });
+   }
+   if(B.et && B.et.length){
+    h += TBTV ? '<div class="psub">POR ETIQUETA</div><div class="plista">'
+              : '<details class="pdet"><summary>Por etiqueta (1A a 4C)</summary><div class="plista">';
+    B.et.forEach(function(z){ h += '<div class="pl"><span>' + esc(z[0]) + '</span><b>' + pmil(z[1]) + '</b></div>'; });
+    h += '</div>' + (TBTV ? '' : '</details>');
+   }
+   if(B.st && B.st.length){
+    h += TBTV ? '<div class="psub">SUBTIPO SEGÚN BRANCA</div><div class="plista">'
+              : '<details class="pdet"><summary>Subtipo según Branca</summary><div class="plista">';
+    B.st.forEach(function(z){ h += '<div class="pl"><span>' + esc(z[0]) + '</span><b>' + pmil(z[1]) + '</b></div>'; });
+    h += '</div><div class="phint">Es la categoría que les puso Branca. La de arriba es la nuestra: no tienen por qué coincidir.</div>' + (TBTV ? '' : '</details>');
+   }
+  }
   if(S.cruce && S.cruce.length){
     h += TBTV ? '<div class="psub">SUBCANAL POR NIVEL</div><div class="plista">'
               : '<details class="pdet"><summary>Subcanal por nivel, el cruce</summary><div class="plista">';
