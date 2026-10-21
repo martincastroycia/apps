@@ -591,6 +591,17 @@ function abArrancar(q){
    les llega, porque no venden Branca. */
 var BSNOM={C:'Conquistar',E:'Eficientizar',D:'Defender',M:'Mantener'};
 var BSCOL={C:'#12467f',E:'#8a6d1a',D:'#1a7f4b',M:'#5c6b7a'};
+function sbchip(c){ var s=c.sb; if(!s) return ''; var n=s.b.length+s.o; return ' <span class="sbch">'+n+' bocas</span>'; }
+function sbhtml(c){
+  var s=c.sb; if(!s) return '';
+  var tot=s.b.length+s.o, h='<div class="sbx"><div class="sbt">Bocas de entrega <span>'+tot+' en total'+(s.o?' · '+s.b.length+' tuyas':'')+'</span></div>';
+  if(!s.b.length) h+='<div class="sbn">Ninguna está a tu nombre: las atienden otros vendedores.</div>';
+  s.b.forEach(function(x){ var d=dias(x[1]);
+    h+='<div class="sbi"><div class="sbd">'+esc(x[0])+(x[4]?' <span class="nvo">nueva</span>':'')+'</div>'
+     +'<div class="sbm">Última compra '+fcorta(x[1])+(d!==null?' (hace '+d+' d)':'')+' · este mes <b>'+fmt(x[2])+'</b>'+(x[3]?' · mes pasado '+fmt(x[3]):'')+'</div></div>'; });
+  if(s.o&&s.b.length) h+='<div class="sbn">Y '+s.o+(s.o===1?' boca más la atiende':' bocas más las atienden')+' otros vendedores.</div>';
+  return h+'</div>';
+}
 function bschip(c){
   var b=c.bs; if(!b||!b[0]) return '';
   var n=BSNOM[b[0]]||'', col=BSCOL[b[0]]||'#5c6b7a';
@@ -991,12 +1002,13 @@ function pintar(){
                      : '<span class="cmeta">le toca en ' + (ci - d) + ' d</span>'; }
     if(v.ag){ var az=agenda(v.id)[c.n]||{}, af=az.r||az.f||''; if(az.e!=='visitado'&&af===hoyIso())meta='<span class="cmeta hoy">VISITAR HOY</span>'; else if(az.e!=='visitado'&&af&&af<hoyIso())meta='<span class="cmeta rojo">ATRASADO</span>'; }
     h += '<details class="cli' + (m.v ? ' vis' : '') + '" id="cli' + c.n + '" data-n="' + esc(c.c).toLowerCase() + '">';
-    h += '<summary><span class="sem s' + c.s + '"></span>' + (ix < 3 ? '<span class="estr">★</span>' : '') + '<span class="cnom">' + esc(c.c) + (c.au ? ' <span class="nvo">nuevo</span>' : '') + (c.rg ? ' <span class="foq">★</span>' : '') + '</span>' + bschip(c) + pfchip(c) + '<span class="tick">✓</span>' + meta + '</summary>';
+    h += '<summary><span class="sem s' + c.s + '"></span>' + (ix < 3 ? '<span class="estr">★</span>' : '') + '<span class="cnom">' + esc(c.c) + (c.au ? ' <span class="nvo">nuevo</span>' : '') + (c.rg ? ' <span class="foq">★</span>' : '') + '</span>' + bschip(c) + pfchip(c) + sbchip(c) + '<span class="tick">✓</span>' + meta + '</summary>';
     h += focohtml(c);
     if(c.fg) h += '<div class="falt">⚠ El repositor encontró faltando en góndola: <b>'+c.fg.f.map(esc).join(' · ')+'</b><div class="faltm">'+esc(c.fg.repo)+' · '+fcorta(c.fg.fecha)+'</div></div>';
     h += '<div class="cuerpo">';
     if(c.i) h += '<div class="dir">' + esc(c.i) + mapaHtml(c.i, v) + '</div>';
     h += '<div class="lin">Compra por mes: <strong>' + fmt(c.p) + '</strong></div>';
+    h += sbhtml(c);
     h += '<div class="lin">Última compra: <span class="' + (tarde?'rojo':'') + '">' + fcorta(c.u) + (d!==null?' (hace ' + d + ' días)':'') + '</span></div>';
     if(c.f.length) h += '<div class="lin">Ofrecerle: ' + c.f.map(function(f){ return '<span class="chip">' + esc(f) + '</span>'; }).join('') + '</div>';
     h += dejoHtml(c, v);
