@@ -2046,14 +2046,14 @@ function ppanCaidos(){
   var h = '<div class="pcard prjc"><div class="pct">Clientes ca\u00eddos de todo el grupo</div>'
         + '<div class="phint">' + L.length + ' clientes que dejaron de comprar. Juntos compraban <b>' + qshort(plata) + ' por mes</b>. Del que m\u00e1s pesa al que menos.</div>'
         + '<button class="pbtn" onclick="tvCaiIr()">Verlos en la pantalla grande</button></div>';
-  h += '<div class="pcard"><div class="pct">La lista completa</div>';
+  h += '<details class="pcard"><summary class="pct" style="cursor:pointer;list-style:none">▸ La lista completa · ' + L.length + ' clientes <span style="font-weight:400;text-transform:none;letter-spacing:0">(tocá para abrir)</span></summary>';
   L.forEach(function(z, i){
     h += '<div class="pcai"><span class="pcaipos">' + (i+1) + '</span>'
        + '<span class="pcain">' + esc(z.c) + ' <i>\u00b7 ' + esc(z.v) + '</i></span>'
        + '<span class="pcaiv mbadtxt">' + (z.p ? qshort(z.p) + '/mes' : '') + '</span></div>'
        + '<div class="pcaid">hace <b>' + z.d + ' d\u00edas</b> \u00b7 \u00faltima compra ' + fcorta(z.f) + (z.fa.length ? ' \u00b7 llevaba ' + z.fa.map(esc).join(', ') : '') + '</div>';
   });
-  return h + '</div>';
+  return h + '</details>';
 }
 function ptvPortafolio(x){
   var P = x.pf; if(!P || !P.cl || !P.cl.length) return '';
