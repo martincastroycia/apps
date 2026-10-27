@@ -299,8 +299,15 @@ function preSet(cli, cod, marca, campo, val){
   if(campo==='tp'||campo==='au') pintar();
 }
 function preLista(D, v){
+  if(v && v.pre && v.pre.t) return v.pre.t.map(function(x){ return {n:x[0], c:x[1], i:x[2], p:0}; });
   if(!v || !v.pre || !D || !D.c) return [];
   var l=D.c.slice().sort(function(a,b){ return (b.p||0)-(a.p||0); });
+  if(v.pre.l){ var LF={}, B=v.pre.b||{}, BM=v.pre.bm||{}, out=[]; v.pre.l.forEach(function(x){ LF[String(x)]=1; });
+    var VI={}; l.forEach(function(c){ if(!LF[String(c.n)] || VI[String(c.n)]) return; VI[String(c.n)]=1; var xs=B[String(c.n)];
+      if(!xs){ out.push(c); return; }
+      out.push({n:c.n, c:c.c+' \u00b7 '+(BM[String(c.n)]||'sucursal 1'), i:(BM[String(c.n)]||c.i), p:c.p});
+      xs.forEach(function(z){ out.push({n:z[0], c:c.c+' \u00b7 '+z[1], i:z[1], p:c.p}); }); });
+    return out; }
   var m=Number(v.pre.m)||0;
   return m ? l.slice(0,m) : l;
 }
@@ -342,14 +349,16 @@ function prehtml(c, v, ix){
   if(!v.pre || !v.pre.p || !v.pre.p.length) return '';
   /* solo a los primeros del dia: la lista ya viene ordenada por lo que
      compra cada uno, asi que son los que mas valen la pena */
-  if(v.pre.m && ix >= v.pre.m) return '';
+  if(v.pre.l){ if(v.pre.l.indexOf(String(c.n))<0) return ''; }
+  else if(v.pre.m && ix >= v.pre.m) return '';
   var P=preLee(), hechos=0;
   v.pre.p.forEach(function(x){ if((P[c.n+'|'+x[0]+'|']||{}).p>0) hechos++; });
   var tot=v.pre.p.length;
   var h='<details class="preBox" onclick="event.stopPropagation()"><summary><b>\ud83d\udcb2 Precios</b> <span class="preCh">'+hechos+'/'+tot+'</span>'
    + '<span class="preSub">'+esc(v.pre.n)+'</span></summary><div class="preIn">';
   h += '<div class="preTit">Lo que vale en este comercio</div>';
-  v.pre.p.forEach(function(x, i){ h += preFila(c, x[0], x[1], '', i); });
+  var gAnt='';
+  v.pre.p.forEach(function(x, i){ if(x[2] && x[2]!==gAnt){ gAnt=x[2]; h += '<div class="preSub2">'+esc(x[2])+'</div>'; } h += preFila(c, x[0], x[1], '', i); });
   var marcas=(v.pre.c||[]);
   if(marcas.length){
    h += '<div class="preTit">La competencia</div>';
@@ -545,6 +554,376 @@ function preBorrarTodo(){
   if(!confirm('\u00bfBorrar los precios que cargaste? Hacelo despu\u00e9s de mandarlos.')) return;
   lsSet('rg_pre_'+quien, '{}'); pintar();
 }
+if(G.rel){
+function supRelShims(){
+  if(!G.vnum) G.vnum = (G.relc && G.relc.vnum) || 'sup';
+  window.elRepo = function(){ var v = null; try{ v = elVend(quien); }catch(e){} return {nom:(v && v.nom) || String(quien || ''), dias:{}}; };
+  window.rpPend = function(){ try{ return JSON.parse(lsGet('rg_relq') || '[]'); }catch(e){ return []; } };
+  window.rpPendPoner = function(l){ lsSet('rg_relq', JSON.stringify(l)); };
+  window.rpMotivo = function(e){ try{ return preMotivo(e); }catch(x){ return String(e || ''); } };
+  window.rpVaciarCola = async function(){
+    var l = rpPend();
+    if(!l.length) return {n:0, falta:0};
+    var v = elVend(quien), puse = false;
+    if(v && !v.pre && G.relc){ v.pre = G.relc; puse = true; }
+    try{
+      var hoy = hoyIso(), d = hoy.slice(8,10) + '/' + hoy.slice(5,7) + '/' + hoy.slice(2,4);
+      var L = prePendL();
+      l.forEach(function(o){
+        var b = btoa(unescape(encodeURIComponent(o.txt)));
+        L = L.filter(function(x){ return x.id !== o.id; });
+        L.push({id:o.id, vend:String(quien), fecha:hoy, txt:'PRECIOS \u00b7 ' + quien + ' \u00b7 ' + d + '\nRELEV;' + b});
+      });
+      prePendSet(L); rpPendPoner([]);
+      var R = await preVaciar();
+      return {n:R.n || 0, falta:R.falta || 0, err:R.err || ''};
+    } finally { if(puse) delete v.pre; }
+  };
+}
+supRelShims();
+}
+function padNorm(t){ return String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().replace(/\./g,'').replace(/[^A-Z0-9]+/g,' ').trim(); }
+function padDe(n){ for(var i=0;i<(G.pad||[]).length;i++) if(String(G.pad[i][0])===String(n)) return G.pad[i]; return null; }
+function padBuscar(q, max){
+  var Q=padNorm(q), num=Q.replace(/[^0-9]/g,''), ws=Q.split(' ').filter(function(w){ return w.length>=2 && !/^[0-9]+$/.test(w); }), out=[];
+  for(var i=0;i<(G.pad||[]).length&&out.length<(max||12);i++){ var c=G.pad[i];
+    if(num&&!ws.length&&String(c[0]).indexOf(num)===0){ out.push(c); continue; }
+    if(!ws.length) continue;
+    var nm=padNorm(c[1]), ok=true;
+    for(var j=0;j<ws.length;j++) if(nm.indexOf(ws[j])<0){ ok=false; break; }
+    if(ok) out.push(c); }
+  return out;
+}
+/* parecidos: con AL MENOS UNA palabra (de 3 letras o mas) en comun, los que mas comparten primero */
+
+/* ===== RELEVAMIENTO DE EXHIBICION, EN EL TELEFONO DEL REPOSITOR =========
+   Misma idea que PREPANT (la toma de precios): una bandera que desvia
+   pintar() y pinta la pantalla entera. [stated] 1/10/2026: «tendra que ser en
+   una ventana aparte». Y [stated] 2/10/2026: «en la planilla le calcula los
+   frentes y porcentajes asi los repositores saben ya cuando cargan que esta
+   mal y tienen que arreglar la gondola»: por eso el semaforo va PEGADO arriba
+   y se recalcula con cada tecla. */
+var RELPANT = 0, RELEXH = "pri", RELFALTA = 0;
+function relPantalla(v){ RELPANT = v ? 1 : 0; pintar(); window.scrollTo(0,0); }
+function relD(){
+  var d = null;
+  try{ d = JSON.parse(lsGet("rp_relev") || "null"); }catch(e){ d = null; }
+  if(!d || typeof d !== "object") d = {cad:"", suc:"", mes:(G.rel && G.rel.mes) || "", pri:{}, sec:{}, pre:{}};
+  if(!d.pri) d.pri = {}; if(!d.sec) d.sec = {}; if(!d.pre) d.pre = {};
+  return d;
+}
+function relGuardar(d){ try{ lsSet("rp_relev", JSON.stringify(d)); }catch(e){} }
+function relBocas(){ try{ return JSON.parse(lsGet("rp_bocas") || "[]"); }catch(e){ return []; } }
+function relBocaPoner(c, s, cli, bk){
+  var l = relBocas();
+  for(var i=0;i<l.length;i++) if(l[i][0] === c && l[i][1] === s) return;
+  l.push([c, s, cli || 0, bk || ""]);
+  try{ lsSet("rp_bocas", JSON.stringify(l)); }catch(e){}
+}
+function relVal(m){ var d = relD(); return Number((RELEXH === "pri" ? d.pri : d.sec)[m]) || 0; }
+function relPoner(m, v){
+  var d = relD(), T = RELEXH === "pri" ? d.pri : d.sec;
+  v = Math.max(0, Math.round(Number(v) || 0));
+  if(v > 0) T[m] = v; else delete T[m];
+  relGuardar(d);
+  relRefrescar(m);
+}
+function relMas(m, n){ relPoner(m, relVal(m) + n); }
+function relCalc(){
+  var d = relD(), R = G.rel, o = {cat:{}, combo:{f:0,t:0}, tot:{f:0,t:0}, nP:0, nS:0};
+  R.cats.forEach(function(c){ o.cat[c] = {f:0, t:0}; });
+  R.mar.forEach(function(x){
+    var a = Number(d.pri[x[1]]) || 0, b = Number(d.sec[x[1]]) || 0, v = a + b, mia = x[2] === "FBD";
+    o.nP += a; o.nS += b;
+    o.cat[x[0]].t += v; if(mia) o.cat[x[0]].f += v;
+    o.tot.t += v; if(mia) o.tot.f += v;
+    if(R.combo.indexOf(x[0]) > -1){ o.combo.t += v; if(mia) o.combo.f += v; }
+  });
+  return o;
+}
+function relParte(P, k){ return k === "COMBO" ? P.combo : (k === "TOTAL" ? P.tot : P.cat[k]); }
+function relPc(x){ return (Math.round(x*1000)/10).toLocaleString("es-AR",{maximumFractionDigits:1}) + "%"; }
+function relSemHtml(){
+  var P = relCalc(), h = "";
+  G.rel.obj.forEach(function(o){
+    var par = relParte(P, o.k), hay = par.t > 0, p = hay ? par.f/par.t : 0, br = p - o.obj;
+    var col = !hay ? "#8a95a0" : (br >= 0 ? "#1a7f4b" : (br > -0.05 ? "#9a6b11" : "#b4342a"));
+    var fon = !hay ? "#f4f6f8" : (br >= 0 ? "#e9f6ee" : (br > -0.05 ? "#fff8e6" : "#fdeceb"));
+    var sac = 0;
+    if(hay && br < 0){
+      var comp = par.t - par.f;
+      sac = Math.ceil(comp - (par.f * (1 - o.obj)) / o.obj);
+      if(!(sac > 0)) sac = 0;
+      if(sac > comp) sac = comp;
+    }
+    h += '<div class="relsc" style="background:' + fon + '"><em>' + esc(o.tit) + '</em>'
+       + '<b style="color:' + col + '">' + (hay ? relPc(p) : "—") + '</b>'
+       + '<i>obj. ' + relPc(o.obj) + '</i>'
+       + (hay ? (br >= 0 ? '<i style="color:#1a7f4b;font-weight:700">cumple</i>'
+                         : '<i style="color:#b4342a;font-weight:700">' + (sac ? ('sacar ' + sac + ' de la comp.') : ('falta ' + relPc(-br))) + '</i>') : '')
+       + '</div>';
+  });
+  return h;
+}
+function relPieHtml(){
+  var P = relCalc();
+  return '<b>' + P.nP + '</b> en primaria · <b>' + P.nS + '</b> en secundaria';
+}
+/* al tocar un numero NO se redibuja la pantalla entera: solo ese renglon, el
+   semaforo y el pie. Redibujar todo perdia el foco y el scroll, que es lo que
+   rompia la hoja del padron en el telefono. */
+function relRefrescar(m){
+  var e = document.getElementById("relv_" + relId(m));
+  if(e) e.value = relVal(m) || "";
+  var s = document.getElementById("relSem"); if(s) s.innerHTML = relSemHtml();
+  var p = document.getElementById("relPie"); if(p) p.innerHTML = relPieHtml();
+}
+function relId(m){ return String(m).replace(/[^A-Za-z0-9]/g, "_"); }
+function relFilaHtml(x){
+  var m = x[1], mia = x[2] === "FBD", v = relVal(m), q = relId(m);
+  return '<div class="relfila' + (mia ? ' mia' : '') + '">'
+    + '<div class="relnom">' + esc(m) + (mia ? '<small>NUESTRA</small>' : '') + '</div>'
+    + '<button class="relbt" onclick="relMas(\'' + relEscJs(m) + '\',-1)">−</button>'
+    + '<input class="relnum" id="relv_' + q + '" type="number" inputmode="numeric" value="' + (v || "") + '" placeholder="0" '
+    + 'onchange="relPoner(\'' + relEscJs(m) + '\', this.value)">'
+    + '<button class="relbt" onclick="relMas(\'' + relEscJs(m) + '\',1)">+</button></div>';
+}
+function relEscJs(x){ return String(x).replace(/\\/g,"\\\\").replace(/'/g,"\\'"); }
+function relExh(e){ RELEXH = e; pintar(); window.scrollTo(0,0); }
+function relHojaRepo(r){
+  var d = relD(), R = G.rel;
+  if(!d.cad || !d.suc) return relBocaHtml(d);
+  if(RELFALTA) return relFaltaHtml(d);
+  var h = '<div class="relenc"><button class="relcam" onclick="relAbrirBoca()">cambiar</button>'
+        + '<h1>' + esc(d.cad) + ' — ' + esc(d.suc) + '</h1>'
+        + '<div class="rels">' + esc(relNomMes(d.mes)) + ' · exhibición '
+        + (RELEXH === "pri" ? "primaria (góndola)" : "secundaria (puntas e islas)") + '</div></div>'
+        + '<div class="reltabs"><button class="' + (RELEXH === "pri" ? "on" : "") + '" onclick="relExh(\'pri\')">PRIMARIA</button>'
+        + '<button class="' + (RELEXH === "sec" ? "on" : "") + '" onclick="relExh(\'sec\')">SECUNDARIA</button></div>'
+        + '<div class="relsem" id="relSem">' + relSemHtml() + '</div>';
+  R.cats.forEach(function(c){
+    h += '<div class="relcat" id="relcat_' + relId(c) + '">' + esc(c) + '</div>';
+    R.mar.forEach(function(x){ if(x[0] === c) h += relFilaHtml(x); });
+  });
+  h += '<div class="relnota">Contá <b>frentes</b>: las caras de producto que se ven de frente. '
+     + 'Primero la góndola, después las puntas y las islas.</div>'
+     + '<div class="relpie"><div class="relpt" id="relPie">' + relPieHtml() + '</div>'
+     + '<button class="relvolver" onclick="relPantalla(0)">Volver</button>'
+     + '<button class="relok" onclick="relMandar()">Mandar</button></div>';
+  return h;
+}
+function relNomMes(m){
+  var ML = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  if(!m) return "";
+  return (ML[+String(m).slice(5,7)-1] || m) + " " + String(m).slice(0,4);
+}
+/* v175, [stated] 23/10/2026: «relevamiento, tb le tendria que figurar los
+   clientes como salen en el sistema y sus sucursales». Antes la cadena y la
+   sucursal eran texto libre, y la misma boca podia quedar escrita de dos
+   formas. Ahora se busca el CLIENTE del padron y se elige el LOCAL de la lista
+   de sus bocas (las direcciones de la facturacion). Escribirlo a mano queda
+   como ultimo recurso y pregunta antes. */
+var RELLIBRE = 0;
+function relBocaHtml(d){
+  var prev = relBocas();
+  var h = '<div class="relenc"><h1>Relevamiento de exhibición</h1>'
+    + '<div class="rels">' + esc(relNomMes(d.mes || (G.rel && G.rel.mes))) + '</div></div>'
+    + '<div class="relboca">';
+  if(RELLIBRE){
+    return h + '<h2>Escribilo a mano</h2>'
+      + '<div class="bnota" style="color:#b4342a">Solo si no está en el sistema. Así como lo escribas va a salir en la planilla.</div>'
+      + '<div class="rellab">Cliente o cadena</div><input id="relCad" value="' + esc(d.cad || "") + '" placeholder="La Gallega">'
+      + '<div class="rellab">Local / sucursal</div><input id="relSuc" value="' + esc(d.suc || "") + '" placeholder="Moreno">'
+      + '<button class="relok2" onclick="relEmpezar()">Empezar</button>'
+      + '<button class="relvolver2" onclick="RELLIBRE=0;pintar()">Volver a buscar</button></div>';
+  }
+  h += '<h2>¿Qué cliente estás relevando?</h2>'
+    + (prev.length ? ('<div class="rellab">Los que ya cargaste</div><div class="relsug">'
+        + prev.map(function(p, i){ return '<button onclick="relElegirBoca(' + i + ')">' + esc(p[0] + " — " + p[1]) + '</button>'; }).join('')
+        + '</div>') : '')
+    + '<div class="rellab">Buscalo como está en el sistema</div>'
+    + '<input id="relQ" placeholder="nombre o número de cliente…" oninput="relBuscaCli(this.value)" autocomplete="off">'
+    + '<div id="relRes"></div>'
+    + '<button class="relvolver2" onclick="relPantalla(0)">Volver</button></div>';
+  return h;
+}
+function relBuscaCli(q){
+  var e = document.getElementById("relRes"); if(!e) return;
+  q = String(q || "").trim();
+  if(q.length < 2){ e.innerHTML = ''; return; }
+  /* v175: [stated] «los clientes que no son nuestros, osea que compran de
+     fabrica, pero los atendemos ... figuran en las visitas de los
+     repositores». Primero salen las paradas de SUS rutas (todas los dias),
+     con el nombre con que las conoce: asi aparecen tambien las que compran
+     directo a fabrica y no estan en el padron. Despues, el padron. */
+  var rp = relParadasBusca(q), l = padBuscar(q, 10);
+  var yaNum = {}; rp.forEach(function(x){ if(x.num) yaNum[String(x.num)] = 1; });
+  l = l.filter(function(c){ return !yaNum[String(c[0])]; });
+  e.innerHTML = (rp.length ? ('<div class="rellab">De tus rutas</div>' + rp.map(function(x, j){
+      var c = x.num ? padDe(x.num) : null, nb = (c && c[2] && c[2].length > 1) ? c[2].length : 0;
+      return '<button class="bres" onclick="relParadaElegir(' + j + ')">' + esc(x.rot || x.c) + ' <span>'
+        + (x.num ? ((c ? esc(c[1]) + ' ' : '') + '#' + x.num + (nb ? (' \u00b7 ' + nb + ' locales') : '')) : 'compra directo a f\u00e1brica') + '</span></button>';
+    }).join('') + (l.length ? '<div class="rellab">Del sistema</div>' : '')) : '')
+    + (l.length ? l.map(function(c){
+      var nb = (c[2] && c[2].length > 1) ? c[2].length : 0;
+      return '<button class="bres" onclick="relCliElegir(' + c[0] + ')">' + esc(c[1]) + ' <span>#' + c[0] + (nb ? (' · ' + nb + ' locales') : '') + '</span></button>';
+    }).join('') : (rp.length ? '' : '<div class="bnota">No encontré ninguno. Probá con otra palabra del nombre o con el número.</div>'))
+    + '<button class="tgb" style="margin-top:10px;width:100%" onclick="relCliLibre()">No está en el sistema</button>';
+}
+var RELPAR = [];
+function relParadasBusca(q){
+  var r = elRepo(quien), ws = padNorm(q).split(' ').filter(function(w){ return w.length >= 2; }), vis = {}, out = [];
+  if(!r || !ws.length) return [];
+  Object.keys(r.dias || {}).forEach(function(d){ (r.dias[d] || []).forEach(function(x){
+    if(vis[x.n]) return;
+    var t = padNorm((x.rot || '') + ' ' + (x.c || '') + ' ' + (x.num || ''));
+    for(var j = 0; j < ws.length; j++) if(t.indexOf(ws[j]) < 0) return;
+    vis[x.n] = 1; out.push(x);
+  }); });
+  RELPAR = out.slice(0, 10);
+  return RELPAR;
+}
+function relParadaElegir(j){
+  var x = RELPAR[j]; if(!x) return;
+  /* la parada de la ruta YA dice que local es (El arriero - Ensanche, Zorzon
+     25 mayo...): el cliente sale como esta en el sistema y el local con el
+     nombre de la parada. No se vuelve a preguntar la direccion. Si compra
+     directo a fabrica no esta en el padron: va el nombre de la parada. */
+  var nom = x.rot || x.c || '', c = x.num ? padDe(x.num) : null;
+  relEmpezarCon(c ? c[1] : nom, nom, x.num || 0, '');
+}
+function relCliElegir(n){
+  var c = padDe(n); if(!c) return;
+  var e = document.getElementById("relRes"); if(!e) return;
+  var bs = c[2] || [];
+  if(bs.length < 2){
+    /* una sola boca conocida: se arranca derecho; el local se puede escribir si hace falta */
+    relEmpezarCon(c[1], bs[0] || "Local único", c[0], bs[0] ? padNorm(bs[0]).replace(/ /g,'') : "");
+    return;
+  }
+  e.innerHTML = '<div class="bnota" style="color:#0d1f3a;font-weight:700;font-size:15px">' + esc(c[1]) + ' tiene ' + bs.length + ' locales. ¿En cuál estás?</div>'
+    + bs.map(function(d, i){ return '<button class="bres" onclick="relLocalElegir(' + c[0] + ',' + i + ')">📍 ' + esc(d) + '</button>'; }).join('')
+    + '<button class="tgb" style="margin-top:8px;width:100%" onclick="relLocalOtro(' + c[0] + ')">Es otro local, no está en la lista</button>';
+  e.scrollIntoView();
+}
+function relLocalElegir(n, i){
+  var c = padDe(n); if(!c || !c[2] || !c[2][i]) return;
+  relEmpezarCon(c[1], c[2][i], c[0], padNorm(c[2][i]).replace(/ /g,''));
+}
+function relLocalOtro(n){
+  var c = padDe(n); if(!c) return;
+  var s = prompt("¿Qué local de " + c[1] + " es? (la dirección o cómo lo llaman)", "");
+  if(!s || !String(s).trim()) return;
+  if(!confirm("Ese local no está en la lista de " + c[1] + ".\n\n¿Seguro que no es ninguno de los de la lista? Si es uno nuevo, cargalo así.")) return;
+  relEmpezarCon(c[1], String(s).trim(), c[0], "");
+}
+function relCliLibre(){
+  if(!confirm("¿Seguro que no está en el sistema?\n\nSi lo escribís a mano puede quedar con otro nombre y no juntarse con el resto de sus locales en la planilla.\n\nTocá Cancelar para buscarlo otra vez.")) return;
+  RELLIBRE = 1; pintar(); window.scrollTo(0,0);
+}
+function relEmpezarCon(cad, suc, cli, bk){
+  var d = relD();
+  if(cad !== d.cad || suc !== d.suc){ d.pri = {}; d.sec = {}; d.pre = {}; d.nohay = []; }
+  d.cad = cad; d.suc = suc; d.cli = Number(cli) || 0; d.bk = bk || "";
+  if(!d.mes) d.mes = (G.rel && G.rel.mes) || "";
+  relGuardar(d); relBocaPoner(cad, suc, d.cli, d.bk);
+  RELLIBRE = 0; pintar(); window.scrollTo(0,0);
+}
+function relAbrirBoca(){
+  var d = relD(); d.cad = ""; d.suc = ""; relGuardar(d);
+  pintar(); window.scrollTo(0,0);
+}
+function relElegirBoca(i){
+  var p = relBocas()[i];
+  if(!p) return;
+  relEmpezarCon(p[0], p[1], p[2] || 0, p[3] || "");
+}
+function relEmpezar(){
+  var c = (document.getElementById("relCad").value || "").trim();
+  var s = (document.getElementById("relSuc").value || "").trim();
+  if(!c || !s){ alert("Falta la cadena o la sucursal."); return; }
+  var d = relD();
+  /* boca distinta: se arranca de cero, sin arrastrar lo de la anterior */
+  if(c !== d.cad || s !== d.suc){ d.pri = {}; d.sec = {}; d.pre = {}; d.nohay = []; }
+  d.cad = c; d.suc = s; d.cli = 0; d.bk = "";
+  RELLIBRE = 0;
+  if(!d.mes) d.mes = (G.rel && G.rel.mes) || "";
+  relGuardar(d); relBocaPoner(c, s);
+  pintar(); window.scrollTo(0,0);
+}
+/* v174, [stated] 23/10/2026: «el repositor se olvido de tomar la familia
+   vodka, un aviso en el telefono antes de cerrar el relevamiento que les diga
+   te falto tal y tal familia, estas seguro? no hay productos?».
+   Se mira la PRIMARIA categoria por categoria: la gondola es donde estan
+   todas, asi que una categoria en cero ahi es casi siempre un olvido. La
+   secundaria se mira entera: es normal que no haya puntas de vodka, pero que
+   no haya NINGUNA punta ni isla tambien hay que confirmarlo.
+   No frena: dice que falta, deja ir a contarlo con un toque, o mandar igual.
+   Lo que el confirma que no hay viaja en d.nohay, para que la oficina sepa
+   que no fue un olvido. */
+function relFaltan(){
+  var d = relD(), R = G.rel, out = [];
+  R.cats.forEach(function(c){
+    var t = 0;
+    R.mar.forEach(function(x){ if(x[0] === c) t += Number(d.pri[x[1]]) || 0; });
+    if(!t) out.push({k:c, tit:c, exh:"pri"});
+  });
+  var s = 0; R.mar.forEach(function(x){ s += Number(d.sec[x[1]]) || 0; });
+  if(!s) out.push({k:"SEC", tit:"Puntas e islas (secundaria)", exh:"sec"});
+  return out;
+}
+function relFaltaHtml(d){
+  var F = relFaltan(), P = relCalc();
+  var h = '<div class="relenc"><h1>Antes de mandar</h1><div class="rels">' + esc(d.cad) + ' \u2014 ' + esc(d.suc) + '</div></div>'
+    + '<div class="relboca"><h2 style="color:#b4342a">No contaste ning\u00fan frente de:</h2>';
+  F.forEach(function(f){
+    h += '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #e3e8ee">'
+       + '<div style="flex:1;font-size:17px;font-weight:700">' + esc(f.tit) + '</div>'
+       + '<button class="relok2" style="width:auto;margin:0;padding:10px 14px" onclick="relIrA(\'' + relEscJs(f.k) + '\',\'' + f.exh + '\')">Contar</button></div>';
+  });
+  h += '<p style="font-size:15px;line-height:1.45;margin:14px 0">\u00bfSeguro que no hay? Si te olvidaste, toc\u00e1 <b>Contar</b> y te lleva ah\u00ed. '
+     + 'Si en el local no hay ning\u00fan producto de eso, mand\u00e1 as\u00ed.</p>'
+     + '<div style="font-size:14px;color:#3d5163;margin-bottom:10px"><b>' + P.nP + '</b> frentes en primaria \u00b7 <b>' + P.nS + '</b> en secundaria</div>'
+     + '<button class="relok2" style="background:#b4342a" onclick="relMandar(1)">No hay, mandar as\u00ed</button>'
+     + '<button class="relvolver2" onclick="relFaltaVolver()">Volver</button></div>';
+  return h;
+}
+function relFaltaVolver(){ RELFALTA = 0; pintar(); window.scrollTo(0,0); }
+function relIrA(k, exh){
+  RELFALTA = 0; RELEXH = exh; pintar();
+  var e = k === "SEC" ? null : document.getElementById("relcat_" + relId(k));
+  if(e){ try{ e.scrollIntoView(); window.scrollBy(0, -240); }catch(x){} } else window.scrollTo(0,0);
+}
+function relMandar(yaVisto){
+  var d = relD(), P = relCalc();
+  if(!d.cad){ relAbrirBoca(); return; }
+  if(!P.nP && !P.nS){ alert("Todavía no contaste nada."); return; }
+  var F = relFaltan();
+  if(F.length && !yaVisto){ RELFALTA = 1; pintar(); window.scrollTo(0,0); return; }
+  RELFALTA = 0;
+  d.nohay = F.map(function(f){ return f.k === "SEC" ? "secundaria" : f.k; });
+  relGuardar(d);
+  if(!F.length && !confirm("Mandar el relevamiento de\n\n" + d.cad + " — " + d.suc + "\n" + relNomMes(d.mes)
+      + "\n\n" + P.nP + " frentes en primaria\n" + P.nS + " en secundaria\n\n¿Lo mando?")) return;
+  var o = {id: G.vnum + "-rel-" + (quien||"") + "-" + d.cad.replace(/[^A-Za-z0-9]/g,"") + "-" + d.suc.replace(/[^A-Za-z0-9]/g,"") + "-" + (d.mes||""),
+           repo: (elRepo(quien)||{}).nom || quien || "", fecha: hoyIso(), tipo: "relev",
+           txt: JSON.stringify({cad:d.cad, suc:d.suc, mes:d.mes, pri:d.pri, sec:d.sec, pre:d.pre, nohay:(d.nohay||[]), cli:(d.cli||0), bk:(d.bk||"")})};
+  var l = rpPend();
+  /* si ya hay uno de la MISMA boca y mes sin mandar, se pisa: lo que vale es
+     lo ultimo contado, no la suma de los intentos */
+  for(var i = l.length - 1; i >= 0; i--) if(l[i].id === o.id) l.splice(i, 1);
+  l.push(o); rpPendPoner(l);
+  rpVaciarCola().then(function(res){
+    if(res.n && !res.falta){
+      alert("Listo, llegó a la oficina.\n\n" + d.cad + " — " + d.suc);
+      var d2 = relD(); d2.pri = {}; d2.sec = {}; d2.pre = {}; d2.nohay = []; relGuardar(d2);
+      pintar(); window.scrollTo(0,0);
+    } else {
+      alert("Quedó guardado en el teléfono.\n\n" + rpMotivo(res.err));
+    }
+  })["catch"](function(e){ alert("Quedó guardado en el teléfono.\n\n" + rpMotivo(String((e&&e.message)||e))); });
+}
+
 var ABMAND=0, ABYA=0;
 function abDiaReal(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function abEstado(){ try{ return JSON.parse(lsGet('ab_est')||'{}'); }catch(e){ return {}; } }
@@ -890,7 +1269,8 @@ function copiarPedido(n){
 }
 function pintar(){
   try{ if(quien) abArrancar(quien); }catch(e){}
-  if(PAN && (VISTA==='pan' || VISTA==='tv' || VISTA==='tvtb' || !G.vs || !G.vs.length)){ pintarPanel(); return; }
+  if(PAN && (VISTA==='pan' || VISTA==='rel' || VISTA==='tv' || VISTA==='tvtb' || !G.vs || !G.vs.length)){ pintarPanel(); return; }
+  if(RELPANT && G.rel){ document.body.innerHTML=relHojaRepo(); window.scrollTo(0,0); return; }
   if(PREPANT && quien){ var _pv=elVend(quien);
     if(_pv && _pv.pre){ document.body.innerHTML=preHojaHtml(_pv); preGPS(); return; }
     PREPANT=0; }
@@ -928,6 +1308,10 @@ function pintar(){
     h += '<button class="bfIr" onclick="bfPantalla(1)">🏭 Branca Fábrica'
       + '<span class="preIrCh">'+v.bf.cli.length+'</span>'
       + '<span class="preIrSub">'+(_bfp? (_bfp+' sin comprar hace más de 60 días') : 'lo que le compran directo a la fábrica')+'</span></button>'; }
+  if(G.rel){ var _rd=relD(), _rc=relCalc(), _rn=_rc.nP+_rc.nS;
+    h += '<button class="preIr" onclick="relPantalla(1)">📏 Relevamiento de góndola'
+      + '<span class="preIrCh">'+(rpPend().length?('⚠ '+rpPend().length):(_rn||''))+'</span>'
+      + '<span class="preIrSub">'+(_rd.cad?(esc(_rd.cad)+' · '+_rn+' frentes'):('frentes de '+relNomMes(G.rel.mes)))+'</span></button>'; }
   if(v.pre){
     h += '<button class="preIr" onclick="prePantalla(1)">💲 Tomar precios'
       + '<span class="preIrCh">'+preCuantos()+'</span>'
@@ -1336,7 +1720,9 @@ function preHojaHtml(v){
    + (pnd ? '<span class="rpest">⚠ '+pnd+' envío(s) sin salir — se mandan solos cuando haya señal</span>' : '')
    + (preFotPend() ? '<span class="rpest">⚠ '+preFotPend()+' foto(s) sin salir</span>' : '')
    + (preGpsTxt() ? '<span class="preGps">📍 '+preGpsTxt()+'</span>' : '')+'</div>';
-  if(tope) h += '<div class="preNota">Se piden los <b>primeros '+tope+'</b> clientes del día, ordenados por lo que compran. Los demás no hace falta.</div>';
+  if(v.pre.t) h += '<div class="preNota">Son <b>todos</b> los comercios de la <b>planilla de Branca</b> ('+v.pre.t.length+'). Lo que cargues cuenta igual que lo de los vendedores.</div>';
+  else if(v.pre.l) h += '<div class="preNota">Son los comercios de la <b>planilla de Branca</b> que te tocan este día. En cada uno, el precio de los '+(v.pre.p||[]).length+' artículos; si no lo tiene, tocá por qué.</div>';
+  else if(tope) h += '<div class="preNota">Se piden los <b>primeros '+tope+'</b> clientes del día, ordenados por lo que compran. Los demás no hace falta.</div>';
   var n=0, P=preLee();
   l.forEach(function(c){
     var hechos=0, tot=(v.pre.p||[]).length;
@@ -2433,14 +2819,81 @@ function ptvTb(){
   h += '</div><button class="ptvsal" onclick="verVista(\'pan\')">Salir del modo pantalla</button></div>';
   return h;
 }
+function prelTelefono(){
+  var R = PAN.rel || {}, h = '';
+  var MS = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  function nmes(m){ return m ? (MS[Number(String(m).slice(5,7)) - 1] || m) + ' ' + String(m).slice(0,4) : ''; }
+  function pc(x){ return (x === null || x === undefined) ? '—' : (Math.round(x * 1000) / 10).toLocaleString('es-AR', {maximumFractionDigits:1}) + '%'; }
+  function pz(x){ return x ? '$ ' + pmil(x) : ''; }
+  var T = 'style="width:100%;border-collapse:collapse;font-size:13px"';
+  var TD = 'style="padding:5px 4px;border-bottom:1px solid #e6ebf0;vertical-align:top"';
+  var TDR = 'style="padding:5px 4px;border-bottom:1px solid #e6ebf0;text-align:right;white-space:nowrap"';
+  /* ---- gondola ---- */
+  if(R.gon){
+    var G2 = R.gon;
+    h += '<div class="pcard"><div class="pct">GÓNDOLA · ' + esc(nmes(G2.mes)) + '</div>'
+       + '<div class="phint">Frentes contados en ' + G2.bocas.length + ' boca(s): <b>' + pmil(G2.tot[0]) + '</b> en góndola y <b>' + pmil(G2.tot[1]) + '</b> en puntas e islas. Nuestra parte contra el objetivo de Branca.</div>'
+       + '<div style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0">';
+    G2.obj.forEach(function(o){
+      var hay = o[2] !== null, br = hay ? o[2] - o[1] : 0;
+      var col = !hay ? '#8a95a0' : (br >= 0 ? '#1a7f4b' : (br > -0.05 ? '#9a6b11' : '#b4342a'));
+      h += '<div style="flex:1;min-width:130px;border:1px solid #dde3ea;border-radius:10px;padding:8px">'
+         + '<div style="font-size:11px;color:#5b6b7a;text-transform:uppercase">' + esc(o[0]) + '</div>'
+         + '<div style="font-size:22px;font-weight:800;color:' + col + '">' + pc(o[2]) + '</div>'
+         + '<div style="font-size:12px;color:#5b6b7a">objetivo ' + pc(o[1]) + '</div></div>';
+    });
+    h += '</div><table ' + T + '><tr><th ' + TD + '>Boca</th><th ' + TD + '>Quién · cuándo</th><th ' + TDR + '>Frentes</th><th ' + TDR + '>Fernet</th><th ' + TDR + '>Total</th></tr>';
+    G2.bocas.forEach(function(b){
+      h += '<tr><td ' + TD + '><b>' + esc(b[0]) + '</b>' + (b[1] && b[1] !== b[0] ? '<br><span style="color:#5b6b7a">' + esc(b[1]) + '</span>' : '') + '</td>'
+         + '<td ' + TD + '>' + esc(b[2]) + (b[3] ? '<br><span style="color:#5b6b7a">' + esc(fcorta(b[3])) + '</span>' : '') + '</td>'
+         + '<td ' + TDR + '>' + pmil(b[4] + b[5]) + '</td><td ' + TDR + '>' + pc(b[6]) + '</td><td ' + TDR + '><b>' + pc(b[7]) + '</b></td></tr>';
+    });
+    h += '</table></div>';
+  }
+  /* ---- precios ---- */
+  if(R.pre){
+    var P = R.pre;
+    h += '<div class="pcard"><div class="pct">PRECIOS · ' + esc(nmes(P.mes)) + '</div>'
+       + '<div class="phint">' + P.filas.length + (P.tot ? ' de ' + P.tot : '') + ' comercio(s) relevados. Promedio, mínimo y máximo de lo que se vio en la góndola; «no tienen» son los que marcaron que no lo hay.</div>'
+       + '<table ' + T + '><tr><th ' + TD + '>Artículo</th><th ' + TDR + '>Promedio</th><th ' + TDR + '>Mín – máx</th><th ' + TDR + '>Vistos</th></tr>';
+    var gAnt = '';
+    P.cols.forEach(function(c, i){
+      var r = P.res[i];
+      if(c[3] && c[3] !== gAnt){ gAnt = c[3]; h += '<tr><td colspan="4" style="padding:8px 4px 3px;font-weight:800;color:#0f5a4a">' + esc(c[3]) + '</td></tr>'; }
+      h += '<tr' + (c[2] ? ' style="background:#eef7f1"' : '') + '><td ' + TD + '>' + (c[2] ? '<b>' + esc(c[1]) + '</b>' : esc(c[1])) + '</td>'
+         + '<td ' + TDR + '>' + (r[3] ? '<b>' + pz(r[0]) + '</b>' : '—') + '</td>'
+         + '<td ' + TDR + '>' + (r[3] ? pz(r[1]) + ' – ' + pz(r[2]) : '') + '</td>'
+         + '<td ' + TDR + '>' + r[3] + (r[4] ? ' <span style="color:#b4342a">(' + r[4] + ' no)</span>' : '') + '</td></tr>';
+    });
+    h += '</table>';
+    h += '<div class="phint" style="margin-top:10px"><b>Comercio por comercio</b> (tocá uno para ver sus precios)</div>';
+    P.filas.forEach(function(f){
+      var n = 0; f[3].forEach(function(x){ if(x !== null) n++; });
+      h += '<details style="border-top:1px solid #e6ebf0;padding:6px 0"><summary style="cursor:pointer"><b>' + esc(f[0]) + '</b> '
+         + '<span style="color:#5b6b7a;font-size:12px">' + esc(f[1]) + (f[2] ? ' · ' + esc(fcorta(f[2])) : '') + ' · ' + n + ' de ' + P.cols.length + '</span></summary>'
+         + '<table ' + T + '>';
+      P.cols.forEach(function(c, i){
+        var x = f[3][i]; if(x === null) return;
+        h += '<tr><td ' + TD + '>' + esc(c[1]) + '</td><td ' + TDR + '>' + (x > 0 ? pz(x) : '<span style="color:#b4342a">no tiene</span>') + '</td></tr>';
+      });
+      h += '</table></details>';
+    });
+    h += '</div>';
+  }
+  if(!h) h = '<div class="pcard"><div class="phint">Todavía no llegó ningún relevamiento de precios ni de góndola.</div></div>';
+  return h;
+}
 function ppestanas(){
   /* OJO: esto lo llama tambien la hoja del vendedor comun, que no tiene
      tablero. Sin el chequeo de PAN se caia la hoja de los 13 vendedores. */
+  if(PAN && PAN.rel && (!G.vs || !G.vs.length)) return '<div class="tabs"><button class="tab'+(VISTA!=='rel'?' act':'')+'" onclick="verVista(\'pan\')">Tablero</button>'
+       + '<button class="tab'+(VISTA==='rel'?' act':'')+'" onclick="verVista(\'rel\')">Relevamientos</button></div>';
   if(!PAN || !G.vs || !G.vs.length) return '';
   var yo = PAN.tipo === 'sup' ? 'Mi cartera' : 'Mi cartera';
   var ot = PAN.tipo === 'sup' ? 'Supervisión' : PAN.tipo === 'branca' ? 'Branca' : 'Tablero';
-  return '<div class="tabs"><button class="tab'+(VISTA!=='pan'?' act':'')+'" onclick="verVista(\'yo\')">'+yo+'</button>'
-       + '<button class="tab'+(VISTA==='pan'?' act':'')+'" onclick="verVista(\'pan\')">'+ot+'</button></div>';
+  return '<div class="tabs"><button class="tab'+((VISTA!=='pan'&&VISTA!=='rel')?' act':'')+'" onclick="verVista(\'yo\')">'+yo+'</button>'
+       + '<button class="tab'+(VISTA==='pan'?' act':'')+'" onclick="verVista(\'pan\')">'+ot+'</button>'
+       + (PAN.rel ? '<button class="tab'+(VISTA==='rel'?' act':'')+'" onclick="verVista(\'rel\')">Relevamientos</button>' : '') + '</div>';
 }
 function pintarPanel(){
   if(BFPANT && PAN && PAN.bf){ document.body.style.background=''; document.body.className='';
@@ -2454,6 +2907,7 @@ function pintarPanel(){
         + '<div class="sub">Datos al '+fcorta(PAN.gen)+'</div></div>'
         + '<img class="logo" src="'+LOGO+'" alt=""></div>';
   h += ppestanas();
+  if(VISTA === 'rel' && PAN.rel){ document.body.innerHTML = h + '<div class="pwrap">' + prelTelefono() + escBarra() + '</div>'; aplicarEsc(); return; }
   h += '<div class="pwrap">';
   if(G.rec) h += '<div class="recado"><b>Aviso:</b> '+esc(G.rec)+'</div>';
   h += ppanMsg();
