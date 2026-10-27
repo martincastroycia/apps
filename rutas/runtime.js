@@ -1269,7 +1269,7 @@ function copiarPedido(n){
 }
 function pintar(){
   try{ if(quien) abArrancar(quien); }catch(e){}
-  if(PAN && (VISTA==='pan' || VISTA==='rel' || VISTA==='tv' || VISTA==='tvtb' || !G.vs || !G.vs.length)){ pintarPanel(); return; }
+  if(PAN && (VISTA==='pan' || VISTA==='rel' || VISTA==='tb' || VISTA==='bf' || VISTA==='tv' || VISTA==='tvtb' || !G.vs || !G.vs.length)){ pintarPanel(); return; }
   if(RELPANT && G.rel){ document.body.innerHTML=relHojaRepo(); window.scrollTo(0,0); return; }
   if(PREPANT && quien){ var _pv=elVend(quien);
     if(_pv && _pv.pre){ document.body.innerHTML=preHojaHtml(_pv); preGPS(); return; }
@@ -1453,13 +1453,13 @@ function bfSinCompra(B){
   var n=0; (B.cli||[]).forEach(function(c){ if(c.d!==null && c.d>60) n++; }); return n;
 }
 function bfNumT(n){ return String(Math.round(Number(n)||0)).replace(/\B(?=(\d{3})+(?!\d))/g,'.'); }
-function bfHojaHtml(v){
+function bfHojaHtml(v, enTab){
   var B=v.bf, ms=B.ms||[];
   BFU12=B.u12||[];
   if(!BFMES || (BFMES!=='ANIO' && ms.indexOf(BFMES)<0)) BFMES=ms[ms.length-1];
-  var h='<div class="enc preEnc"><div class="encTxt"><h1>🏭 Branca Fábrica</h1>'
+  var h=enTab ? '<div class="sub" style="margin:4px 2px 8px">'+B.cli.length+(B.cli.length===1?' cliente':' clientes')+' que compran directo a la fábrica</div>' : '<div class="enc preEnc"><div class="encTxt"><h1>🏭 Branca Fábrica</h1>'
        +'<div class="sub">'+esc(v.nom)+' · '+B.cli.length+(B.cli.length===1?' cliente':' clientes')+' que compran directo a la fábrica</div></div></div>';
-  h+='<button class="preVolver" onclick="bfPantalla(0)">← Volver a mi cartera</button>';
+  if(!enTab) h+='<button class="preVolver" onclick="bfPantalla(0)">← Volver a mi cartera</button>';
   h+='<div class="tabs bfmes">';
   ms.forEach(function(m){ h+='<button class="tab'+(m===BFMES?' act':'')+'" onclick="bfMes(\''+m+'\')">'+bfMesNomT(m)+'</button>'; });
   h+='<button class="tab'+(BFMES==='ANIO'?' act':'')+'" onclick="bfMes(\'ANIO\')">12 meses</button></div>';
@@ -2109,11 +2109,24 @@ function ppanStock(){
 var PFL = 'l';
 function pflVer(k){ PFL = k; pintar(); }
 function pfl100(l, km){ return (km > 0 && l > 0) ? (l * 100 / km).toFixed(1) : '—'; }
+function ppanTanques(){
+  var Q = PAN.flt && PAN.flt.tq;
+  if(!Q || !Q.t) return '';
+  var h = '<div class="pcard"><div class="pct">GASOIL EN LOS TANQUES</div><div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px">';
+  Q.t.forEach(function(t){
+    h += '<div style="flex:1;min-width:120px;border:1px solid #dde3ea;border-radius:10px;padding:8px"><div style="font-size:11px;color:#5b6b7a;text-transform:uppercase">Tanque ' + esc(t[0]) + '</div>'
+       + '<div style="font-size:22px;font-weight:800;color:' + (t[1] !== null && t[1] < 0 ? '#b4342a' : '#0e5a9b') + '">' + (t[1] === null ? '—' : pmil(t[1]) + ' L') + '</div>'
+       + '<div style="font-size:12px;color:#5b6b7a">' + (t[2] ? 'control ' + fcorta(t[2]) + (t[3] ? ' · ' + esc(t[3]) : '') : 'sin controlar') + '</div></div>';
+  });
+  h += '<div style="flex:1;min-width:120px;border:1px solid #dde3ea;border-radius:10px;padding:8px;background:#f4f8fc"><div style="font-size:11px;color:#5b6b7a;text-transform:uppercase">Total</div>'
+     + '<div style="font-size:22px;font-weight:800">' + pmil(Q.tot) + ' L</div><div style="font-size:12px;color:#5b6b7a">los dos tanques</div></div>';
+  return h + '</div></div>';
+}
 function ppanFlota(){
   var F = PAN.flt;
-  if(!F || !F.vs || !F.vs.length) return '';
+  if(!F || !F.vs || !F.vs.length) return ppanTanques();
   var ROT = {l:'Litros', km:'Kilómetros', c:'Litros cada 100 km'};
-  var h = '<div class="pcard"><div class="pct">GASOIL DE LA FLOTA, CAMIÓN POR CAMIÓN</div>'
+  var h = ppanTanques() + '<div class="pcard"><div class="pct">GASOIL DE LA FLOTA, CAMIÓN POR CAMIÓN</div>'
         + '<div class="psb">últimos 12 meses · ' + pmil(F.l) + ' litros · ' + pmil(F.k) + ' km · '
         + pfl100(F.lk, F.k) + ' litros cada 100 km</div>';
   h += '<div class="phint">Lo que gasta cada uno en litros y en kilómetros. La plata de la flota se mira en la computadora, no viaja al teléfono.</div>';
@@ -2816,7 +2829,7 @@ function ptvTb(){
         + '<div class="ptvsub">' + (TBI+1) + ' de ' + n + ' &middot; tablero de Branca</div>'
         + '<div class="ptvc ptvtb">' + cuerpo + '</div><div class="ptvnav">';
   for(var i = 0; i < n; i++) h += '<button class="ptvn' + (i === TBI ? ' act' : '') + '" onclick="tbtvIr(' + i + ')">' + (i+1) + '</button>';
-  h += '</div><button class="ptvsal" onclick="verVista(\'pan\')">Salir del modo pantalla</button></div>';
+  h += '</div><button class="ptvsal" onclick="verVista(\'tb\')">Salir del modo pantalla</button></div>';
   return h;
 }
 function prelTelefono(){
@@ -2842,11 +2855,23 @@ function prelTelefono(){
          + '<div style="font-size:22px;font-weight:800;color:' + col + '">' + pc(o[2]) + '</div>'
          + '<div style="font-size:12px;color:#5b6b7a">objetivo ' + pc(o[1]) + '</div></div>';
     });
-    h += '</div><table ' + T + '><tr><th ' + TD + '>Boca</th><th ' + TD + '>Quién · cuándo</th><th ' + TDR + '>Frentes</th><th ' + TDR + '>Fernet</th><th ' + TDR + '>Total</th></tr>';
+    h += '</div><table ' + T + '><tr><th ' + TD + '>Boca</th><th ' + TD + '>Quién · cuándo</th><th ' + TDR + '>Frentes</th><th ' + TDR + '>Total</th></tr>';
+    var TD0 = TD.replace('border-bottom:1px solid #e6ebf0;', ''), TDR0 = TDR.replace('border-bottom:1px solid #e6ebf0;', '');
     G2.bocas.forEach(function(b){
-      h += '<tr><td ' + TD + '><b>' + esc(b[0]) + '</b>' + (b[1] && b[1] !== b[0] ? '<br><span style="color:#5b6b7a">' + esc(b[1]) + '</span>' : '') + '</td>'
-         + '<td ' + TD + '>' + esc(b[2]) + (b[3] ? '<br><span style="color:#5b6b7a">' + esc(fcorta(b[3])) + '</span>' : '') + '</td>'
-         + '<td ' + TDR + '>' + pmil(b[4] + b[5]) + '</td><td ' + TDR + '>' + pc(b[6]) + '</td><td ' + TDR + '><b>' + pc(b[7]) + '</b></td></tr>';
+      h += '<tr><td ' + TD0 + '><b>' + esc(b[0]) + '</b>' + (b[1] && b[1] !== b[0] ? '<br><span style="color:#5b6b7a">' + esc(b[1]) + '</span>' : '') + '</td>'
+         + '<td ' + TD0 + '>' + esc(b[2]) + (b[3] ? '<br><span style="color:#5b6b7a">' + esc(fcorta(b[3])) + '</span>' : '') + '</td>'
+         + '<td ' + TDR0 + '>' + pmil(b[4] + b[5]) + '</td><td ' + TDR0 + '><b>' + pc(b[7]) + '</b></td></tr>';
+      /* v189: debajo de cada boca, su parte en cada objetivo, con el color del semaforo */
+      var po = b[8] || [null, null, null, null];
+      if(!b[8]) po[0] = b[6];
+      h += '<tr><td colspan="4" style="padding:2px 6px 10px;border-bottom:1px solid #e3e8ee"><div style="display:flex;flex-wrap:wrap;gap:6px">'
+         + G2.obj.map(function(o, i){
+             var x = po[i], hay = x !== null && x !== undefined, br = hay ? x - o[1] : 0;
+             var col = !hay ? '#8a95a0' : (br >= 0 ? '#1a7f4b' : (br > -0.05 ? '#9a6b11' : '#b4342a'));
+             return '<span style="border:1px solid #dde3ea;border-radius:8px;padding:3px 7px;font-size:12px;white-space:nowrap">'
+                  + esc(o[0]) + ' <b style="color:' + col + '">' + (hay ? pc(x) : '—') + '</b></span>';
+           }).join('')
+         + '</div></td></tr>';
     });
     h += '</table></div>';
   }
@@ -2886,15 +2911,18 @@ function prelTelefono(){
 function ppestanas(){
   /* OJO: esto lo llama tambien la hoja del vendedor comun, que no tiene
      tablero. Sin el chequeo de PAN se caia la hoja de los 13 vendedores. */
-  if(PAN && PAN.rel && (!G.vs || !G.vs.length)) return '<div class="tabs"><button class="tab'+(VISTA!=='rel'?' act':'')+'" onclick="verVista(\'pan\')">Tablero</button>'
-       + '<button class="tab'+(VISTA==='rel'?' act':'')+'" onclick="verVista(\'rel\')">Relevamientos</button></div>';
+  var tbT = (PAN && typeof tbHay === 'function' && tbHay()) ? '<button class="tab'+(VISTA==='tb'?' act':'')+'" onclick="verVista(\'tb\')">Tablero Branca</button>' : '';
+  var bfT = (PAN && PAN.bf && PAN.bf.cli && PAN.bf.cli.length) ? '<button class="tab'+(VISTA==='bf'?' act':'')+'" onclick="verVista(\'bf\')">Branca Fábrica</button>' : '';
+  if(PAN && (PAN.rel || tbT || bfT) && (!G.vs || !G.vs.length)) return ptabs4('<div class="tabs"><button class="tab'+((VISTA!=='rel'&&VISTA!=='tb'&&VISTA!=='bf')?' act':'')+'" onclick="verVista(\'pan\')">Tablero</button>'
+       + tbT + bfT + (PAN.rel ? '<button class="tab'+(VISTA==='rel'?' act':'')+'" onclick="verVista(\'rel\')">Relevamientos</button>' : '') + '</div>');
   if(!PAN || !G.vs || !G.vs.length) return '';
   var yo = PAN.tipo === 'sup' ? 'Mi cartera' : 'Mi cartera';
   var ot = PAN.tipo === 'sup' ? 'Supervisión' : PAN.tipo === 'branca' ? 'Branca' : 'Tablero';
-  return '<div class="tabs"><button class="tab'+((VISTA!=='pan'&&VISTA!=='rel')?' act':'')+'" onclick="verVista(\'yo\')">'+yo+'</button>'
+  return ptabs4('<div class="tabs"><button class="tab'+((VISTA!=='pan'&&VISTA!=='rel'&&VISTA!=='tb'&&VISTA!=='bf')?' act':'')+'" onclick="verVista(\'yo\')">'+yo+'</button>'
        + '<button class="tab'+(VISTA==='pan'?' act':'')+'" onclick="verVista(\'pan\')">'+ot+'</button>'
-       + (PAN.rel ? '<button class="tab'+(VISTA==='rel'?' act':'')+'" onclick="verVista(\'rel\')">Relevamientos</button>' : '') + '</div>';
+       + tbT + bfT + (PAN.rel ? '<button class="tab'+(VISTA==='rel'?' act':'')+'" onclick="verVista(\'rel\')">Relevamientos</button>' : '') + '</div>');
 }
+function ptabs4(s){ var n = s.split('<button').length - 1; return n >= 4 ? s.replace('class="tabs"', 'class="tabs t4"') : s; }
 function pintarPanel(){
   if(BFPANT && PAN && PAN.bf){ document.body.style.background=''; document.body.className='';
     document.body.innerHTML = bfHojaHtml({nom:(PAN.tit||'Dirección'), bf:PAN.bf}); return; }
@@ -2908,6 +2936,8 @@ function pintarPanel(){
         + '<img class="logo" src="'+LOGO+'" alt=""></div>';
   h += ppestanas();
   if(VISTA === 'rel' && PAN.rel){ document.body.innerHTML = h + '<div class="pwrap">' + prelTelefono() + escBarra() + '</div>'; aplicarEsc(); return; }
+  if(VISTA === 'tb' && tbHay()){ document.body.innerHTML = h + '<div class="pwrap">' + ppanTb() + escBarra() + '</div>'; aplicarEsc(); return; }
+  if(VISTA === 'bf' && PAN.bf && PAN.bf.cli && PAN.bf.cli.length){ document.body.innerHTML = h + bfHojaHtml({nom:(PAN.tit||'Dirección'), bf:PAN.bf}, 1); aplicarEsc(); return; }
   h += '<div class="pwrap">';
   if(G.rec) h += '<div class="recado"><b>Aviso:</b> '+esc(G.rec)+'</div>';
   h += ppanMsg();
@@ -2923,7 +2953,7 @@ function pintarPanel(){
     h += ppanTotal(PAN.tipo === 'duenio' ? 'Facturación de la empresa' : 'Facturación del grupo', n + ' vendedores');
     if(PAN.tipo === 'duenio') h += ppanStock();
     if(PAN.tipo === 'duenio') h += ppanFlota();
-    if(PAN.bf && PAN.bf.cli && PAN.bf.cli.length){
+    if(false && PAN.bf && PAN.bf.cli && PAN.bf.cli.length){
       h += '<button class="bfIr" onclick="bfPantalla(1)">🏭 Branca Fábrica'
         + '<span class="preIrCh">'+PAN.bf.cli.length+'</span>'
         + '<span class="preIrSub">Los clientes que Branca factura directo — aparte de la facturación de la empresa</span></button>';
@@ -2951,7 +2981,6 @@ function pintarPanel(){
     h += ppanCaidos();
     h += ppanAlertas();
   }
-  h += ppanTb();
   h += escBarra() + '</div>';
   document.body.innerHTML = h;
   aplicarEsc();
