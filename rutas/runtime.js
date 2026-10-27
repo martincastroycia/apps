@@ -2842,23 +2842,11 @@ function prelTelefono(){
          + '<div style="font-size:22px;font-weight:800;color:' + col + '">' + pc(o[2]) + '</div>'
          + '<div style="font-size:12px;color:#5b6b7a">objetivo ' + pc(o[1]) + '</div></div>';
     });
-    h += '</div><table ' + T + '><tr><th ' + TD + '>Boca</th><th ' + TD + '>Quién · cuándo</th><th ' + TDR + '>Frentes</th><th ' + TDR + '>Total</th></tr>';
-    var TD0 = TD.replace('border-bottom:1px solid #e6ebf0;', ''), TDR0 = TDR.replace('border-bottom:1px solid #e6ebf0;', '');
+    h += '</div><table ' + T + '><tr><th ' + TD + '>Boca</th><th ' + TD + '>Quién · cuándo</th><th ' + TDR + '>Frentes</th><th ' + TDR + '>Fernet</th><th ' + TDR + '>Total</th></tr>';
     G2.bocas.forEach(function(b){
-      h += '<tr><td ' + TD0 + '><b>' + esc(b[0]) + '</b>' + (b[1] && b[1] !== b[0] ? '<br><span style="color:#5b6b7a">' + esc(b[1]) + '</span>' : '') + '</td>'
-         + '<td ' + TD0 + '>' + esc(b[2]) + (b[3] ? '<br><span style="color:#5b6b7a">' + esc(fcorta(b[3])) + '</span>' : '') + '</td>'
-         + '<td ' + TDR0 + '>' + pmil(b[4] + b[5]) + '</td><td ' + TDR0 + '><b>' + pc(b[7]) + '</b></td></tr>';
-      /* v189: debajo de cada boca, su parte en cada objetivo, con el color del semaforo */
-      var po = b[8] || [null, null, null, null];
-      if(!b[8]) po[0] = b[6];
-      h += '<tr><td colspan="4" style="padding:2px 6px 10px;border-bottom:1px solid #e3e8ee"><div style="display:flex;flex-wrap:wrap;gap:6px">'
-         + G2.obj.map(function(o, i){
-             var x = po[i], hay = x !== null && x !== undefined, br = hay ? x - o[1] : 0;
-             var col = !hay ? '#8a95a0' : (br >= 0 ? '#1a7f4b' : (br > -0.05 ? '#9a6b11' : '#b4342a'));
-             return '<span style="border:1px solid #dde3ea;border-radius:8px;padding:3px 7px;font-size:12px;white-space:nowrap">'
-                  + esc(o[0]) + ' <b style="color:' + col + '">' + (hay ? pc(x) : '—') + '</b></span>';
-           }).join('')
-         + '</div></td></tr>';
+      h += '<tr><td ' + TD + '><b>' + esc(b[0]) + '</b>' + (b[1] && b[1] !== b[0] ? '<br><span style="color:#5b6b7a">' + esc(b[1]) + '</span>' : '') + '</td>'
+         + '<td ' + TD + '>' + esc(b[2]) + (b[3] ? '<br><span style="color:#5b6b7a">' + esc(fcorta(b[3])) + '</span>' : '') + '</td>'
+         + '<td ' + TDR + '>' + pmil(b[4] + b[5]) + '</td><td ' + TDR + '>' + pc(b[6]) + '</td><td ' + TDR + '><b>' + pc(b[7]) + '</b></td></tr>';
     });
     h += '</table></div>';
   }
