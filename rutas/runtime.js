@@ -936,6 +936,8 @@ function abAnotar(q){
   if(E.d.indexOf(h)<0) E.d.push(h);
   if(E.d.length>60) E.d=E.d.slice(-60);
   E.u=(new Date()).toISOString(); E.ver=String(G.ab.ver||''); E.p=1;
+  E.gen=String(G.gen||'').slice(0,10);
+  try{ E.md = window.__G ? (lsGet('rutas_modo')||'nav') : 'arch'; }catch(e){ E.md=''; }
   abGuardar(E);
 }
 async function abMandar(){
@@ -946,7 +948,8 @@ async function abMandar(){
     if(typeof firebase==='undefined') await preSDK();
     try{ firebase.app(); }catch(e){ firebase.initializeApp(G.ab.fb); }
     if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
-    var o={q:String(E.q), nom:String(G.ab.nom||''), u:String(E.u||''), d:(E.d||[]), ver:String(E.ver||'')};
+    var o={q:String(E.q), nom:String(G.ab.nom||''), u:String(E.u||''), d:(E.d||[]), ver:String(E.ver||''),
+           gen:String(E.gen||''), md:String(E.md||''), err:String(lsGet('rutas_err')||'')};
     var by=new TextEncoder().encode(JSON.stringify(o)), b='';
     for(var i=0;i<by.length;i++) b+=String.fromCharCode(by[i]);
     var cuerpo={v:String(G.ab.vnum), b:btoa(b), nf:0, estado:'nuevo',

@@ -11,6 +11,39 @@
 var LS_COD = "rutas_cod", LS_KEY = "rutas_key", LS_GEN = "rutas_gen", LS_VER = "rutas_ver", LS_SEL = "rutas_sel",
     LS_FZ = "rutas_forzar";
 var C_DATOS = "rutas-datos";   /* el mismo nombre que usa sw.js */
+/* v196, [stated] 29/10/2026: dos vendedores abrian dias seguidos con datos
+   viejos (13/10 y 21/10) y «les cuesta poner como programa porque son
+   burros». Tres cosas: (1) si lo guardado es de OTRO dia y hay datos nuevos,
+   se ponen solos al abrir, sin tocar la barra verde; (2) si la actualizacion
+   falla se anota por que (rutas_err) y viaja con el aviso de apertura;
+   (3) boton para instalar la app con un toque (Android). */
+var LS_ERR = "rutas_err", T0 = Date.now();
+function anotarError(que, e){
+  try{ guardar(LS_ERR, JSON.stringify({f:new Date().toISOString(), q:String(que), m:String((e && e.message) || e || "").slice(0,120)})); }catch(_e){}
+}
+function esInstalada(){
+  try{ return !!((window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone); }catch(e){ return false; }
+}
+try{ guardar("rutas_modo", esInstalada() ? "app" : "nav"); }catch(e){}
+var INST = null;
+window.addEventListener("beforeinstallprompt", function(e){
+  try{ e.preventDefault(); }catch(_e){}
+  INST = e;
+  if(esInstalada()) return;
+  barra("bInst", "📲 Tocá acá para instalar la aplicación en el teléfono", "#0d1f3a", "#ffffff", async function(){
+    var ev = INST; INST = null;
+    try{ if(ev){ ev.prompt(); await ev.userChoice; } }catch(_e){}
+    sacarBarra("bInst");
+  });
+});
+window.addEventListener("appinstalled", function(){ try{ sacarBarra("bInst"); guardar("rutas_modo", "app"); }catch(e){} });
+/* ¿se puede poner lo nuevo solo? Solo en los primeros segundos de la apertura
+   (todavia no empezo a trabajar) y una sola vez por sesion. */
+function autoOk(){
+  if(Date.now() - T0 > 25000) return false;
+  try{ if(sessionStorage.getItem("rt_auto") === "1") return false; }catch(e){ return false; }
+  return true;
+}
 
 function $(id){ return document.getElementById(id); }
 function guardar(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -167,6 +200,16 @@ function arrancar(json){
 async function traerNuevo(id, keyBytes, gen, ver, sel, hayDatos){
   try{
     await bajarDatos(id, keyBytes, false);
+    borrar(LS_ERR);
+    /* datos de otro dia: se ponen solos, como si hubiera tocado el cartel */
+    if(hayDatos && autoOk()){
+      try{ sessionStorage.setItem("rt_auto", "1"); }catch(e){}
+      guardar(LS_VER, ver || "");
+      guardar(LS_SEL, sel || "");
+      guardar(LS_FZ, "1");
+      location.reload();
+      return;
+    }
     var txt = hayDatos ? ("Hay datos nuevos del " + linda(gen) + " — tocá acá para actualizar")
                        : "Hay información nueva — tocá acá para actualizar";
     barra("bNuevo", txt, "#1f6b3b", "#ffffff", function(){
@@ -180,7 +223,7 @@ async function traerNuevo(id, keyBytes, gen, ver, sel, hayDatos){
       guardar(LS_FZ, "1");
       location.reload();
     }, 1);
-  }catch(e){}
+  }catch(e){ anotarError("bajar los datos nuevos", e); }
 }
 
 async function inicio(){
@@ -218,7 +261,7 @@ async function inicio(){
 
   var abrio = false;
   if(forzar){
-    try{ arrancar(await bajarDatos(p.id, keyBytes, false)); abrio = true; }catch(e){}
+    try{ arrancar(await bajarDatos(p.id, keyBytes, false)); abrio = true; borrar(LS_ERR); }catch(e){ anotarError("abrir los datos nuevos", e); }
   }
   if(!abrio){
     try{ arrancar(await bajarDatos(p.id, keyBytes, true)); abrio = true; }catch(e){}
