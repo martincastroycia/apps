@@ -2086,26 +2086,30 @@ function ppanStock(){
   if(!S || !S.tot) return '';
   var pct = S.tot ? (S.int / S.tot * 100) : 0;
   var h = '<div class="pcard pazulc"><div class="pct">STOCK EN EL DEPÓSITO</div>'
-        + '<div class="pbig">' + qshort(S.tot) + '</div>'
-        + '<div class="psb">a costo de reposición · al ' + pstkFecha(S.fecha) + ' · ' + pmil(S.arts) + ' artículos, ' + pmil(S.un) + ' unidades</div>';
+        + '<div class="pbig">' + qshort(S.tot + S.int) + '</div>'
+        + '<div class="psb">mercadería a costo + impuesto interno ya pagado · al ' + pstkFecha(S.fecha) + ' · ' + pmil(S.arts) + ' artículos, ' + pmil(S.un) + ' unidades</div>';
   h += '<div class="pimp">'
-     + '<div class="pil"><span>Plata parada en el depósito</span><b>' + qshort(S.tot) + '</b></div>'
-     + '<div class="pil"><span>De eso, impuesto interno (Branca)</span><b>' + qshort(S.int) + '</b></div>'
-     + '<div class="pil pit"><span>LO QUE ES MERCADERÍA</span><b>' + qshort(S.tot - S.int) + '</b></div>'
-     + '<div class="pinota">El <b>' + pstkPc(pct) + '%</b> de lo que hay en el depósito es impuesto interno: plata ya pagada que se recupera recién al vender. '
-     + 'Sale de la lista de Branca vigente al día del stock. Este cuadro sale solamente acá.</div>'
+     + '<div class="pil"><span>Mercadería, a costo (sin IVA ni interno)</span><b>' + qshort(S.tot) + '</b></div>'
+     + '<div class="pil"><span>+ Impuesto interno ya pagado (Branca)</span><b>' + qshort(S.int) + '</b></div>'
+     + '<div class="pil pit"><span>PLATA PARADA EN EL DEPÓSITO</span><b>' + qshort(S.tot + S.int) + '</b></div>'
+     + '<div class="pinota">El costo del listado de stock no trae el impuesto interno: se pagó aparte y se recupera recién al vender. '
+     + (S.ifue === 'facturas' ? 'Sale de la lista de Branca vigente al día del stock, ajustada a lo que se facturó de verdad en ' + esc(S.imes) + ' (' + Math.round(S.ifac * 100) + '% de la lista). ' : 'Sale de la lista de Branca vigente al día del stock. ')
+     + 'Este cuadro sale solamente acá.</div>'
      + '</div>';
-  if(S.neg) h += '<div class="potr">Hay <b>' + S.neg + '</b> artículo(s) con stock en negativo. No es un error del teléfono: viene así en el listado.</div>';
+  if(S.neg) h += '<div class="potr">Hay <b>' + S.neg + '</b> artículo(s) con stock en negativo' + (S.negImp ? ' (restan ' + qshort(-S.negImp) + ')' : '') + '. No es un error del teléfono: viene así en el listado.</div>';
   if(S.sinFam > 0) h += '<div class="potr">' + qshort(S.sinFam) + ' es de artículos sin fábrica cargada, así que no figuran en el detalle de abajo.</div>';
   h += '<button class="pbtn" id="stkBtn" onclick="ppanStkVer()">Ver fábrica por fábrica</button>';
   h += '<div id="stkFams" style="display:none;margin-top:8px">';
+  var TT = (S.tot || 0) + (S.int || 0);
   S.fams.forEach(function(x){
-    var p2 = S.tot ? Math.round(x.i / S.tot * 100) : 0;
+    var tx = (x.i || 0) + (x.ii > 0 ? x.ii : 0);
+    var p2 = TT ? Math.round(tx / TT * 100) : 0;
     h += '<div class="prow"><span class="prn">' + esc(x.f)
-       + '<i style="display:block;font-style:normal;opacity:.65;font-size:11.5px">'
-       + x.n + ' artículos' + (x.ii > 0 ? (' · interno ' + qshort(x.ii)) : '') + '</i></span>'
-       + '<span class="prv"><b>' + qshort(x.i) + '</b> <i>' + p2 + '%</i></span></div>';
+       + '<i style="display:block;font-style:normal;opacity:.65;font-size:11.5px;white-space:normal">'
+       + x.n + ' artículos' + (x.ii > 0 ? (' · mercadería ' + qshort(x.i) + ' + interno ' + qshort(x.ii)) : '') + '</i></span>'
+       + '<span class="prv"><b>' + qshort(tx) + '</b> <i>' + p2 + '%</i></span></div>';
   });
+  h += '<div class="potr" style="margin-top:6px">Cada fábrica va con su impuesto interno sumado, y el % es sobre la plata parada total (' + qshort(TT) + ').</div>';
   h += '</div></div>';
   return h;
 }
