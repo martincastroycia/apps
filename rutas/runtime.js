@@ -2067,16 +2067,17 @@ function ppanTotal(tit, sub){
   }
   if(PAN.vfab && PAN.vfab.l && PAN.vfab.l.length){
     var VF = PAN.vfab, TV = 0;
-    VF.l.forEach(function(x){ TV += x.b + x.ii; });
+    function vfTot(x){ return x.b + Math.round(x.b * 0.21) + x.ii; }
+    VF.l.forEach(function(x){ TV += vfTot(x); });
     h += '<button class="pbtn" id="vfBtn" style="margin-top:10px" onclick="ppanVfVer()">' + (VF_AB ? 'Ocultar la venta por fábrica' : 'Ver la venta por fábrica') + '</button>';
     h += '<div id="vfFams" style="display:' + (VF_AB ? 'block' : 'none') + ';margin-top:8px">';
     VF.l.forEach(function(x){
-      var tx = x.b + x.ii, p2 = TV ? Math.round(tx / TV * 100) : 0;
+      var tx = vfTot(x), p2 = TV ? Math.round(tx / TV * 100) : 0;
       h += '<div class="prow"><span class="prn">' + esc(x.f)
-         + (x.ii > 0 ? '<i style="display:block;font-style:normal;opacity:.65;font-size:11.5px;white-space:normal">facturado ' + qshort(x.b) + ' + interno ' + qshort(x.ii) + '</i>' : '')
+         + '<i style="display:block;font-style:normal;opacity:.65;font-size:11.5px;white-space:normal">sin IVA ' + qshort(x.b) + (x.ii > 0 ? ' + IVA ' + qshort(Math.round(x.b * 0.21)) + ' + interno ' + qshort(x.ii) : '') + '</i>'
          + '</span><span class="prv"><b>' + qshort(tx) + '</b> <i>' + p2 + '%</i></span></div>';
     });
-    h += '<div class="potr" style="margin-top:6px">Venta del mes sin IVA' + (VF.hasta ? ' al ' + pstkFecha(VF.hasta) : '') + '. Branca va con su impuesto interno sumado, y el % es sobre ese total (' + qshort(TV) + ').'
+    h += '<div class="potr" style="margin-top:6px">Venta del mes' + (VF.hasta ? ' al ' + pstkFecha(VF.hasta) : '') + ' <b>con IVA</b> (21% sobre lo facturado) y Branca con su <b>impuesto interno</b> sumado. Abajo de cada fábrica, lo facturado sin IVA. Todo suma el <b>total de plata</b> de arriba (' + qshort(TV) + ') y el % es sobre ese total.'
        + (VF.dif ? ' Hay ' + qshort(Math.abs(VF.dif)) + ' de la facturación que no está abierta por fábrica.' : '') + '</div>';
     h += '</div>';
   }
