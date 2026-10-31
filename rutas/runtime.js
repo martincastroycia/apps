@@ -2065,7 +2065,29 @@ function ppanTotal(tit, sub){
        + '<div class="pinota">El IVA se calcula sobre el importe, sin el interno; el interno va aparte. Este cuadro sale solamente acá.</div>'
        + '</div>';
   }
+  if(PAN.vfab && PAN.vfab.l && PAN.vfab.l.length){
+    var VF = PAN.vfab, TV = 0;
+    VF.l.forEach(function(x){ TV += x.b + x.ii; });
+    h += '<button class="pbtn" id="vfBtn" style="margin-top:10px" onclick="ppanVfVer()">' + (VF_AB ? 'Ocultar la venta por fábrica' : 'Ver la venta por fábrica') + '</button>';
+    h += '<div id="vfFams" style="display:' + (VF_AB ? 'block' : 'none') + ';margin-top:8px">';
+    VF.l.forEach(function(x){
+      var tx = x.b + x.ii, p2 = TV ? Math.round(tx / TV * 100) : 0;
+      h += '<div class="prow"><span class="prn">' + esc(x.f)
+         + (x.ii > 0 ? '<i style="display:block;font-style:normal;opacity:.65;font-size:11.5px;white-space:normal">facturado ' + qshort(x.b) + ' + interno ' + qshort(x.ii) + '</i>' : '')
+         + '</span><span class="prv"><b>' + qshort(tx) + '</b> <i>' + p2 + '%</i></span></div>';
+    });
+    h += '<div class="potr" style="margin-top:6px">Venta del mes sin IVA' + (VF.hasta ? ' al ' + pstkFecha(VF.hasta) : '') + '. Branca va con su impuesto interno sumado, y el % es sobre ese total (' + qshort(TV) + ').'
+       + (VF.dif ? ' Hay ' + qshort(Math.abs(VF.dif)) + ' de la facturación que no está abierta por fábrica.' : '') + '</div>';
+    h += '</div>';
+  }
   return h + '</div>';
+}
+var VF_AB = 0;
+function ppanVfVer(){
+  VF_AB = VF_AB ? 0 : 1;
+  var e = document.getElementById('vfFams'), b = document.getElementById('vfBtn');
+  if(e) e.style.display = VF_AB ? 'block' : 'none';
+  if(b) b.textContent = VF_AB ? 'Ocultar la venta por fábrica' : 'Ver la venta por fábrica';
 }
 /* el stock en pesos, solo en la hoja de direccion. El importe del listado
    es COSTO DE REPOSICION; el interno se muestra aparte, no se resta. */
