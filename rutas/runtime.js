@@ -1278,6 +1278,8 @@ function pintar(){
   if(PREPANT && quien){ var _pv=elVend(quien);
     if(_pv && _pv.pre){ document.body.innerHTML=preHojaHtml(_pv); preGPS(); return; }
     PREPANT=0; }
+  if(!CIERPANT && quien){ var _cv0=elVend(quien);
+    if(_cv0 && _cv0.cierx && !lsGet('rg_cier_'+quien+'_'+_cv0.cierx.m)){ lsSet('rg_cier_'+quien+'_'+_cv0.cierx.m,'1'); CIERPANT=1; } }
   if(CIERPANT && quien){ var _cv=elVend(quien);
     if(_cv && _cv.cierx){ document.body.innerHTML='<button class="preVolver" onclick="cierPantalla(0)">← Volver a la ruta</button><iframe id="cierFr" style="width:100%;border:0;min-height:85vh;display:block"></iframe><button class="preVolver" onclick="cierPantalla(0)">← Volver a la ruta</button>';
       var _fr=document.getElementById('cierFr'); _fr.onload=function(){ try{ _fr.style.height=(_fr.contentDocument.documentElement.scrollHeight+20)+'px'; }catch(e){} }; _fr.srcdoc=_cv.cierx.h; return; }
@@ -1306,6 +1308,9 @@ function pintar(){
   h += '<div class="enc"><div class="encTxt"><h1>' + esc(v.nom) + ' — ' + titSec + '</h1></div>'     + '<img class="logo" src="' + LOGO + '" alt=""></div>';
   h += '<div class="sub">Datos al ' + fcorta(G.gen) + ' · ' + (D.c.length + D.p.length + D.x.length) + ' clientes</div>';
   h += ppestanas();
+  if(v.cierx){ var _cm=parseInt(String(v.cierx.m).slice(5,7),10)-1;
+    h += '<button class="preIr" style="border:2px solid #0e5a9b" onclick="cierPantalla(1)">📋 Cómo cerraste '+MESN[_cm]
+      + '<span class="preIrSub">tu cierre del mes y tus cuotas de este mes — tocá para verlo</span></button>'; }
   h += indBloque(v);
   h += msgHoy(v);
   if(PAN && PAN.cta) h += '<div class="pwrap" style="padding-bottom:0">' + ppanCuenta() + '</div>';
@@ -1340,9 +1345,6 @@ function pintar(){
   var oc = oe[0]==='mok' ? 'objok' : oe[0]==='mwarn' ? 'objwarn' : 'objbad';
   if(BL.obj) h += '<div class="obj ' + oc + '">'   + '<div class="objtop"><span class="objtit">Objetivo de ' + MESN[v.o.mes-1] + '</span>'   + '<span class="objpct ' + oe[1] + '">' + pct + '%</span></div>'   + '<div class="rango">' + fmt(v.o.real) + ' de ' + fmt(v.o.meta) + '</div>'   + '<div class="barra"><div class="barin ' + oe[0] + '" style="width:' + Math.min(pct,100) + '%"></div>'   + '<div class="raya" style="left:' + Math.round(v.o.frac*100) + '%"></div></div>'   + '<div class="rango"><span class="objest ' + oe[1] + '">' + ofr + '</span> La rayita marca dónde tendrías que ir hoy (' + Math.round(v.o.frac*100) + '%).</div>'   + faltaHoyHtml(v) + cmpMesHtml(v) + '</div>';
   h += cierreHtml(v);
-  if(v.cierx){ var _cm=parseInt(String(v.cierx.m).slice(5,7),10)-1;
-    h += '<button class="preIr" onclick="cierPantalla(1)">📋 Cierre de '+MESN[_cm]
-      + '<span class="preIrSub">cómo te fue en '+MESN[_cm]+' y tus cuotas del mes nuevo</span></button>'; }
   if(BL.cmp) h += cmphtml(v);
   if(BL.met) h += qhtml(v, D);
   if(BL.rk) h += rkhtml(v);
