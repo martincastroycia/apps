@@ -5,8 +5,8 @@ var MESN = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','s
 function esc(t){ return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmt(n){ return '$ ' + Math.round(n).toLocaleString('es-AR'); }
 function fcorta(iso){ if(!iso) return '-'; return iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(2,4); }
-var CB=[],CP={},CF=[];
-function fijarCat(v){ var k=(G.cat&&G.cat[v.g])||null; CB=(k&&k.bc)||G.bc||[]; CP=(k&&k.pc)||G.pc||{}; CF=(k&&k.fc)||G.fc||[]; }
+var CB=[],CP={},CF=[],PX=[],PB=[];
+function fijarCat(v){ var k=(G.cat&&G.cat[v.g])||null; CB=(k&&k.bc)||G.bc||[]; CP=(k&&k.pc)||G.pc||{}; CF=(k&&k.fc)||G.fc||[]; PX=(k&&k.px)||[]; PB=(k&&k.pb)||[]; }
 function rcan(f){ f=String(f||'').toUpperCase().trim(); if(f==='PORTAFOLIO BRANCA')return 'FRATELLI BRANCA'; if(f==='CELUSAL')return 'TIMBO SA (CELUSAL)'; if(f==='5 HISPANOS')return 'CINCO HISPANOS'; return (G.can&&G.can[f])||f; }
 function okRg(c,n){ var r=c.rg; if(!r) return true; var f=rcan(n); var i; if(r.sin&&r.sin.length){ for(i=0;i<r.sin.length;i++) if(rcan(r.sin[i])===f) return false; } if(r.solo&&r.solo.length){ for(i=0;i<r.solo.length;i++) if(rcan(r.solo[i])===f) return true; return false; } return true; }
 function focohtml(c){ if(!c.rg) return ''; var t=''; if(c.rg.foco) t='Hacé foco en <b>'+esc(c.rg.foco)+'</b>'; else if(c.rg.solo&&c.rg.solo.length) t='Solo comprale <b>'+c.rg.solo.map(esc).join(' · ')+'</b>'; if(c.rg.nota) t+=(t?' · ':'')+esc(c.rg.nota); if(!t) return ''; return '<div class="foco">★ '+t+'</div>'; }
@@ -1083,7 +1083,7 @@ function pfsug(D){
 function cohtml(c){var z=c.co||{c:[],s:[]},a=z.c||[],s=z.s||[];if(!a.length&&!s.length)return '';var h='<div class="brbox"><div class="brtit"><span style="color:'+(a.length?'#198754':'#c0392b')+';margin-right:6px">●</span>COMBOS PARA OFRECER</div>';if(a.length)h+='<details class="brdet"><summary>Combos que ya compra <b>'+a.length+'</b></summary><div>'+a.map(function(n){return '<span class="brsi">'+esc(n)+'</span>';}).join('')+'</div></details>';if(s.length)h+='<details class="brdet" open><summary>Oportunidades <b>'+s.length+'</b></summary><div>'+s.map(function(x){return '<div><span class="brno">'+esc(x[0])+'</span><span class="brmeta">'+esc(x[1])+'</span></div>';}).join('')+'</div></details>';return h+'</div>';}
 function uvhtml(c){var z=c.uv||{f:'',a:[]},a=z.a||[];if(!a.length)return '';return '<div class="brbox"><div class="brtit">ÚLTIMA VISITA / COMPRA · '+fcorta(z.f)+'</div><details class="brdet" open><summary>Artículos que llevó <b>'+a.length+'</b></summary><div>'+a.map(function(x){return '<div><span class="brsi">'+esc(x[0])+'</span><span class="brmeta">'+Number(x[1]||0).toLocaleString('es-AR')+' un. · '+fmt(x[2]||0)+'</span></div>';}).join('')+'</div></details></div>';}
 function phtml(c,n){if(c.pr&&!Object.prototype.hasOwnProperty.call(c.pr,n))return '';var cat=(CP&&CP[n])||[],a=(c.pr&&c.pr[n])||[],t={},h='';a.forEach(function(x){t[String(x[0])]=1;});if(!cat.length)return '';function nom(k){for(var i=0;i<cat.length;i++)if(String(cat[i].c)===String(k))return cat[i].n;return k;}var f=cat.filter(function(x){return !t[String(x.c)];});h='<div class="brbox"><div class="brtit"><span style="color:'+(a.length?'#198754':'#c0392b')+';margin-right:6px">●</span>'+esc(n)+': <strong>'+a.length+' de '+cat.length+'</strong> artículos</div>';if(a.length)h+='<details class="brdet"><summary>Artículos que compra <b>'+a.length+'</b></summary><div>'+a.map(function(x){return '<span class="brsi">'+esc(nom(x[0]))+'</span>';}).join('')+'</div></details>';if(f.length)h+='<details class="brdet"><summary>Artículos que faltan vender <b>'+f.length+'</b></summary><div>'+f.map(function(x){return '<span class="brno">'+esc(x.n)+'</span>';}).join('')+'</div></details>';return h+'</div>';}
-function fhtml(c){var a=c.ot||[],m={},bf={};a.forEach(function(x){m[x[0]]=x;});(c.fa||[]).forEach(function(x){bf[x[0]]=1;});var fs=(CF||[]).map(function(x){return x.n;}).filter(function(n){return ['PORTAFOLIO BRANCA','CELUSAL','5 HISPANOS','SIN STOCK'].indexOf(String(n).toUpperCase())<0 && okRg(c,n);}),h='<div class="brbox"><div class="brtit">RESTO DE LAS FAMILIAS</div>';fs.forEach(function(n){var x=m[n]||[n,[],[]],b=x[1]||[],s=x[2]||[],v=!!bf[n];h+='<details class="brdet"><summary><span style="color:'+(v?'#198754':'#c0392b')+';margin-right:6px">●</span>'+esc(n)+'</summary><div>';if(b.length)h+='<div class="brmeta">Artículos que compra</div>'+b.map(function(q){return '<span class="brsi">'+esc(q)+'</span>';}).join('');if(s.length)h+='<div class="brmeta">Sugerencias para vender</div>'+s.map(function(q){return '<span class="brno">'+esc(q)+'</span>';}).join('');if(!b.length&&!s.length)h+='<div class="brmeta">Todavía no compra esta familia.</div>';h+='</div></details>';});return h+'</div>';}
+function fhtml(c){var a=c.ot||[],m={},bf={};a.forEach(function(x){m[x[0]]=x;});(c.fa||[]).forEach(function(x){bf[x[0]]=1;});var fuera=['PORTAFOLIO BRANCA','CELUSAL','5 HISPANOS','SIN STOCK'].concat(Object.keys(CP||{}),PX||[]).map(function(x){return String(x).toUpperCase();}),bajo=(PB||[]).map(function(x){return String(x).toUpperCase();});var fs=(CF||[]).map(function(x){return x.n;}).filter(function(n){return fuera.indexOf(String(n).toUpperCase())<0 && okRg(c,n);});fs=fs.filter(function(n){return bajo.indexOf(String(n).toUpperCase())<0;}).concat(fs.filter(function(n){return bajo.indexOf(String(n).toUpperCase())>-1;}));var h='<div class="brbox"><div class="brtit">RESTO DE LAS FAMILIAS</div>';fs.forEach(function(n){var x=m[n]||[n,[],[]],b=x[1]||[],s=x[2]||[],v=!!bf[n];h+='<details class="brdet"><summary><span style="color:'+(v?'#198754':'#c0392b')+';margin-right:6px">●</span>'+esc(n)+'</summary><div>';if(b.length)h+='<div class="brmeta">Artículos que compra</div>'+b.map(function(q){return '<span class="brsi">'+esc(q)+'</span>';}).join('');if(s.length)h+='<div class="brmeta">Sugerencias para vender</div>'+s.map(function(q){return '<span class="brno">'+esc(q)+'</span>';}).join('');if(!b.length&&!s.length)h+='<div class="brmeta">Todavía no compra esta familia.</div>';h+='</div></details>';});return h+'</div>';}
 function dias(iso){ if(!iso) return null; var d=(Date.now()-new Date(iso+'T12:00:00').getTime())/86400000; return Math.floor(d); }
 function esGenerico(nom){ var t=String(nom||'').toUpperCase().replace(/^\s+/,''); return /^(PARTICULAR|CONSUMIDOR|MOSTRADOR|VARIOS|CONTADO|SIN NOMBRE|CLIENTE OCASIONAL)\b/.test(t); }
 function hoyIso(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
@@ -1278,6 +1278,10 @@ function pintar(){
   if(PREPANT && quien){ var _pv=elVend(quien);
     if(_pv && _pv.pre){ document.body.innerHTML=preHojaHtml(_pv); preGPS(); return; }
     PREPANT=0; }
+  if(CIERPANT && quien){ var _cv=elVend(quien);
+    if(_cv && _cv.cierx){ document.body.innerHTML='<button class="preVolver" onclick="cierPantalla(0)">← Volver a la ruta</button><iframe id="cierFr" style="width:100%;border:0;min-height:85vh;display:block"></iframe><button class="preVolver" onclick="cierPantalla(0)">← Volver a la ruta</button>';
+      var _fr=document.getElementById('cierFr'); _fr.onload=function(){ try{ _fr.style.height=(_fr.contentDocument.documentElement.scrollHeight+20)+'px'; }catch(e){} }; _fr.srcdoc=_cv.cierx.h; return; }
+    CIERPANT=0; }
   if(BFPANT && quien){ var _bv=elVend(quien);
     if(_bv && _bv.bf){ document.body.innerHTML=bfHojaHtml(_bv); return; }
     BFPANT=0; }
@@ -1336,6 +1340,9 @@ function pintar(){
   var oc = oe[0]==='mok' ? 'objok' : oe[0]==='mwarn' ? 'objwarn' : 'objbad';
   if(BL.obj) h += '<div class="obj ' + oc + '">'   + '<div class="objtop"><span class="objtit">Objetivo de ' + MESN[v.o.mes-1] + '</span>'   + '<span class="objpct ' + oe[1] + '">' + pct + '%</span></div>'   + '<div class="rango">' + fmt(v.o.real) + ' de ' + fmt(v.o.meta) + '</div>'   + '<div class="barra"><div class="barin ' + oe[0] + '" style="width:' + Math.min(pct,100) + '%"></div>'   + '<div class="raya" style="left:' + Math.round(v.o.frac*100) + '%"></div></div>'   + '<div class="rango"><span class="objest ' + oe[1] + '">' + ofr + '</span> La rayita marca dónde tendrías que ir hoy (' + Math.round(v.o.frac*100) + '%).</div>'   + faltaHoyHtml(v) + cmpMesHtml(v) + '</div>';
   h += cierreHtml(v);
+  if(v.cierx){ var _cm=parseInt(String(v.cierx.m).slice(5,7),10)-1;
+    h += '<button class="preIr" onclick="cierPantalla(1)">📋 Cierre de '+MESN[_cm]
+      + '<span class="preIrSub">cómo te fue en '+MESN[_cm]+' y tus cuotas del mes nuevo</span></button>'; }
   if(BL.cmp) h += cmphtml(v);
   if(BL.met) h += qhtml(v, D);
   if(BL.rk) h += rkhtml(v);
@@ -1405,7 +1412,7 @@ function pintar(){
     if(c.rp.length) h += '<div class="repo">Reponer: ' + c.rp.map(function(y){ return esc(y[0]) + ' ' + fmt(y[1]); }).join(' · ') + '</div>';
     h += uvhtml(c) + cohtml(c);
     if(v.pre && !preEnVentana(c) && preToca(c, D, v)) h += prehtml(c, v, 0);
-    h += phtml(c,'CELUSAL') + phtml(c,'5 HISPANOS') + fhtml(c);
+    Object.keys(CP).forEach(function(n){ h += phtml(c,n); }); h += fhtml(c);
     if(v.ag){ var ag=agenda(v.id), z=ag[c.n]||{}, opts=[['pendiente','Pendiente'],['visitado','Visitado'],['no_atendio','No atendió'],['reagendado','Reagendado']]; h += '<div class="agenda"><strong>Visita del mes</strong><label class="aglabel">Fecha prevista</label><div class="agfila"><input type="date" value="'+esc(z.f||'')+'" onchange="agendaFecha('+c.n+',this.value)"><select onchange="agendaEstado('+c.n+',this.value)">'+opts.map(function(o){return '<option value="'+o[0]+'"'+(z.e===o[0]?' selected':'')+'>'+o[1]+'</option>';}).join('')+'</select></div><label class="aglabel">Nueva fecha de reprogramación</label><div class="agfila"><input type="date" value="'+esc(z.r||'')+'" onchange="agendaRefecha('+c.n+',this.value)"></div></div>'; }
     if(!c.f.length && !c.rp.length) h += '<div class="fperd">Ya te compra todo lo que trabajamos</div>';
     h += '<div class="vfila"><label><input type="checkbox" ' + (m.v?'checked':'') + ' onchange="visita(' + c.n + ', this.checked)"> Visitado</label>';
@@ -1702,6 +1709,8 @@ function faltHojaHtml(v){
 }
 var PREPANT=0;
 function prePantalla(v){ PREPANT=v?1:0; pintar(); window.scrollTo(0,0); }
+var CIERPANT=0;
+function cierPantalla(v){ CIERPANT=v?1:0; pintar(); window.scrollTo(0,0); }
 function preHojaHtml(v){
   var D = (v.dias && v.dias[diaAct]) ? v.dias[diaAct] : (v.cartera || {c:[]});
   var l = preLista(D, v);
@@ -2152,6 +2161,38 @@ function ppanTanques(){
   h += '<div style="flex:1;min-width:120px;border:1px solid #dde3ea;border-radius:10px;padding:8px;background:#f4f8fc"><div style="font-size:11px;color:#5b6b7a;text-transform:uppercase">Total</div>'
      + '<div style="font-size:22px;font-weight:800">' + pmil(Q.tot) + ' L</div><div style="font-size:12px;color:#5b6b7a">los dos tanques</div></div>';
   return h + '</div></div>';
+}
+function ppanCamp(){
+  var C = PAN.camp; if(!C || !C.length) return '';
+  var h = '<div class="pcard"><div class="pct">CAMPAÑAS DEL MES</div>'
+        + '<div class="phint">Tocá cada campaña para ver cómo viene cada vendedor, del que más lleva al que menos. Verde va en ritmo, amarillo un poco atrás, rojo atrasado. ✓ ya cumplió.</div>';
+  C.forEach(function(c){
+    var ok = 0, va = 0, at = 0;
+    c.vs.forEach(function(x){ if(x.ok) ok++; else if(x.e === 'ok') va++; else at++; });
+    h += '<details class="pdet"><summary><b>' + esc(c.n) + '</b> <span class="pgris">' + (c.pe ? 'arranca el ' + c.d1 + ' · ' + c.vs.length + ' vendedores' : ok + ' de ' + c.vs.length + ' cumplieron · ' + (c.qd ? 'quedan ' + c.qd + ' días' : 'termina hoy')) + '</span></summary>';
+    if(c.pe) h += '<div class="pln pgris">Arranca el ' + c.d1 + ' y va hasta el ' + c.d2 + '. Todavía no cuenta nada: abajo, la meta de cada uno.</div>';
+    else h += '<div class="pln"><b>' + ok + '</b> de ' + c.vs.length + ' ya cumplieron · <b>' + va + '</b> van en ritmo · <b>' + at + '</b> atrasados</div>'
+           + '<div class="pln pgris">A hoy hay que llevar el ' + c.rit + '% · termina el ' + c.d2 + '</div>';
+    if(c.pr) h += '<div class="pln"><b>Premio:</b> ' + esc(c.pr) + '</div>';
+    if(c.m2t) h += '<div class="pln pgris">Para cobrar, además, un mínimo de <b>' + esc(c.m2t) + '</b>.</div>';
+    c.vs.forEach(function(x){
+      var t = x.e === 'ok' ? 'mok' : (x.e === 'warn' ? 'mwarn' : 'mbad');
+      h += '<div style="padding:7px 0 4px;border-top:1px solid #eef1f4">'
+         + '<div style="display:flex;justify-content:space-between;gap:8px"><span><b>' + esc(x.n) + '</b>' + (x.ok ? ' ✓' : '') + '</span>'
+         + (c.pe ? '' : '<b class="' + t + 'txt">' + x.p + '%</b>') + '</div>'
+         + '<div class="pgris" style="font-size:13px">' + (c.pe ? 'meta ' + esc(x.mt) : esc(x.rt) + ' de ' + esc(x.mt))
+         + (c.m2t && !c.pe ? ' · ' + esc(x.r2t) + (x.ok2 ? ' ✓' : ' (falta para el mínimo)') : '') + '</div>'
+         + (c.pe ? '' : '<div class="pbar"><i class="' + t + '" style="width:' + Math.min(100, Math.max(0, x.p)) + '%"></i><em style="left:' + Math.min(99, c.rit) + '%"></em></div>')
+         + '</div>';
+    });
+    if(c.bo && c.bo.m){ var b = c.bo;
+      h += '<div style="margin-top:8px;padding:8px 10px;border-left:4px solid #d9a021;background:#fff8e6;border-radius:8px;font-size:13.5px"><b>BONO DEL GRUPO</b>' + (c.bn ? ' — ' + esc(c.bn) : '') + '<br>'
+         + (c.pe ? 'Si entre todos juntan <b>' + pmil(b.m) + '</b> cajas, se agregan <b>' + fmt(b.mo) + '</b> a repartir entre los que lleguen.'
+            : 'Entre todos llevan <b>' + pmil(b.t) + '</b> de <b>' + pmil(b.m) + '</b> cajas' + (b.ll ? '. <b>Ya está</b>: ' + fmt(b.mo) + ' entre los ' + b.n + ' que llegaron.' : '. Faltan <b>' + pmil(b.fa) + '</b> cajas para destrabar ' + fmt(b.mo) + '.'))
+         + '</div>'; }
+    h += '</details>';
+  });
+  return h + '</div>';
 }
 function ppanFlota(){
   var F = PAN.flt;
@@ -2975,6 +3016,7 @@ function pintarPanel(){
   h += ppanPortada();
   if(PAN.tipo === 'branca'){
     h += ppanBranca();
+    h += ppanCamp();
     h += ppanInd();
     h += ppanFaltantes();
     h += ppanPortafolio();
@@ -2984,6 +3026,7 @@ function pintarPanel(){
     h += ppanTotal(PAN.tipo === 'duenio' ? 'Facturación de la empresa' : 'Facturación del grupo', n + ' vendedores');
     if(PAN.tipo === 'duenio') h += ppanStock();
     if(PAN.tipo === 'duenio') h += ppanFlota();
+    h += ppanCamp();
     if(false && PAN.bf && PAN.bf.cli && PAN.bf.cli.length){
       h += '<button class="bfIr" onclick="bfPantalla(1)">🏭 Branca Fábrica'
         + '<span class="preIrCh">'+PAN.bf.cli.length+'</span>'
