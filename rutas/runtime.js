@@ -117,14 +117,16 @@ var PROMOS=[["","sin promo"],["cant","precio por cantidad (2x, 6x…)"],["esc","
 var PIDEC={"cant":1,"esc":1};
 var PIDET={"cant":1,"esc":1,"combo":1};
 var AUS=[["","—"],["nf","no lo encontré"],["ss","sin stock"],["nt","no trabaja la marca"]];
-var PREGPS='', PREGPSEST='';
+var PREGPS='', PREGPSEST='', PREGPSYA=0;
 function preGPS(){
   try{ var g=lsGet('rg_gps_'+hoyIso()); if(g){ PREGPS=g; PREGPSEST='ok'; return; } }catch(e){}
   if(!navigator.geolocation){ PREGPSEST='sin'; return; }
+  if(PREGPSYA) return;
+  PREGPSYA=1; setTimeout(function(){ PREGPSYA=0; }, 60000);
   try{ if(navigator.permissions&&navigator.permissions.query){
     navigator.permissions.query({name:'geolocation'}).then(function(st){
-      if(st.state==='denied'){ PREGPSEST='no'; try{ pintar(); }catch(e){} }
-      try{ st.onchange=function(){ if(st.state!=='denied'){ PREGPSEST=''; preGPS(); } }; }catch(e){}
+      if(st.state==='denied' && PREGPSEST!=='no'){ PREGPSEST='no'; try{ pintar(); }catch(e){} }
+      try{ st.onchange=function(){ if(st.state!=='denied'){ PREGPSEST=''; PREGPSYA=0; preGPS(); } }; }catch(e){}
     })['catch'](function(){});
   } }catch(e){}
   try{
@@ -134,7 +136,7 @@ function preGPS(){
       PREGPSEST='ok';
       lsSet('rg_gps_'+hoyIso(), PREGPS); preCont();
       try{ pintar(); }catch(e){}
-    }, function(e){ PREGPSEST=(e&&e.code===1)?'no':''; try{ pintar(); }catch(e2){} },
+    }, function(e){ var nu=(e&&e.code===1)?'no':''; if(nu!==PREGPSEST){ PREGPSEST=nu; try{ pintar(); }catch(e2){} } },
       {enableHighAccuracy:true, timeout:12000, maximumAge:300000});
   }catch(e){}
 }
