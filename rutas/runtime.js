@@ -117,14 +117,16 @@ var PROMOS=[["","sin promo"],["cant","precio por cantidad (2x, 6x…)"],["esc","
 var PIDEC={"cant":1,"esc":1};
 var PIDET={"cant":1,"esc":1,"combo":1};
 var AUS=[["","—"],["nf","no lo encontré"],["ss","sin stock"],["nt","no trabaja la marca"]];
-var PREGPS='', PREGPSEST='';
+var PREGPS='', PREGPSEST='', PREGPSYA=0;
 function preGPS(){
   try{ var g=lsGet('rg_gps_'+hoyIso()); if(g){ PREGPS=g; PREGPSEST='ok'; return; } }catch(e){}
   if(!navigator.geolocation){ PREGPSEST='sin'; return; }
+  if(PREGPSYA) return;
+  PREGPSYA=1; setTimeout(function(){ PREGPSYA=0; }, 60000);
   try{ if(navigator.permissions&&navigator.permissions.query){
     navigator.permissions.query({name:'geolocation'}).then(function(st){
-      if(st.state==='denied'){ PREGPSEST='no'; try{ pintar(); }catch(e){} }
-      try{ st.onchange=function(){ if(st.state!=='denied'){ PREGPSEST=''; preGPS(); } }; }catch(e){}
+      if(st.state==='denied' && PREGPSEST!=='no'){ PREGPSEST='no'; try{ pintar(); }catch(e){} }
+      try{ st.onchange=function(){ if(st.state!=='denied'){ PREGPSEST=''; PREGPSYA=0; preGPS(); } }; }catch(e){}
     })['catch'](function(){});
   } }catch(e){}
   try{
@@ -134,7 +136,7 @@ function preGPS(){
       PREGPSEST='ok';
       lsSet('rg_gps_'+hoyIso(), PREGPS); preCont();
       try{ pintar(); }catch(e){}
-    }, function(e){ PREGPSEST=(e&&e.code===1)?'no':''; try{ pintar(); }catch(e2){} },
+    }, function(e){ var nu=(e&&e.code===1)?'no':''; if(nu!==PREGPSEST){ PREGPSEST=nu; try{ pintar(); }catch(e2){} } },
       {enableHighAccuracy:true, timeout:12000, maximumAge:300000});
   }catch(e){}
 }
@@ -1284,6 +1286,10 @@ function pintar(){
     if(_cv && _cv.cierx){ document.body.innerHTML='<button class="preVolver" onclick="cierPantalla(0)">← Volver a la ruta</button><iframe id="cierFr" style="width:100%;border:0;min-height:85vh;display:block"></iframe><button class="preVolver" onclick="cierPantalla(0)">← Volver a la ruta</button>';
       var _fr=document.getElementById('cierFr'); _fr.onload=function(){ try{ _fr.style.height=(_fr.contentDocument.documentElement.scrollHeight+20)+'px'; }catch(e){} }; _fr.srcdoc=_cv.cierx.h; return; }
     CIERPANT=0; }
+  if(PTSPANT && quien){ var _ptv=elVend(quien);
+    if(_ptv && _ptv.pts){ document.body.innerHTML='<button class="preVolver" onclick="ptsPantalla(0)">← Volver a la ruta</button><iframe id="ptsFr" style="width:100%;border:0;min-height:85vh;display:block"></iframe><button class="preVolver" onclick="ptsPantalla(0)">← Volver a la ruta</button>';
+      var _pf=document.getElementById('ptsFr'); _pf.onload=function(){ try{ _pf.style.height=(_pf.contentDocument.documentElement.scrollHeight+20)+'px'; }catch(e){} }; _pf.srcdoc=_ptv.pts.h; return; }
+    PTSPANT=0; }
   if(BFPANT && quien){ var _bv=elVend(quien);
     if(_bv && _bv.bf){ document.body.innerHTML=bfHojaHtml(_bv); return; }
     BFPANT=0; }
@@ -1311,6 +1317,8 @@ function pintar(){
   if(v.cierx){ var _cm=parseInt(String(v.cierx.m).slice(5,7),10)-1;
     h += '<button class="preIr" style="border:2px solid #0e5a9b" onclick="cierPantalla(1)">📋 Cómo cerraste '+MESN[_cm]
       + '<span class="preIrSub">tu cierre del mes y tus cuotas de este mes — tocá para verlo</span></button>'; }
+  if(v.pts){ h += '<button class="preIr" style="border:2px solid #1d8a5b" onclick="ptsPantalla(1)">⭐ Tus puntos: '+v.pts.p.toLocaleString('es-AR')+' de '+v.pts.meta.toLocaleString('es-AR')
+      + '<span class="preIrSub">vas '+v.pts.pc+'% de tu meta · hoy deberías ir '+v.pts.fr+'% — tocá para ver</span></button>'; }
   h += indBloque(v);
   h += msgHoy(v);
   if(PAN && PAN.cta) h += '<div class="pwrap" style="padding-bottom:0">' + ppanCuenta() + '</div>';
@@ -1712,6 +1720,8 @@ function faltHojaHtml(v){
 var PREPANT=0;
 function prePantalla(v){ PREPANT=v?1:0; pintar(); window.scrollTo(0,0); }
 var CIERPANT=0;
+var PTSPANT=0;
+function ptsPantalla(v){ PTSPANT=v?1:0; pintar(); window.scrollTo(0,0); }
 function cierPantalla(v){ CIERPANT=v?1:0; pintar(); window.scrollTo(0,0); }
 function preHojaHtml(v){
   var D = (v.dias && v.dias[diaAct]) ? v.dias[diaAct] : (v.cartera || {c:[]});
