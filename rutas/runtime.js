@@ -961,7 +961,7 @@ function punYo(){ var v=null,t='';
  try{ if(!v && typeof elRepo==='function'){ v=elRepo(quien); if(v) t='r'; } }catch(e){}
  if(!v || !v.pul || !v.pul.length || !G.pu) return null;
  return {id:String(v.id||quien), nom:String(v.nom||''), t:t, l:v.pul}; }
-function punPantalla(x){ PUNPANT=x?1:0; if(!x){ PUN_CLI=null; PUN_F={}; PUN_NOTA=''; } pintar(); window.scrollTo(0,0); }
+function punPantalla(x){ PUNPANT=x?x:0; if(!x){ PUN_CLI=null; PUN_F={}; PUN_NOTA=''; } pintar(); window.scrollTo(0,0); }
 function punLs(k,d){ try{ var v=JSON.parse(localStorage.getItem(k)); return v==null?d:v; }catch(e){ return d; } }
 function punLsSet(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 function punPend(){ return punLs('pun_pend_'+quien, []); }
@@ -1073,6 +1073,24 @@ async function punVaciar(manual){
 try{ window.addEventListener('online', function(){ setTimeout(function(){ punVaciar(0); }, 2000); }); }catch(e){}
 try{ setTimeout(function(){ if(punPend().length) punVaciar(0); }, 9000); }catch(e){}
 try{ setInterval(function(){ if(document.visibilityState==='visible' && punPend().length) punVaciar(0); }, 120000); }catch(e){}
+/* v234: punteras pagadas (sin cargo por puntera): 30 dias desde la factura. Viajan en v.ppg = [[cli, nombre, desde, hasta]] */
+function ppgYo(){ var v=null; try{ if(typeof elVend==='function') v=elVend(quien); }catch(e){} try{ if(!v && typeof elRepo==='function') v=elRepo(quien); }catch(e){}
+ return (v && v.ppg && v.ppg.length) ? v.ppg : null; }
+function ppgVig(){ var L=ppgYo()||[], hoy=punHoy(); return L.filter(function(x){ return String(x[3])>=hoy; }); }
+function ppgQuedan(h){ return Math.round((new Date(h+'T12:00:00')-new Date(punHoy()+'T12:00:00'))/86400000); }
+function ppgFc(f){ f=String(f||''); return f.slice(8,10)+'/'+f.slice(5,7); }
+function ppgChip(){ var L=ppgVig(); if(!L.length) return '';
+ return '<button class="chipB a" onclick="punPantalla(2)">💰 Punteras pagadas <b>'+L.length+'</b></button>'; }
+function ppgHoja(){ var L=ppgVig();
+ var h='<button class="punVolver" onclick="punPantalla(0)">← Volver</button><div class="punCaja"><h2>💰 Punteras pagadas</h2>'
+  +'<div class="punNota">A estos clientes se les pagó la puntera (sin cargo): tiene que estar armada con Branca hasta la fecha que dice. Son 30 días desde la primera factura sin cargo.</div>';
+ if(!L.length) h+='<div class="punNota">No hay ninguna vigente.</div>';
+ L.forEach(function(x){ var q=ppgQuedan(x[3]);
+  h+='<div class="punRow" style="display:block;padding:9px 0"><b style="font-size:16px">'+punEsc(x[1])+'</b> <span style="color:#65726b">#'+punEsc(x[0])+'</span>'
+   +((x[4]||1)>1?'<div style="font-size:14px;font-weight:700;color:#0e5a9b;margin-top:2px">'+x[4]+' punteras \u00b7 una en cada local</div>':'')
+   +'<div style="font-size:14px;color:#3d5163;margin-top:2px">Desde el '+ppgFc(x[2])+' hasta el <b>'+ppgFc(x[3])+'</b> · '
+   +'<span style="'+(q<=5?'color:#a5281b;font-weight:700':'')+'">'+(q<=0?'último día':('quedan '+q+(q===1?' día':' días')))+'</span></div></div>'; });
+ return h+'</div>'; }
 
 /* ===== FOTOS DE GONDOLA EN EL TELEFONO (v229) =====
    El visor (grande, deslizar, bajar, compartir), la pantalla «Mis repositores»
@@ -1640,6 +1658,7 @@ function pintar(){
     if(_cv && _cv.cierx){ document.body.innerHTML='<button class="preVolver" onclick="cierPantalla(0)">← Volver a la ruta</button><iframe id="cierFr" style="width:100%;border:0;min-height:85vh;display:block"></iframe><button class="preVolver" onclick="cierPantalla(0)">← Volver a la ruta</button>';
       var _fr=document.getElementById('cierFr'); _fr.onload=function(){ try{ _fr.style.height=(_fr.contentDocument.documentElement.scrollHeight+20)+'px'; }catch(e){} }; _fr.srcdoc=_cv.cierx.h; return; }
     CIERPANT=0; }
+  if(PUNPANT===2 && quien && ppgYo()){ document.body.innerHTML=ppgHoja(); window.scrollTo(0,0); return; }
   if(PUNPANT && quien){ if(punYo()){ document.body.innerHTML=punHoja(); return; } PUNPANT=0; }
   if(GONPANT && quien){ var _gv=elVend(quien); if(_gv && _gv.gon){ document.body.innerHTML=gonHoja(_gv); return; } GONPANT=0; }
   if(PTSPANT && quien){ var _ptv=elVend(quien);
@@ -1673,6 +1692,7 @@ function pintar(){
   var _ch=[];
   if(v.pts){ var _pp=Math.max(0,Math.min(100,+v.pts.pc||0)); _ch.push('<button class="chipB v" onclick="ptsPantalla(1)">⭐ <b>'+v.pts.p.toLocaleString('es-AR')+'</b>/'+v.pts.meta.toLocaleString('es-AR')+' <i class="chipBar"><i style="width:'+_pp+'%"></i></i></button>'); }
   try{ var _pc=punChip(); if(_pc) _ch.push(_pc); }catch(e){}
+  try{ var _pg=ppgChip(); if(_pg) _ch.push(_pg); }catch(e){}
   try{ var _gc=gonChip(v); if(_gc) _ch.push(_gc); }catch(e){}
   if(v.pre){ var _pq=prePendL().length, _pn=preCuantos(); _ch.push('<button class="chipB'+(_pq?' r':'')+'" onclick="prePantalla(1)">💲 Precios'+(_pq?(' <b>⚠ '+_pq+'</b>'):(_pn?(' <b>'+_pn+'</b>'):''))+'</button>'); }
   if(G.rel){ var _rc=relCalc(), _rn=_rc.nP+_rc.nS, _rq=rpPend().length; _ch.push('<button class="chipB'+(_rq?' r':'')+'" onclick="relPantalla(1)">📏 Góndola'+(_rq?(' <b>⚠ '+_rq+'</b>'):(_rn?(' <b>'+_rn+'</b>'):''))+'</button>'); }
