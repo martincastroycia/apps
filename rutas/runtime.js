@@ -284,9 +284,19 @@ function preRaro(cod, marca, n){
   if(n > R*3) return 'Anotaste $'+n.toLocaleString('es-AR')+' y lo que se vio siempre ronda $'+Math.round(R).toLocaleString('es-AR')+'.\n\n\u00bfEst\u00e1 bien? Fijate que no te haya quedado un cero de m\u00e1s.';
   return '';
 }
+function preHora(){ var d=new Date(); return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2); }
+function preGpsMapa(){ try{ return JSON.parse(lsGet('rg_pgps_'+quien+'_'+hoyIso())||'{}'); }catch(e){ return {}; } }
+var PREGPSCLI={};
+function preGpsCli(cli){ cli=String(cli); if(PREGPSCLI[cli] || preGpsMapa()[cli]) return; if(!navigator.geolocation) return; PREGPSCLI[cli]=1;
+  try{ navigator.geolocation.getCurrentPosition(function(p){ var c=p.coords||{};
+    var g=(Math.round(c.latitude*100000)/100000)+','+(Math.round(c.longitude*100000)/100000)+','+Math.round(c.accuracy||0);
+    var M=preGpsMapa(); if(!M[cli]){ M[cli]=g; lsSet('rg_pgps_'+quien+'_'+hoyIso(), JSON.stringify(M)); }
+    if(!PREGPS){ PREGPS=g; PREGPSEST='ok'; lsSet('rg_gps_'+hoyIso(), g); }
+  }, function(){ PREGPSCLI[cli]=0; }, {enableHighAccuracy:true, timeout:15000, maximumAge:20000}); }catch(e){ PREGPSCLI[cli]=0; } }
 function preSet(cli, cod, marca, campo, val){
   var P=preLee(), k=cli+'|'+cod+'|'+(marca||'');
   var z=P[k]||(P[k]={p:0,pr:'',m:marca||''});
+  if(!z.ho) z.ho=preHora(); preGpsCli(cli);
   if(campo==='p'){ var n=preNum(val);
     if(n>0){ var av=preRaro(cod, marca, n); if(av && !confirm(av)){ preCont(); pintar(); return; } }
     z.p=n; if(n>0) z.au=''; }
@@ -407,10 +417,10 @@ function preSumar(n, gi){
 function preTexto(){
   var P=preLee(), l=[], hoy=hoyIso();
   var d=hoy.slice(8,10)+'/'+hoy.slice(5,7)+'/'+hoy.slice(2,4);
-  var g=PREGPS||'';
+  var g0=PREGPS||'', GM=preGpsMapa();
   for(var k in P){ var z=P[k]; if(!z) continue;
     if(!(z.p>0) && !z.au) continue;
-    var q=k.split('|');
+    var q=k.split('|'), g=GM[q[0]]||g0;
     l.push([q[0], q[1], (z.p||0), (z.pr||''), (q[2]||''), (z.tp||''), (z.pq||''), (z.pt||''), (z.au||''), (z.ho||''), g].join(';')); }
   var F=preFotLee();
   Object.keys(F).forEach(function(cl){ (F[cl]||[]).forEach(function(z){
