@@ -259,7 +259,7 @@ function preFotHtml(cli){
   PREFET.forEach(function(x){
     var ya=l.filter(function(z){ return z.et===x[0]; }).length;
     h+='<label class="preFb'+(ya?' on':'')+'">'+esc(x[1])+(ya?' · '+ya:'')
-     + '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="preFotSacar('+cli+',\''+x[0]+'\',this)"></label>';
+     + '<input type="file" accept="image/*" capture="environment" style="display:none" onchange="preFotSacar(\''+cli+'\',\''+x[0]+'\',this)"></label>';
   });
   h+='</div>';
   if(l.length){
@@ -267,7 +267,7 @@ function preFotHtml(cli){
     l.forEach(function(z){
       h+='<span class="preFoi'+(z.ok?' ok':'')+'">'+esc(preFotEt(z.et))
        + (z.ok?' ✓':' ⏳')
-       + ' <b onclick="preFotBorrar('+cli+',\''+z.id+'\')">×</b></span>';
+       + ' <b onclick="preFotBorrar(\''+cli+'\',\''+z.id+'\')">×</b></span>';
     });
     h+='</div>';
   }
@@ -324,25 +324,25 @@ function preCuantos(){ var P=preLee(), n=0; for(var k in P) if(P[k] && P[k].p>0)
 function preCont(){ var e=document.getElementById('preN'); if(e) e.textContent=preCuantos(); var b=document.getElementById('preBar'); if(b) b.style.display=preCuantos()?'':'none'; }
 function preFila(c, cod, nom, marca, i){
   var P=preLee(), z=P[c.n+'|'+cod+'|'+(marca||'')]||{p:0,pr:'',tp:'',pq:0,pt:0,au:''};
-  var A=function(cp,v){ return 'preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\''+cp+'\',this.value)'; };
+  var A=function(cp,v){ return 'preSet(\''+c.n+'\',\''+cod+'\',\''+(marca||'')+'\',\''+cp+'\',this.value)'; };
   var h='<div class="preF">'
    + '<span class="preN">'+esc(nom)+'</span>'
-   + '<input class="preI" type="number" inputmode="decimal" placeholder="$" value="'+(z.p||'')+'" onchange="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'p\',this.value)">'
+   + '<input class="preI" type="number" inputmode="decimal" placeholder="$" value="'+(z.p||'')+'" onchange="preSet(\''+c.n+'\',\''+cod+'\',\''+(marca||'')+'\',\'p\',this.value)">'
    + '</div>';
-  h+='<div class="preF preF2">'   + '<select class="preTp" onchange="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'tp\',this.value)">'   + PROMOS.map(function(x){ return '<option value="'+x[0]+'"'+(String(z.tp||'')===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')   + '</select>';
+  h+='<div class="preF preF2">'   + '<select class="preTp" onchange="preSet(\''+c.n+'\',\''+cod+'\',\''+(marca||'')+'\',\'tp\',this.value)">'   + PROMOS.map(function(x){ return '<option value="'+x[0]+'"'+(String(z.tp||'')===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')   + '</select>';
   if(z.tp && (PIDEC[z.tp]||PIDET[z.tp])){
-   if(PIDEC[z.tp]) h+='<input class="prePq" type="number" inputmode="numeric" placeholder="cu\u00e1ntas" value="'+(z.pq||'')+'" onchange="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'pq\',this.value)">';
-   if(PIDET[z.tp]) h+='<input class="prePt" type="number" inputmode="decimal" placeholder="total $" value="'+(z.pt||'')+'" onchange="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'pt\',this.value)">';
+   if(PIDEC[z.tp]) h+='<input class="prePq" type="number" inputmode="numeric" placeholder="cu\u00e1ntas" value="'+(z.pq||'')+'" onchange="preSet(\''+c.n+'\',\''+cod+'\',\''+(marca||'')+'\',\'pq\',this.value)">';
+   if(PIDET[z.tp]) h+='<input class="prePt" type="number" inputmode="decimal" placeholder="total $" value="'+(z.pt||'')+'" onchange="preSet(\''+c.n+'\',\''+cod+'\',\''+(marca||'')+'\',\'pt\',this.value)">';
   }
   if(z.tp==='pct'||z.tp==='2da'||z.tp==='pago'||z.tp==='otra'||z.tp==='combo')
-   h+='<input class="prePr" placeholder="detalle" value="'+esc(z.pr||'')+'" onchange="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'pr\',this.value)">';
+   h+='<input class="prePr" placeholder="detalle" value="'+esc(z.pr||'')+'" onchange="preSet(\''+c.n+'\',\''+cod+'\',\''+(marca||'')+'\',\'pr\',this.value)">';
   h+='</div>';
   var un=(Number(z.pq)>0&&Number(z.pt)>0)?Math.round(Number(z.pt)/Number(z.pq)):0;
   if(un) h+='<div class="preUn">sale <b>$'+un.toLocaleString('es-AR')+'</b> cada una</div>';
   if(!(z.p>0)){
    h+='<div class="preAu">';
    AUS.forEach(function(x){ if(!x[0]) return;
-    h+='<button class="preAb'+(String(z.au||'')===x[0]?' on':'')+'" onclick="preSet('+c.n+',\''+cod+'\',\''+(marca||'')+'\',\'au\',\''+(String(z.au||'')===x[0]?'':x[0])+'\')">'+x[1]+'</button>'; });
+    h+='<button class="preAb'+(String(z.au||'')===x[0]?' on':'')+'" onclick="preSet(\''+c.n+'\',\''+cod+'\',\''+(marca||'')+'\',\'au\',\''+(String(z.au||'')===x[0]?'':x[0])+'\')">'+x[1]+'</button>'; });
    h+='</div>';
   }
   return h;
@@ -375,12 +375,12 @@ function prehtml(c, v, ix){
      (abiertos[cd]||[]).forEach(function(mk){ h += preFila(c, cd, mk+(nm?(' \u00b7 '+nm):''), mk); });
      var L=gr[cd]||[];
      h += '<div class="preAdd">'
-       + '<select id="preM'+c.n+'_'+gi+'" onchange="preMarcaCambio('+c.n+','+gi+')">'
+       + '<select id="preM'+c.n+'_'+gi+'" onchange="preMarcaCambio(\''+c.n+'\','+gi+')">'
        + L.map(function(m){ return '<option data-cod="'+esc(String(m[1]||''))+'">'+esc(String(m[0]||''))+'</option>'; }).join('')
        + '<option value="__otra__" data-cod="'+esc(cd)+'">otra...</option></select>'
        + '<select id="preP'+c.n+'_'+gi+'"'+(cd?' style="display:none"':'')+'>'
        + v.pre.p.map(function(x){ return '<option value="'+x[0]+'"'+(String(x[0])===cd?' selected':'')+'>'+esc(x[1])+'</option>'; }).join('')+'</select>'
-       + '<button class="preMas" onclick="preSumar('+c.n+','+gi+')">+ agregar</button></div>';
+       + '<button class="preMas" onclick="preSumar(\''+c.n+'\','+gi+')">+ agregar</button></div>';
    });
   }
   h += preFotHtml(c.n);
