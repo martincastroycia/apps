@@ -1,0 +1,2127 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Flota — Martín Castro y Cía.</title>
+<meta name="theme-color" content="#0E5A9B">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Flota">
+<link rel="manifest" href="flota.webmanifest">
+<link rel="icon" type="image/png" href="rutas/icono-192.png">
+<link rel="apple-touch-icon" href="rutas/icono-192.png">
+<style>
+:root{--marca:#0E5A9B;--tinta:#0D1F3A;--gris:#65726b;--linea:#dfe5ea;--fondo:#f4f6f8}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--tinta);background:var(--fondo)}
+header{background:var(--marca);color:#fff;padding:12px 14px;position:sticky;top:0;z-index:10}
+header b{font-size:17px}
+header .sub{font-size:12.5px;opacity:.85}
+main{padding:12px 12px 90px;max-width:640px;margin:0 auto}
+.caja{background:#fff;border:1px solid var(--linea);border-radius:12px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:13px;font-weight:600;color:var(--gris);margin:10px 0 3px}
+input,select,textarea{width:100%;padding:11px 12px;font-size:17px;border:1px solid #c9d2da;border-radius:9px;background:#fff;color:var(--tinta)}
+input:focus,select:focus{outline:2px solid var(--marca);outline-offset:-1px}
+button{font:inherit;font-weight:700;border-radius:9px;border:1px solid var(--marca);padding:12px 16px;cursor:pointer}
+.prim{background:var(--marca);color:#fff;width:100%;font-size:17px}
+.sec{background:#fff;color:var(--marca)}
+.chico{font-size:13px;padding:8px 12px}
+.nota{font-size:13px;color:var(--gris);line-height:1.45}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tabs button{flex:1;background:#fff;color:var(--marca);border-color:#c9d2da}
+.tabs button.on{background:var(--marca);color:#fff;border-color:var(--marca)}
+/* v292: los fleteros eligen el tanque con dos botones grandes, como dicen los carteles */
+.fleTq{display:flex;gap:10px;margin:4px 0 2px}
+.fleTq button{flex:1;padding:18px 6px;font-size:20px;font-weight:800;letter-spacing:.5px;background:#fff;border:3px solid #c9d2da;color:#26323d}
+.fleTq button.on{color:#fff}
+.fleTq button.tqE.on{background:#0E5A9B;border-color:#0E5A9B}
+.fleTq button.tqC.on{background:#d9731a;border-color:#d9731a}
+.aviso{border-radius:9px;padding:10px 12px;font-size:14px;margin:10px 0}
+.amar{background:#fff5d6;border:1px solid #e3d08a;color:#6b5a12}
+.roj{background:#fbe4e4;border:1px solid #e0a8a8;color:#a3282f}
+.ver{background:#e3f0e3;border:1px solid #a9c9a9;color:#1f6b3b}
+.fila{display:flex;gap:8px;align-items:center}
+.fila>*{flex:1}
+.fila .angosto{flex:0 0 auto;width:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+td,th{padding:6px 4px;border-bottom:1px solid var(--linea);text-align:left}
+.der{text-align:right}
+#malAbierta{position:fixed;inset:0;background:#a3282f;color:#fff;z-index:99;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:24px;text-align:center;gap:14px}
+#malAbierta b{font-size:22px}
+#malLink{background:#fff;color:#a3282f;padding:10px;border-radius:8px;word-break:break-all;font-size:14px}
+.oculto{display:none!important}
+.mini{max-width:110px;border-radius:8px;border:1px solid var(--linea)}
+</style></head><body>
+
+<div id="malAbierta">
+  <b>Así no va a funcionar</b>
+  <div>Estás abriendo la app como archivo. Tiene que abrirse desde el link, con Chrome.</div>
+  <div id="malLink"></div>
+  <button class="sec" id="malCopiar">Copiar el link</button>
+  <button class="sec" id="malSeguir">Seguir igual</button>
+</div>
+
+<header><b>Flota — Martín Castro y Cía.</b><div class="sub" id="subT">Depósito</div></header>
+<main>
+
+<div id="pAlta" class="caja">
+  <b>Poné tu código</b>
+  <div class="nota" style="margin:6px 0 10px">Te lo da Mariano. Se pide una sola vez en este teléfono.</div>
+  <input type="text" id="inCod" placeholder="900-XXXXXXXX" autocapitalize="characters" autocomplete="off">
+  <div id="avAlta" class="nota" style="margin:8px 0"></div>
+  <button class="prim" id="btEntrar">Entrar</button>
+</div>
+
+<div id="pApp" class="oculto">
+  <div id="colaCartel"></div>
+
+  <div id="alertaVenc"></div>
+
+  <!-- v191: el control de los tanques (solo a quienes la oficina marca: Fredi y Joaquin) -->
+  <div id="cTan" class="caja oculto"></div>
+
+  <div class="tabs" id="lasTabs">
+    <button id="tbCom" class="on">⛽ Combustible</button>
+    <button id="tbGas">🔧 Mantenimiento</button>
+    <button id="tbVen">⚠️ Vencimientos</button>
+    <button id="tbPre" class="oculto">🧾 Presupuestos</button>
+    <button id="tbCam" class="oculto">🌾 Campo</button>
+    <button id="tbEmp">🏢 Edificio</button>
+  </div>
+
+  <div id="cCom" class="caja">
+    <label for="cvV">Vehículo</label>
+    <select id="cvV"></select>
+    <div id="cvUlt" class="nota" style="margin-top:4px"></div>
+    <label for="cvF">Fecha</label>
+    <input type="date" id="cvF">
+    <label for="cvKm">Odómetro (los kilómetros que marca)</label>
+    <input type="number" id="cvKm" inputmode="numeric" placeholder="por ejemplo 248500">
+    <label for="cvTq">¿De qué tanque?</label>
+    <select id="cvTq"></select>
+    <label for="cvL">Litros que le puse</label>
+    <input type="number" id="cvL" inputmode="decimal" step="0.01" placeholder="por ejemplo 120">
+    <div id="cvAviso"></div>
+    <div style="margin-top:12px"><button class="prim" id="btCom">Guardar la carga</button></div>
+  </div>
+
+  <div id="cGas" class="caja oculto">
+    <div id="gvUlt"></div>
+    <label for="gvV">¿De qué vehículo es?</label>
+    <select id="gvV"></select>
+    <div style="margin-top:6px"><label style="display:inline;font-weight:600">
+      <input type="checkbox" id="gvVarios" style="width:auto;margin-right:6px">Es una compra para VARIOS vehículos</label></div>
+    <div id="gvVariosCaja" class="oculto" style="margin-top:8px;border:1px solid var(--linea);border-radius:9px;padding:10px;background:#fbfcfd">
+      <div style="font-size:13px;color:var(--gris);margin-bottom:6px">Tildá los vehículos. El importe se reparte en partes iguales y podés cambiar el de cada uno.</div>
+      <div id="gvLista"></div>
+      <div id="gvSuma" style="margin-top:8px;font-size:13.5px"></div>
+    </div>
+    <label for="gvF">Fecha</label>
+    <input type="date" id="gvF">
+    <label for="gvC">Qué fue</label>
+    <select id="gvC"></select>
+    <div id="gvKmCaja" class="oculto">
+      <label for="gvKm">Odómetro (con cuántos km se lo hiciste)</label>
+      <input type="number" id="gvKm" inputmode="numeric" placeholder="por ejemplo 248500">
+    </div>
+    <label for="gvD">Detalle</label>
+    <input type="text" id="gvD" placeholder="qué le hiciste, qué compraste, dónde">
+    <label for="gvI">Importe</label>
+    <input type="number" id="gvI" inputmode="decimal" step="0.01" placeholder="$">
+    <label for="gvFoto">Foto del ticket (opcional)</label>
+    <input type="file" id="gvFoto" accept="image/*">
+    <div id="gvFotoV" style="margin-top:8px"></div>
+    <div style="margin-top:12px"><button class="prim" id="btGas">Guardar el gasto</button></div>
+  </div>
+
+  <div id="cVen" class="caja oculto">
+    <div class="fila" style="margin-bottom:8px">
+      <select id="vnFiltro" class="angosto" style="width:auto;flex:1">
+        <option value="60">Los próximos 60 días</option>
+        <option value="30">Los próximos 30 días</option>
+        <option value="0">Solo los vencidos</option>
+        <option value="9999">Todos</option>
+      </select>
+    </div>
+    <input type="text" id="vnQ" placeholder="Buscar vehículo, patente o persona" style="margin-bottom:8px">
+    <div id="vnLista"></div>
+  </div>
+
+  <div id="cPre" class="caja oculto"></div>
+  <div id="cCam" class="caja oculto"></div>
+  <div id="cEmp" class="caja oculto"></div>
+
+  <div class="caja" id="cHist">
+    <b>Lo que cargaste</b>
+    <div id="hist" class="nota" style="margin-top:8px">Todavía no cargaste nada.</div>
+  </div>
+
+  <div class="caja">
+    <button class="sec chico" id="btProbar">🔎 Probar la conexión con la oficina</button>
+    <button class="sec chico" id="btSalir" style="margin-left:6px">Salir</button>
+    <div id="diag" class="nota" style="margin-top:10px"></div>
+  </div>
+</div>
+
+</main>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+var firebaseConfig = {
+  apiKey:"AIzaSyBNR7UHiHHoqa-iIRGQrqfycvGyLSR0F-I",
+  authDomain:"castro-flota.firebaseapp.com",
+  projectId:"castro-flota",
+  storageBucket:"castro-flota.firebasestorage.app",
+  messagingSenderId:"670179222916",
+  appId:"1:670179222916:web:fa1a9241bbc35a824029d1"
+};
+var LINK_APP = "https://apps.martincastroycia.com.ar/flota.html";
+/* v192: [stated] 27/10 «los teléfonos tienen como app así que no van a poder poner el 3». La app se
+   actualiza sola: la oficina manda en sus datos el sello de la ultima app generada y, si este archivo es
+   mas viejo, se vuelve a abrir pidiendo el nuevo (una vez por sello, para que nunca quede en vuelta). */
+var APPVER = "f129v5u73hqb";
+function appVieja(g){
+  try{
+    if(!g || !g.appVer || APPVER.indexOf("__") === 0) return false;
+    if(String(g.appVer) === String(APPVER)) return false;
+    /* como mucho un intento cada media hora: si la nueva todavia no esta subida, no queda en vuelta */
+    var k = "fl_upd_" + g.appVer, ya = Number(lsGet(k) || 0);
+    if(ya && Date.now() - ya < 30 * 60 * 1000) return false;
+    lsSet(k, String(Date.now()));
+    location.replace(location.pathname + "?v=" + encodeURIComponent(g.appVer));
+    return true;
+  }catch(e){ return false; }
+}
+var BLOQUES = [{"v":"900","b":"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"},{"v":"901","b":"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"},{"v":"902","b":"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"},{"v":"903","b":"Ad8xMnp3U/YYwM1/wOf6YmPYKxDCf6dnaey3db3Sayq8WIgtQMsiqLIwfStwjL91ccquCyvZN/tcAOTjU56FXqMA+4sYa/HBpvt1tome4DysmXUSqoNIb2JkEPXl0nhO6rq2B0qTYKYGk/dNi/8EploGzEjM3lbk9rwxsuyVWthWsXhEiL/FNzjvkSaNWxFG06YnFBRfnuZR3hDq5seArXtAXO6+K8sqVFnv/EuzMGiqFndR6RRvRINbTsRUZ1+m2vMCuYfpPYj2oXeKLmPmMvT9YvdNtEVE2Rmd6MxEHJ3wXuTDq8Gu2adZ5eOUUwHqzXF5KsNb35LpJYPtCi6aFGTd1hSg3qByXn46Nu1djGPDmj0l9Bdv9FKcZ23nvdGPqEZNm8GvugxEsYXpyyYk3ZcBM30yGOKaX/ebtNmngaYC82F20+98qWG5400cYh3XAfelsRrevECagPKcD+OdAICzTgcwLaIaFXCrruclP/ywCATh2K58oEo1cAVLVhDvxZUtKU+sofifp38KXwYzL6KXGUDNlZnb6fJGqNtSiTrB1L7IUWGp0K5mJ1QghUkUegarAX40b/lllzIPYdN+YET5IWL6bGDdGooLBXDupQNbZofyvCTwnjhkYjEJ7pUh6eQTAVNS0Fh22Gu8heVFMh3WybhgQ1OUtJm4G+zuQc65doaNPIjnfhDAtuwPtN6xf1ErKmpuMPb7WhvD2tKElDCY+RrUvkvFpAREthCXAwlDB8aytKmriVgvKP21QuwuW3S33ZDxwjRf5Hp24OxzSngG+9xtdQCKeFOEwZCiX0aowbtQeqYRd4M4+vlrBeWMdOmZowfODVeySoXITGs1nBMQ5FeFVqYhDJ1bcJqAqMp6KYGUzazFvCQaj6qPgDAlQTi+3FUik7A9WwimD0e92vng9jiU8EPZ1VMqashrdWrnGD5R+8euax3mT18LTiZwY2oXMs7h/NWVPLcagaXXVPG4/1Ye/+Z1z1Uz2asmlmNv98jwDsbcU3uiR3rg6VfzSxp2AuKwr0axWEYblWm2dbXnIhy8hncha3i7VTj4taeZFZvbM1RP5bhRHSRcECjVjJTjq2VhCkVWy1whZDhyZDspPRphse0V+69CLMe1voUAdq3GUyj2pGMlDA7X81iWHqhE4qRCLyTbUVDi30yjihqol6NI3HELeDCtqyzvOyHJstA/ayWYwQjU2XJ8T4ncx0aXXRN4VTOOr3FPHULlj6Bxz0WeMo1k8p4UBqeaXdcuhGyaNluBo6//5x6nsMIU5SJwfZjyfTsCipngjLtfUmGU8PTSrzXVi5t4sOBgr6DB/MBGr7BaiMKeybnK7YG/eZtuus+3xUvI2rPlqnoDz5UZs2jKWfmxcUUziF0KF7LNSB2spEZMzWyvz1nwG9NtQHWNoeeoH8TWMqJP1I4i1+dHqDmyhONfDRrFqnGH0oXK9XKUfAJxhlQrWt14Fzcts9j0qv/LpEKAMiefj9HCMyQAmVnwd/ofDZY+wKQrjEXQ0nm2AQD++fIoGsRbczsAgHIt0C8AIjDDTt+7gPC4SRQGbwPqjOkmcs/sKHEg453l+e9CMevEKNDpf3SkoYIascpiBcGBc572Uuc5DEJiev6BtZkJ4/3+b15KLJO0V4LmqxCrib/7MdiWUlosvpHJ2gPKnKKV+rtefhYgHO7tqlUQvFnuif6m9lJy++f/cImjwcqoj8EFMPu17xfqQcVb4DfrpTLPBeJdaxHAdUU3qOCFxlRJ6znwy70QPlvLjGdbKSAShR8NUSRf4Qwmg76u8qBvxKCiVYK/eiLP71XKOlGQzoVn0qzfQOWNYZmY1M0i9GM2ZhBKVn4pxgrCXa0MqTpWbXHTloAdUu6+72AdA9Bho+UMHUSniO6wW6uR6rphmxLCSD+ewwr7bxRU4Z4edQ39+vXGT1efReLumqyVPhKBJhi2eOKTRsMA4OmJIyYBx+4Sq/8mvZsnx4c77IUdSG970B59blu8bliX+twfB39A957i6ZarnUi4DUCaOR0tpjIwYYkvkHWe5dewJ7SvlAAYeqjXEx76tKZhUmL3V18ZAsZjcUXDK+DRHYpAGOl/OZHcg5xxNvK12zI9EMIlLuQ6TCkpZJ7BpmBUXfA/lw6LT+DKqppmVJqwCXyOoC7pb0MpCdFEZHbRmk3HrK7YRF9DRfwu0mVyHkWnYtmyplMEZK69oZmSQu0C4VDKKiHcdoATeKw0SHaT4FbEiJhtfFbgVe85HZbhLw0HTG9Ed4qie1/NrM1Pi8Q8z3bzbuw8rzbQ3ofgB5T0RuYx5tHtIhhE4t6nl4yjp7fdCLYYY1BH2KJL+S6GNdXIcphFmwjewaWfUi7P5i+D8hWXbiPhPlJU83AzdoBQreJs2f06vYOF8MQ9NGr4YZxAvcfC2cOuWv4yWwKNxfRZyqmn7fjm9DDCWfOxYCtU8fioeBuMbN6wpOGwuH4Z6gu8QbF+d2ze58YH+WZcU/IyTSR4CIZHtzKK+O9RSx9AWodjciNfPPSBPngRG/n458LZmS3b1TOLtlJeD5d6L1Iu59xdYVx3+TPoghupAz4Eo8XvE4EfI7v0d5JQustGOSAkbC3NazkOTJYY82R2Xhkpf1Y/5bd8si6b14J1bj/CxwGYwam3UT/lB+7yfu8l4zEagJ31Upk7caSNCmXRL11nq6aSI4i72u0n2kTIhMV/Ssr+NtcQYteWLWMAbB0e92GmJjEe06fLopWJ6gSWJFbg2HtHxT0YbnFfYzVSK1fVkm0fYfkdBH73VDxJXrVz1x0I/MJExOc0TYev8bOjTC/q+aDPq+Ys/u99Q8Q9ya/xWJe9jLGa3jmmgG47QsUqOO8pLZdvKV1Z5Im3tpL+owoLd+nKRH66EAXICBd//BwuGe8c5+IY69XmObEJyp7nbfVgjFM35IU3wpWY+HeSbO0iYRujqTy4+l2FPFQCRK1EUeYyxSB5pJWBUC02t8DiFfgFkCoVbgheA19zxWb05ZWbQ5Ih+q9JEJ16sN6TIa9XeXz5WrXJVXlsxqwwi4iW/dG/c8OJELdgQqCvbn3u2Nn5EerJHNHpNMbEIPnVlmKX1dWNsr/v3iQuXTFO5DTIIKsun6Szf16WkEMeWV59GjmsOJu1fY0MoMu7ZgTEXQuRxvo9DNy6AAngvdkmtSS/eG/vaFqSMTQPz1xvnOEDWx0cUvTJKsnVa8Y+78sDogYHRHwGvqeacI109tAsHxrh8WaF67YnM6JDQSkcmpOQ2K02lT4VjQ+5UumN3uCKYvM43hOW1qYM3qeTXbk+ZKyZxDTmSUTFgutbgASX7auVMjp+zk+JIoRlZg2QX4U/o6yfsB6zoESJdWaIrURPSep+3HqHPwK3C7eNfcZ4WyR5S+YmMQc7b9Ov1hPhF+v9tFMyt7d2bw28pyjJOoqJwXh3GDbfHN/+v358pvWV8XVusflv7rKNx4G6yD2vIGy1gerzd/xMoVVZNABbokHSyea6LI4cbY4/chE7daHb1hHvLov1fgbldeqTJK73FWROQ1fc8I8z2u8ERiCbNBixFLcf2UfRwwiW7WwL+vw1TzPrLKDMaFcPWpXmMV+dhk+C2yZdhGR7x0wqRp2SGeVcCQUVeHO9fEf9Hmke+ceMnwGwOAb17EZK7m3oqA25zgM5LHiNgKwdJHTT+ksvGD2ZNJYdNCzu/6YjFeYCbjQTk43feh/unKDnz2udRVDcBe3hoMQEAAAtJj2cxn/AHA12csj0r0G7JdCvfWqFhLXj/NYwt9N353LTKMKCvLwCIsfEQSeORHIsayk1sjZ6939QDnc1HlWjBtOFlXsg4azoKZTupImz1mcYbGiFXaKpBHPUP43MJBFRfI9bjkWJtXG6Pujom3P+OF8W6zUOjfrz1DYwGj6q2QnbpAxc4Vn3PTTunb4ka0UmdIhFLAe5k/htvn7kDOtgBs/QkjaznkrHlevr7ymW8hwrFFj4N3IL13TqC9Usk6tZdU1jlegbOGp7moMs7iL7ImaUZ3kzUhp08iQnUgcuMh/QPcx2zcEnoY58DkFrs1shxUEvhNUafD+4tJNYT2jCw3rIKA0ZhE/yPGfVb7pHK03lA7HW7rgCpXFNQmoVNb0JKj3T12SgvJOyAGmDq4e/boEDzU9qhht4JVuOJwPok6NSQHhP3llHPN27vXh2TbkTtaw5ZmJI7tZ9REP9xPRah0FWu2INmV8x1SaMPOUWri67+WEE2mOe607wjhRLYTuTUdkaeuEVER72CdlCfniPGBuJMaSLeWGWuYTJLK08oqelyrcktrWPsH9FIuZix2YnR1Kd1UQR7MTwllfEAOT+4Jy0MqjgFjknNmdnevsCG5wbYKqFNW+NMwNNHNK3KpL8gEL3odBAOo6FuzyslGJvC0QIWQtMntyUHSeMjqVG2DHkSXh/XElGRziXRIrpmM0VMtSXUR2H0tVRXxMBIOj21mptj/hkZkfw37l+tGu9vM0ro2VIbAOGvF1F1yqm4jXehsZmF6FdoMcZ9/CX/1p/5WZ2CR+v+YJD/+1i0u68HLC1rlGebsK4cFSCLN/Q4EaRGBEy+AR6QygtoSyYizdHDHhDkM3E3E5P+Z9UsaBz4R1n8dQyCf08lCTjt7H302kI9GeVLfnlMCO1nu2KWtPhGcxZcXbH2tVjTHRM749jEfOrTXqJDPblVEfxjCFYYbmq8+OzVNYMEfrLYGSvWhTDlDVzxbnsSjyDwYf952G/egqBY6myzVZwnLgWTpmALrlzKIKZkZei8VHm2cHICgOsd/OaQDlymQttXERYZEYDpdteTosStdMUoXPOlUE2ZDTLxWRl3D0M5PgN4NtQiQEA9QEdg8QSQAPuS4j61DkEid7cRZ1WcpuavaCXeZT5YEHcxwst9G96EtgAUadNycQyXB4T9Y/2uDK+ANcIiey/1Rd+Bl9bxykjmlYj2Vl7BS1CDbXsKv4WdMLT6cLcGWOiBOgzKz3GMSmMtDaU/r1K+p2dZlwm8ra1gzZXYcIxsADxZ40N5Nn42x6/r95f4Sci+aNdwouy6BmcmQ2TqwgcOH6B/wA+GaBwS4y/oh7iD5/NC/AdxMX9MkoUT2htRN7ryYxhFFYQc5PxmxR6WK8WYfjcstqyOz8XrXUSlsX3jToeOaqMnENqZeTrJInQ+GL1UE3sbPZKCMyqk4ZvyIGVkeNqb/qOK0gXbE/+l1oEEQhE5jDTymZdxfbRzq2YEYSgkhNtEStlOGFkq4j9n9JGPSoQXkUDVF+QcraB2+Wuq/Obg1EDg8rTDSELMfku0Ici8srsmM1DnA87aS0LzRUDKsSser8bGdxMWhgh8NIECyIzNCHGzbU5r9icZUK7/ZnX3v2WeqvmuC9TGhI10ysTQEQ3ZwgvIpQ2yjWIgbFjPUa/eN1/XEskoMJXlbihmhcOL6hIw0XzuUIOCKXzq+LLYB6o6bDQPlrqOJvmMIWW5tXxG4PLM0fJXCOFHdXYXST275I3jn7KpS1CwOpyQGZ6dNwEU4i26bIU48y7dA1zms8SXNNAVcO5r1vXIP/4dX3fBW6A+VL45DLS84Ez+fcfBoHLM9WKg44hvKsHD9bM1Ew3iSnxJYbpDu3ncgKOfPUEsdPijWthn7uRrM4Py7v/FdvyNIG5FikwWcDCkMQngbxnINQSqe+KF5CaZi6kDCsJWLDHzwvwhPpbbKepJR5Rw5iMf2gpOJJS/AJqWHqLq2rtrkgUx6OZ8A26Q4Mu8/EURfub0KxAcu+bdcxxAvE0FApOOzSWkfOPcdpXr8arqLNPUoKj6nT5aI0PBPzpk2wlxjmSop/xeZFaJvf0iV3Uw6iq4Ab228AKePUTXwVN0MgdO6/tNnWZxi7LIue1RVm/uylfCTNXFZHfmf1izY5FVPwlL0yuK1tgRjo7huP9TRwkFT11OqdxBpaGfQqsFM9SQTXIxDsrXi7kotvK/x0FpxaXZpeeLalee1nLD9bWrUmNGBphMRcqb9QwD4rhnYg+yqXLiJccDuIvrKHFJ/T7mmBcfLGBhfBKVcrTQ9i7F89r5I3AmT3KxE5IYKcKz3dNPj0poJ6UYZQ7lrgcWBVzVs3G8TFEmK9Hnu3EeiXGNZTvhtQO4Mvp8OZO0b80+BuXEwdzTnrf9PAfidNEzUl0KPCl67u7jJEV214112peA4iYT6VSijkTkfELsosw1SbltkrTQkD54j0Z/Ehros0y8sr64IKuOwjbmm9oiWf9dwP0wafs9OPOivTHozKgjqryaVWzqW2jv/4cdNTQ6RPbwNOJbC3oBir9dt90U2egX3pWkVvbe/+tbGEdGYAqNv9mIl8lqdE4mzCXuC1lF5yJKTOlSuA0HjqPBmjlUrNANA9tQax0OICWPBoFy4eiW1zUg8bOtCZQJObFTjzmY56Pb+5CUcCeoJuV9JpqkB86sXmF0E7MW2YVSwFdp8bke9Ztgu86w8Im79wZ1MYzS8k+TrKIY7PiFKgrVssGpRJbo3LFpEd/guKHArHwdFYxdonzxyyrEQ+Ss1pSohAaTqXZLagGI33ZraqR37XwXKC4+AXgXhi0tAoeXf/0L8lAAUcwxVVJnriG2i8ea6UCuOUltcTRL8bB05p6TuD83D0i0kGwO7CEZyR12hEXAhoAMgpxcRJrEliz9zunOyIVFPa8eL79evRRAlDtw8J4nQxl+pHh5hAeaeHjk+Yj7h7G7VnI6/KHEGfjalr9mH3HSD9VrahB91/eKZfNz33AXJJkYx3j1x8JStWXtOH0o4gNjE9MABctDx8DfKCjECa1x73S5K217MPTsQLnkaW8nJbs25gAq2ZAFD9//O8rablai2VdnAqdI5AIuyBoP/rvHONGSxo4BSUik+I+6xiiZaaC/KH1ZJA6FmkPTPi/pvprkoodrRMY+MUudBHuy0Qz4N0elh5MznwlWJW7pxMP7tk4HGAkNLxYxf0PUsOXJRn/vJ/s7+7412RV52gAFIxxEXWWg00l5oZntxH7/LMcVCx3NB+LFhOfJmWavVDR8WfKOLM/VHzirniQfwx6WBiXLYt4wM4FfW9kebTaCNZxfYY4yY2f8G5Byo1vHdMf6svG271DwLMQ7jYROA+4xG8zM6J32+7MJfhzschF7F3YAvePMDgD0TzCa6OOLNvBSMkQtFzKP31NmTe5yPErMMdpJqtoud+IV9kSr1Gc5gs3ePT77X3V7UsTnl9g6pjijSooqiZqpuEYkiNMnVrpQSZtt8tuJbigCkXUOxBHFmFvc0IbvQiQnDlbX1hX40ciQHiLjYnKGHaZEgeWoYhhNtm4xj6dwIriJ5xT3Sz0jnYETIaoy+Njul9YaT7TDVR7enNGFZe14K5ZKk2Je/ek48Ah2oFFtYs8oEIBRYIc+YpqBMb8sKDP09FIVJvn6OS09FwvlDdI03staAxK99GtE/6a8xfktnpoO7Tl6RvU/pulY+3AhgLKZs4jlwtqMRFvsCqvpTxz/gUqKKj0xpiI+EftjFTJI8cskm+0hmcwP+GL0ENvPEMoyT71zMwbi5OXt33LXh8M0LogsxogGhTjaMimCETdc07oXHbyYDbfpr3pi1qQ4OaTPIwUSx+X+aV1BlK6rOqn6ssf1vAuHzYQb+4="},{"v":"904","b":"AczrARUF6inRy9nTtoMstfuD+nGxQ87BAXjIG+Qw5yP6GBQ3/twuiBHIWQj1p0dcB1N3buo9b6sJ6I75dshgPSB0vopt3Eqgauacy/ccqkfSv/ci5IE8Mj7uKD39eLQDpu6SB+uyF85AxpUgzu7zFT+Eqy6gaGKmOvf+gulA0LB47JUVd9dLnMnR5T7fkd2rmIy8ec7PVyCKFmajZQWwv806KK7DG3Q/i60NP7gn+tHZx2oeLQK7Tj5+iT7ZLVKRP5s/6GY3gV1gHgqPjvQwm3HzShQAXHv91Cl9WVlQHQoUehrahpido7yKTM56FY8s906VcYwn4GOJI6WBObcTQELokvf8Y2VHQvO4A7cwDFLWDVMzo5Q3E8m10oiwtS7mr2dIyOiZc2Ov8wgIVn/yItuEB1vH7OxkNSfW5eKxI/AAKI6eO/pww5NbjMpbEx2wpsuyCLwbLaWTwYzhj9INcKgyXZ+u6WrQ6HLSF0QtmgWJOhitGewBmAO8pGilEp9ygEbwsHAweiSXnksShVFcy7bF3PEe22uVHUm52XeHvWTpnG9ZkCL2jwNuc0cW8HpTOFW2/DsL0TUvC0tIeJ5i3/fOeMO3T5bi8rqD9heLGBNIoohKEB5hJu3xLMbHB34iEqBr5fN3FdiImuj3x0+rhPTlZtw68cLlovmX6ngRytP7hOuZKrcRWNmh+YzRsLxShoqzD5ZUivYiANmF/68DnAnTKelozCh3FVobgKSIzXNLcca3L/zanujtIyKeGfmvrN4L6x8So5bTgPaJOiLEFghM6bQ3avfzkzZ6QRgCCP6jMXIOQ3tU+gKTYB9gkQRbit4ct9AfMQ0MwvmUujT4csFZmPO/lZp7dpyjGz6orSrNf6ve+rZy2NhFoOh3RGpyaaJeAu0Tc+mBGXcPS5oUDS0YsVwr1xOB6bzeEhXDk4/cI1Gsfc3GZ31CnWPkBtyXCt8CV2UDz6wcNB7bDtReXH56kCGL6DJQyPkGGY2Z6eCmKWQH5SIKEpSbk4CzL/9sWllPBcfgEawo7Tw2K2oDI5Michd6JWPxp7AERlYIt0TGeh6JRna9cRbA47+OZwuxqs2/ivOu6xmGtbK5G2nXNAjsSJXHjmOQ2QrSofNRe/zAjREHC7TqQFzE+2mMJdg4J+HIs4fdcNYvXgjoaN+BrMWA8/Wa4KD5VzVnB1ujhKKuuTNGvsW0K88nOP3S9KDRIN2IA0AuI9Xds0Yiip3ToDMkSQGwYyMg9xtSeeFmw/BVQUoYA3t3GNe7waKSpLIX4Ye+FN1FONealmwmRb/9VXWy1hpnh1H+Yy8rD4MQnwjNu4umEV7RsPcRknMpCIQhn1Xm5apt+7WfFBTN3itMo5Ogv7NLcb4F29BqgFBoG85AfBhn3Cwyacsb3NJt18ntflJhaQ=="},{"v":"905","b":"AfMRQtG8OftZHAl4BKi15t8kMmT5fpX+buml/XeB3xEm5H3zoGKbHVeUdRI3/VjD5nJ3UpIdheWfxkJClFXk1QzETcaor1QHkpx/EXTa2vh0s3GHcfymgFeJ9/0z3+zHn4s6AP0Ma/DSVC4raviBW+VVcWee4eECWWH3FSmK0vC4RKdTI1Pbs0GQDWPx1SY+bSvdIfdm9Ow7D7TZFaBhH74euXvxeFP+TU/jHpvHbI2sIFYpW5pnpHcWp5Fq1KV2HvChekBCaY8/D+ijLU9bQd83ahswPWJT9kweIj172C5Sg1W+2zGonkuMdy1QICz6JtuPRrqzVLU8BaqrfFxex8kqQw5OK2eKDoNXFhacfYG3sB75ynEpgoPK+Laa5DOk/sfjqlL5mUEU4Sfp2j8ajAPUbc40JPy0Rkitjy74YW0wqpursNYfRhGgskDfHWhUL3lex/PIhPND5P94wtRh3s52vL6j/MaLg11d1mHRQnn9/Jqcj/7KGlmF55ayDHpovRlgrq5n1uk3Oct1ygyqlEzI5M85S/KrWOQ7KFR/dN51Ol4P+ddTWueWicZ9CAmxbA7XvZs5WaCd4Wx2m6M5dnebMXeG2oqRar1RhlrQTnrPX5zboGQ6bV7OSK9+cuB9P/xI+0IPfbP2HgaC1BlK1NTqmG4sjmVMG8y3q+g7qFu3zcPOvdT30xrClGM6gA8ewpTfKoAsSW6V637fRF83MCbrBkLysR9a548k2EKXW9nOEbLVfDWRDYE5mQA/CM83Pznq8gi5NDES0/3gy+VasHegNyoaMNEwxfmxVPNOwcuIV0xGLG0oUCuwnpRw6QDLRersH9Iip1TH1jpOwsNLe86Oc+EM+ZrOWJ5iHN+Nb3ZzbcyFHSFHPxKFSrh7Fc/2P4/96n1NO08851UY+y3zLINtbkfWT+Xyr78j5/QZHtjAGxhyzPl4LCNgkpTqBQJNTEHtCklRRkzYyC8axWmLlTCqylhwZeK4qjRCma3VVq7UL+ikp/BjwUlvOwCXK6uji6dFJs/6hcOOBRrETyPoyWPafAk4J2fzZ9yniIom8LfFYaFSJ4WszJmTJ7nvr5XRa3iW97yeHs4CT5OBk1zt24/zO0MAIwHVpp8fwicNrI9ncBsmAxkSXkT4rvo9tzQ0POH8/eXEwymjMRyAzZvVQ+tln7Pt+fQ4n9jnOJJtpREhkeeBrgSI+dqFS77YUJbOol4KVxMEYTXAlolaXgdWsTIDx069fQE6MWMA/Vw00fTpAFdh63Hr8M4bE4+xYA28veiC5YtXRFLnP5xbaJpApFM2t+X+L/SXifx482l5LqWxq0WG19lSjzDLDW7Emn2u2bH2zp6MQsHblbTk1+xaBsMpCXhE512hdZk8LeORI7ZXjoev0wWRfAbMmtF7kf71vLep"},{"v":"906","b":"AZSKutCSVyKiJ1ReQg8AaLGvovxmjBJB9DqIICUSzXvUFfPYdz28M3jPC+4/HYL8/7YI7e24UjDnc0X8PvOEtSRv6kx/B0469kKiLTPJtYaa3wxJQjcz2wr+PBfv7pND0ZNrt+IbFncMuAXraqfuPLJwziTNN6vQZMqVkRbtSz4DQ3d3eaEkjxJa6i6jqyORETSdLXoEDxb+XmKgCCe4v2UZD9jbwb1PoVhWNVyAghi7Yr4vD5LYDW7NM5WE3mez5XhNZ5a+YS6LYlDd1TkkbIfkE4DKi0RMA6JR47uN/GbjxqGnqt2gQx/BRU6UBbsGPLER063mxUT8LMG49GrSVlRxjChRHRwoxkme7v1ow2GqfxolUzSW9FrCusqpy+6IqB5yKbWlaKAoaHV4QzPh4MUxUMAt2SOKOFBthbE15pfNY3Oe5w3Zcop3w8IG5RnhDolii2HAZwyWmkW+Gi3ESo2Ku/DAB9iubhU6p6tAqTGO6FSFmjPpI6OGvMDWFMnMNvvWTXobmrzln9AuXLaT7BZ8pRicV3IFwCciHTSvaEKm5STdxL+0YAuGK1EwLT4V7HgyX13UfMwfe5uvVGxLafZWDU3LkC28HN9Geroac8CtkjMhHYOKE5omCJDtTOl6oDrz6URIihmYJL23R4Sjjj/oGL93YPQtCOYyTbNLLxMqJOHoRtpArrowJIST369j0mbZFzZ697oGe4s2jN4Kga/nBtvr48d4KBBGqRyeozfo77+s6GZy/xM2wsPTkdL88eKYKGiJVihvai2y37YPZNWSHsNe7SKHZc31bDAeCysaJlfYu9xIPNzHxJRioWGPQ4l6kQtLQqdR/v/aEUZvAaQLNLkPlhgrGg8ebCsxopbzztcaFr/TaSE4GpChHPu2RlmqKm0waU59RRUzO/AAqQ4g+dSCSBn0930zrpArGRocVaSlHg/8Anvdf2g4oXW11wGYFWbOU6X02bPAiTcSZO98mhsjy3nccsqN5UwFgcrKSl8fw4aHgMQiyOYbdKzjeSn7xkEA+H/vw2Amg2j+nYvLV32FF5sPPF7VBCyP9APNhti2WoJAlESqzBBmZCmSyHBLWs4btaqZgsiCvVajfeTgJwVuJdKw4J3jMr+vsfDyVtJAmWYjyY/2pzaiaYF/ueYjFh8IVuOmCITkqnAqtFI5V3HODVMoVj/ict+jceIOEgZKN8DHCl/VgrdtP/8t4RKdM84SmL5E1ATLfU4392lwK+KRzjjGVTP0Mn5N1C8OB5N6qxBS8FKYpgNaZleBmjMqi2r92JvQFdJCUd5ENVEQbM/WTJkddhhnwYa7ULD6H84H9utHqeqJds+O68BrP6nAM2Re715w/uHNOTG1nQZ6Pe3SWCE2gP3qdr9dT6WJxrCVtGq9HNrhwYkoAUV8AuLSWP0="}];
+/* ===== Flota — app del encargado de depósito =========================
+   Una sola persona carga combustible del tanque propio y gastos de todos
+   los vehículos. Mismo mecanismo que la app de cobranza: el dato viaja
+   CIFRADO con el código de esa persona, se guarda primero en el teléfono
+   y sale cuando hay señal. La oficina lo ve en el buzón del programa.   */
+
+var SAL = 'castro-flota:';
+var COLECCION = 'flota';
+var LS_COD = 'castro_flota_cod';
+var LS_ULT = 'castro_flota_ult';
+var LS_HIST = 'castro_flota_hist';
+var LS_DAT = 'castro_flota_dat';
+
+var CODIGO = '', VNUM = '', G = null, db = null, st = null, AUTHP = null, IDB = null;
+var COLA = [], FLUSHING = false, COLAMSG = '', ULTERR = '';
+var TAB = 'com', FOTO = null, ULT = {}, SOLOVER = false;
+var FOTOSV = null;   /* la foto de la factura del service, aparte de la del ticket */
+/* leer plata escrita a mano, a la argentina: '1.250.000' -> 1250000, '1250,50' -> 1250.5 */
+function plataApp(t){
+  var x = String(t == null ? '' : t).replace(/[^0-9.,]/g, '');
+  if(!x) return 0;
+  var coma = x.lastIndexOf(','), pun = x.lastIndexOf('.'), dec = -1;
+  if(coma >= 0 && pun >= 0) dec = Math.max(coma, pun);
+  else if(coma >= 0 && x.indexOf(',') === coma && x.length - coma - 1 <= 2) dec = coma;
+  else if(pun >= 0 && x.indexOf('.') === pun && x.length - pun - 1 <= 2) dec = pun;
+  var ent = (dec >= 0 ? x.slice(0, dec) : x).replace(/[.,]/g, '');
+  var fr = dec >= 0 ? x.slice(dec + 1) : '';
+  var v = parseFloat((ent || '0') + '.' + (fr || '0'));
+  return isNaN(v) ? 0 : v;
+}
+function svFotoElegida(el){
+  var f = el && el.files ? el.files[0] : null;
+  if(!f){ FOTOSV = null; if($('svFotoV')) $('svFotoV').innerHTML = ''; return; }
+  FOTOSV = f;
+  var kb = Math.round(f.size/1024), url = URL.createObjectURL(f);
+  if($('svFotoV')) $('svFotoV').innerHTML = '<img src="' + url + '" class="mini"> <span class="nota">' + kb + ' KB</span> '
+    + '<button class="sec chico" onclick="FOTOSV=null;document.getElementById(\'svFoto\').value=\'\';document.getElementById(\'svFotoV\').innerHTML=\'\';">✕ Sacar</button>';
+}
+
+function $(id){ return document.getElementById(id); }
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+function hoyISO(){ var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function fcorta(iso){ if(!iso) return ''; return iso.slice(8,10)+'/'+iso.slice(5,7)+'/'+iso.slice(2,4); }
+function numAR(n){ return Number(n||0).toLocaleString('es-AR'); }
+function money(n){ return '$ ' + Math.round(Number(n)||0).toLocaleString('es-AR'); }
+function esc(t){ return String(t==null?'':t).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function nuevoId(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+/* ---- se abrió como archivo en vez de por el link ---- */
+function abiertaMal(){
+  try{
+    var pr = String(location.protocol||'');
+    if(pr === 'https:') return false;
+    if(pr === 'http:' && /^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return false;
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ---- cifrado: misma receta que cobranza ---- */
+function b64bytes(s){ var b=atob(s), u=new Uint8Array(b.length); for(var i=0;i<b.length;i++) u[i]=b.charCodeAt(i); return u; }
+async function gzipear(txt){
+  var cs=new CompressionStream('gzip');
+  var stm=new Blob([new TextEncoder().encode(txt)]).stream().pipeThrough(cs);
+  return new Uint8Array(await new Response(stm).arrayBuffer());
+}
+async function derivar(cod,id){
+  var mat=await crypto.subtle.importKey('raw',new TextEncoder().encode(cod),'PBKDF2',false,['deriveBits']);
+  var bits=await crypto.subtle.deriveBits({name:'PBKDF2',salt:new TextEncoder().encode(SAL+id),iterations:200000,hash:'SHA-256'},mat,256);
+  return new Uint8Array(bits);
+}
+async function cifrar(txt,cod,id){
+  var kb=await derivar(cod,id);
+  var key=await crypto.subtle.importKey('raw',kb,{name:'AES-GCM'},false,['encrypt']);
+  var gz=await gzipear(txt);
+  var sem=new Uint8Array(kb.length+gz.length); sem.set(kb,0); sem.set(gz,kb.length);
+  var iv=new Uint8Array(await crypto.subtle.digest('SHA-256',sem)).subarray(0,12);
+  var ct=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM',iv:iv},key,gz));
+  var out=new Uint8Array(1+12+ct.length); out[0]=1; out.set(iv,1); out.set(ct,13);
+  var s2=''; for(var i=0;i<out.length;i++) s2+=String.fromCharCode(out[i]);
+  return btoa(s2);
+}
+async function descifrar(bytes,cod,id){
+  var kb=await derivar(cod,id);
+  var key=await crypto.subtle.importKey('raw',kb,{name:'AES-GCM'},false,['decrypt']);
+  var gz=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:bytes.subarray(1,13)},key,bytes.subarray(13)));
+  var stm=new Blob([gz]).stream().pipeThrough(new DecompressionStream('gzip'));
+  return new TextDecoder().decode(await new Response(stm).arrayBuffer());
+}
+function idDeCodigo(cod){ var m=String(cod||'').trim().toUpperCase().match(/^(\d+)\s*-/); return m?m[1]:null; }
+
+/* ---- Firebase ---- */
+function conectarFB(){
+  if(db) return true;
+  try{
+    if(typeof firebase === 'undefined') return false;
+    try{ firebase.app(); }catch(e){ firebase.initializeApp(firebaseConfig); }
+    db = firebase.firestore(); st = firebase.storage();
+    sesion().catch(function(){});
+    return true;
+  }catch(e){ return false; }
+}
+function sesion(){
+  if(AUTHP) return AUTHP;
+  AUTHP = (async function(){
+    try{ if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously(); }
+    catch(e){ AUTHP=null; throw e; }
+  })();
+  return AUTHP;
+}
+function conTope(pr, ms, que){
+  return Promise.race([pr, new Promise(function(_,rej){ setTimeout(function(){ rej(new Error('tardó demasiado ('+que+')')); }, ms); })]);
+}
+
+/* ---- la cola: primero el teléfono, después la nube ---- */
+function idbAbrir(){
+  return new Promise(function(res,rej){
+    if(IDB) return res(IDB);
+    if(typeof indexedDB === 'undefined') return rej(new Error('sin indexedDB'));
+    var r=indexedDB.open('castro_flota',1);
+    r.onupgradeneeded=function(){ var d=r.result; if(!d.objectStoreNames.contains('pend')) d.createObjectStore('pend',{keyPath:'id'}); };
+    r.onsuccess=function(){ IDB=r.result; res(IDB); };
+    r.onerror=function(){ rej(r.error||new Error('idb')); };
+  });
+}
+function idbTx(modo, fn){
+  return idbAbrir().then(function(d){
+    return new Promise(function(res,rej){
+      var tx=d.transaction('pend',modo), st2=tx.objectStore('pend'), req=fn(st2);
+      tx.oncomplete=function(){ res(req && ('result' in req) ? req.result : null); };
+      tx.onerror=function(){ rej(tx.error||new Error('tx')); };
+    });
+  });
+}
+function colaLeer(){ return idbTx('readonly',function(s){ return s.getAll(); }).then(function(l){ COLA=l||[]; return COLA; }).catch(function(){ COLA=[]; return COLA; }); }
+function colaGuardar(o){ return idbTx('readwrite',function(s){ return s.put(o); }); }
+function colaSacar(id){ return idbTx('readwrite',function(s){ return s.delete(id); }); }
+
+/* ---- historial local, para que vea lo que ya cargó ---- */
+function histLeer(){ try{ return JSON.parse(lsGet(LS_HIST)||'[]'); }catch(e){ return []; } }
+function histAgregar(o){ var l=histLeer(); l.unshift(o); if(l.length>60) l=l.slice(0,60); lsSet(LS_HIST, JSON.stringify(l)); }
+
+
+/* ---- último odómetro conocido de cada vehículo ----
+   Sale de lo que mandó la oficina y se va corrigiendo con lo que carga él
+   en este teléfono, así el aviso sirve aunque la oficina no haya bajado
+   todavía las cargas de esta semana. */
+function ultLeer(){ try{ return JSON.parse(lsGet(LS_ULT)||'{}'); }catch(e){ return {}; } }
+function ultPoner(vid, km, fe){
+  var U = ultLeer();
+  if(!U[vid] || km > U[vid].km){ U[vid] = {km:km, fe:fe}; lsSet(LS_ULT, JSON.stringify(U)); }
+  ULT = U;
+}
+function ultDe(vid){
+  var U = ULT || {}, del = U[vid];
+  var base = null;
+  (G && G.veh || []).forEach(function(v){ if(String(v.id) === String(vid) && v.km > 0) base = {km:v.km, fe:v.fe||''}; });
+  if(del && base) return del.km >= base.km ? del : base;
+  return del || base;
+}
+function vehDe(id){ var r=null; (G && G.veh || []).forEach(function(v){ if(String(v.id)===String(id)) r=v; }); return r; }
+function nomVeh(id){ var v=vehDe(id); if(!v) return id; return v.nom + (v.pat ? ' · ' + v.pat : ''); }
+
+/* ---- el aviso del kilometraje, igual que en el programa ---- */
+function avisoKm(vid, km){
+  var v = vehDe(vid);
+  if(!v || v.sinkm) return '';
+  if(!km) return 'Sin el odómetro, esta carga no entra en el promedio de consumo.';
+  var u = ultDe(vid);
+  if(!u) return '';
+  var d = km - u.km, ant = numAR(u.km), f = u.fe ? (' el ' + fcorta(u.fe)) : '';
+  if(d < 0) return 'El odómetro BAJÓ: venía en ' + ant + ' km' + f + ' y estás poniendo ' + numAR(km) + '.';
+  if(d === 0) return 'Es el MISMO odómetro que la vez pasada (' + ant + ' km). ¿Lo copiaste sin querer?';
+  var med = Number(v.salto) || 0;
+  if(med > 0 && d > med * 4) return 'Son ' + numAR(d) + ' km desde la última carga, cuando lo normal en este vehículo son unos ' + numAR(Math.round(med)) + '. Fijate que no le sobre un dígito.';
+  if(med > 0 && d < med * 0.15) return 'Son apenas ' + numAR(d) + ' km desde la última carga (venía en ' + ant + f + ').';
+  if(d > 20000) return 'Son ' + numAR(d) + ' km de golpe. Fijate el número.';
+  return '';
+}
+
+/* ---- foto: se achica antes de subir ---- */
+function achicarFoto(file){
+  return new Promise(function(res){
+    try{
+      if(!file || !/^image\//.test(file.type||'')) return res(file);
+      if(typeof createImageBitmap === 'function'){
+        return createImageBitmap(file).then(function(bm){
+          try{
+            var MAX=1400, w=bm.width, h=bm.height;
+            var e2=Math.min(1, MAX/Math.max(w,h)), cw=Math.max(1,Math.round(w*e2)), ch=Math.max(1,Math.round(h*e2));
+            var cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+            cv.getContext('2d').drawImage(bm,0,0,cw,ch); try{ bm.close(); }catch(e){}
+            return new Promise(function(r2){ cv.toBlob(function(b){ r2(b||file); },'image/jpeg',0.62); }).then(res);
+          }catch(e){ return res(file); }
+        }, function(){ res(file); });
+      }
+      res(file);
+    }catch(e){ res(file); }
+  });
+}
+
+/* ---- mandar lo que está en la cola ---- */
+async function flush(){
+  if(FLUSHING) return;
+  await colaLeer();
+  if(!COLA.length){ pintarCola(); return; }
+  if(!conectarFB()){
+    ULTERR = 'no cargaron los programas de Google';
+    COLAMSG = '<b>Sin conexión con la oficina.</b> Tocá «Probar la conexión» acá abajo.';
+    pintarCola(); return;
+  }
+  if(typeof navigator !== 'undefined' && navigator.onLine === false){ COLAMSG = 'El teléfono está sin internet.'; pintarCola(); return; }
+  FLUSHING = true; COLAMSG = ''; pintarCola();
+  try{
+    await conTope(sesion(), 20000, 'entrar');
+    var lista = COLA.slice();
+    for(var i=0;i<lista.length;i++){
+      var o = lista[i];
+      o.intentos = (o.intentos||0) + 1;
+      try{ await colaGuardar(o); }catch(e){}
+      var fotoURL=null, fotoPath=null;
+      if(!o.foto && o.fotoTxt){
+        try{
+          var pr=String(o.fotoTxt).split(','), bin=atob(pr[1]||''), u8=new Uint8Array(bin.length);
+          for(var q=0;q<bin.length;q++) u8[q]=bin.charCodeAt(q);
+          o.foto=new Blob([u8],{type:(/data:([^;]+)/.exec(pr[0])||[,'image/jpeg'])[1]});
+        }catch(e){}
+      }
+      /* La foto va a la base de datos, NO a Storage. Firebase empezo a cobrar
+         Storage en los proyectos nuevos y no vale la pena por una foto de
+         100 KB: entra de sobra en un documento (el tope es 1 MB). Va en un
+         documento APARTE para que el buzon pueda listar las cargas sin
+         bajarse todas las fotos. */
+      if(o.foto && !o.fotoTxt){
+        try{
+          o.fotoTxt = await new Promise(function(res,rej){
+            var fr = new FileReader();
+            fr.onload = function(){ res(fr.result); };
+            fr.onerror = rej;
+            fr.readAsDataURL(o.foto);
+          });
+        }catch(ef){ o.fotoTxt = null; }
+      }
+      if(o.fotoTxt && String(o.fotoTxt).length < 690000){
+        try{
+          await conTope(db.collection('flotafotos').doc(o.id).set({
+            f: String(o.fotoTxt), ts: new Date().toISOString()
+          }), 30000, 'foto');
+          fotoPath = 'flotafotos/' + o.id;
+          fotoURL = null;
+        }catch(ef){ fotoPath = null; }
+      }
+      var dentro = {
+        v: VNUM, tipo: o.tipo, veh: o.veh || '', f: o.f,
+        km: o.km||0, l: o.l||0, cat: o.cat||'', d: o.d||'', i: o.i||0, nf: 0
+      };
+      /* un cambio de vencimiento viaja adentro del MISMO sobre que una carga
+         de gasoil: las reglas de Firebase miran el sobre, no lo de adentro,
+         asi que no hubo que tocar nada en Google. */
+      if(o.tipo === 'venc'){ dentro.cambios = o.cambios || []; dentro.res = o.res || ''; }
+      if(o.tq) dentro.tq = o.tq;
+      if(o.tipo === 'tan'){ dentro.t = o.t || {}; }
+      /* v280: lo del campo viaja adentro, en x */
+      if(o.x) dentro.x = o.x;
+      dentro.nf = fotoPath ? 1 : 0;
+      var cuerpo = JSON.stringify(dentro);
+      var b64 = await cifrar(cuerpo, CODIGO, String(VNUM));
+      try{
+        await conTope(db.collection(COLECCION).doc(o.id).set({
+          v: VNUM, b: b64, nf: (fotoPath?1:0), fotoURL: fotoURL, fotoPath: fotoPath, estado: 'nuevo',
+          ts: firebase.firestore.FieldValue.serverTimestamp(), fecha_carga: new Date().toISOString()
+        }), 30000, 'mandar');
+      }catch(em){
+        var cod = String((em && (em.code||em.message)) || '');
+        var esPerm = /permission|denied/i.test(cod);
+        /* Con el id fijo, un reintento de algo que YA entró se ve como update y
+           las reglas lo rechazan: eso significa que llegó. Pero si el PRIMER
+           intento ya había sido rechazado por permiso, entonces nunca entró y
+           tragarse el error borraría la carga en silencio. Por eso se mira
+           cómo falló la primera vez. */
+        if(esPerm && o.intentos > 1 && o.err1 && !/permission|denied/i.test(o.err1)){ /* ya estaba */ }
+        else{
+          if(!o.err1){ o.err1 = cod; try{ await colaGuardar(o); }catch(e3){} }
+          throw em;
+        }
+      }
+      await colaSacar(o.id);
+      histAgregar({tipo:o.tipo, veh:o.veh, f:o.f, km:o.km||0, l:o.l||0, cat:o.cat||'', i:o.i||0, res:o.res||'', tq:o.tq||'', t:o.t||null, ok:1});
+    }
+    COLAMSG = '';
+  }catch(e){
+    ULTERR = String((e && (e.code||e.message)) || e);
+    COLAMSG = '<b>No salió todavía.</b> ' + esc(ULTERR);
+  }
+  FLUSHING = false;
+  await colaLeer();
+  pintarCola(); pintarHist();
+}
+
+
+/* ---- los datos que deja la oficina ----
+   Antes el telefono solo tenia lo que venia adentro del archivo, asi que un
+   cambio en la computadora no llegaba hasta que se resubia flota.html.
+   Ahora, al abrir, se fija si la oficina dejo algo mas nuevo y lo usa.
+   Lo guarda en el telefono, asi la proxima vez lo tiene aunque no haya senal. */
+function datosGuardados(){
+  try{
+    var t = lsGet(LS_DAT); if(!t) return null;
+    var o = JSON.parse(t);
+    return (o && o.v === VNUM && o.g) ? o.g : null;
+  }catch(e){ return null; }
+}
+function datosGuardar(g){
+  try{ lsSet(LS_DAT, JSON.stringify({v:VNUM, g:g})); }catch(e){}
+}
+async function bajarDatos(){
+  if(!CODIGO || !VNUM) return false;
+  if(!conectarFB()) return false;
+  try{
+    await conTope(sesion(), 20000, 'entrar');
+    var d = await conTope(db.collection('flotadatos').doc(String(VNUM)).get(), 20000, 'bajar');
+    if(!d || !d.exists) return false;
+    var dd = d.data() || {};
+    if(!dd.b) return false;
+    var vieja = Number((G && G.ver) || 0);
+    if(Number(dd.ver || 0) <= vieja) return false;   /* ya lo tengo */
+    var txt = await descifrar(b64bytes(dd.b), CODIGO, String(VNUM));
+    var g = JSON.parse(txt);
+    if(!g || !g.veh) return false;
+    G = g;
+    datosGuardar(g);
+    if(appVieja(g)) return false;
+    return true;
+  }catch(e){ return false; }
+}
+
+
+/* ---- pantalla ---- */
+function pintarCola(){
+  var d = $('colaCartel'); if(!d) return;
+  var n = COLA.length;
+  if(!n && !COLAMSG){ d.innerHTML=''; return; }
+  var h = '';
+  if(n) h += '<div class="aviso amar"><b>⏳ ' + n + (n===1?' carga esperando señal':' cargas esperando señal') + '</b>'
+           + '<div style="margin-top:6px"><button class="sec chico" onclick="flush()">Reintentar ahora</button></div>'
+           + (COLAMSG ? '<div style="margin-top:6px">' + COLAMSG + '</div>' : '') + '</div>';
+  else if(COLAMSG) h += '<div class="aviso roj">' + COLAMSG + '</div>';
+  d.innerHTML = h;
+}
+function pintarHist(){
+  var d = $('hist'); if(!d) return;
+  var l = histLeer();
+  if(!l.length && !COLA.length){ d.innerHTML = 'Todavía no cargaste nada.'; return; }
+  var filas = [];
+  COLA.forEach(function(o){ filas.push({o:o, esp:1}); });
+  l.forEach(function(o){ filas.push({o:o, esp:0}); });
+  var h = '<table><tbody>';
+  filas.slice(0,40).forEach(function(x){
+    var o = x.o;
+    var que = o.tipo === 'tan'
+      ? ('🛢 Control: ' + Object.keys(o.t || {}).map(function(k){ return tqNom(k) + ' ' + numAR(o.t[k]) + ' L'; }).join(' · '))
+      : o.tipo === 'com'
+      ? ('⛽ ' + numAR(o.l) + ' L' + (o.tq ? ' · ' + tqNom(o.tq) : '') + (o.km ? ' · ' + numAR(o.km) + ' km' : ''))
+      : o.tipo === 'gcam'
+      ? ('🌾 ' + esc(o.res || 'gasto del campo') + ' · ' + money(o.i))
+      : o.tipo === 'gemp'
+      ? ('🏢 ' + esc(o.res || 'gasto del edificio') + ' · ' + money(o.i))
+      : (o.tipo === 'ped' || o.tipo === 'resp' || o.tipo === 'dec')
+      ? ('🧾 ' + esc(o.res || 'presupuesto'))
+      : o.tipo === 'venc'
+      ? ('⚠️ ' + esc(o.res || 'vencimiento'))
+      : ('🔧 ' + esc(o.cat||'gasto') + ' · ' + money(o.i));
+    h += '<tr><td>' + esc(fcorta(o.f)) + '</td><td>' + esc(/^(venc|tan|gcam|gemp|ped|resp|dec)$/.test(o.tipo) ? '' : nomVeh(o.veh)) + '</td>'
+       + '<td>' + que + '</td>'
+       + '<td class="der" style="font-size:12.5px;color:' + (x.esp ? '#8a6d1a' : '#1f6b3b') + '">'
+       + (x.esp ? '⏳ esperando' : '✔ mandado') + '</td></tr>';
+  });
+  d.innerHTML = h + '</tbody></table>';
+}
+/* service y cubiertas necesitan el odometro: son mantenimiento, no solo plata.
+   Con eso la oficina puede actualizar el proximo service sin volver a cargar. */
+function gastoPideKm(){
+  var c = String(($('gvC')||{}).value || '').toUpperCase();
+  return /SERVICE|ACEITE|CUBIERT/.test(c);
+}
+function verKmGasto(){
+  var d = $('gvKmCaja'); if(!d) return;
+  d.className = gastoPideKm() ? '' : 'oculto';
+}
+function llenarVehiculos(){
+  var op = (G && G.veh || []).map(function(v){
+    return '<option value="' + esc(v.id) + '">' + esc(v.nom) + (v.pat ? ' · ' + esc(v.pat) : '') + '</option>';
+  }).join('');
+  $('cvV').innerHTML = op;
+  /* un gasto puede no ser de ningun vehiculo (ropa, insumos del deposito):
+     va aparte para no ensuciar el costo por kilometro de ningun camion */
+  $('gvV').innerHTML = op + '<option value="__DEP__">— Depósito / general (no es de un vehículo) —</option>';
+  var cats = (G && G.cats && G.cats.length) ? G.cats : ['Repuestos','Service / aceite','Cubiertas','Otro'];
+  $('gvC').innerHTML = cats.map(function(c){ return '<option>' + esc(c) + '</option>'; }).join('');
+  pintarVarios();
+  fleVehDefecto();
+}
+/* ===== v292: «solo gasoil» (fleteros) =====
+   La oficina manda G.fle = {v: su equipo}. Solo ve la carga de combustible: su equipo ya elegido (si un dia
+   carga otro, lo cambia en la lista) y el tanque con dos botones grandes, EURO y COMÚN (el que dice DIÉSEL). */
+function esFle(){ return !!(G && G.fle); }
+function fleVehDefecto(){
+  if(!esFle() || !G.fle.v) return;
+  var s = $('cvV'); if(!s) return;
+  for(var i = 0; i < s.options.length; i++){ if(s.options[i].value === String(G.fle.v)){ s.value = G.fle.v; break; } }
+}
+function fleBotones(){
+  var s = $('cvTq'); if(!s || !esFle()) return;
+  s.style.display = 'none';
+  var lb = document.querySelector('label[for="cvTq"]'); if(lb) lb.textContent = '¿De qué tanque cargaste?';
+  var d = $('fleTq');
+  if(!d){ d = document.createElement('div'); d.id = 'fleTq'; d.className = 'fleTq'; s.parentNode.insertBefore(d, s.nextSibling); }
+  d.innerHTML = tqLista().map(function(x){
+    var k = x[0], euro = /euro/i.test(k + ' ' + x[1]);
+    var tx = euro ? 'EURO' : (/com/i.test(k + ' ' + x[1]) ? 'COMÚN<br><small style="font-size:12px;font-weight:600">(dice DIÉSEL)</small>' : esc(String(x[1]).toUpperCase()));
+    return '<button type="button" class="' + (euro ? 'tqE' : 'tqC') + (s.value === k ? ' on' : '') + '" onclick="fleTq(' + JSON.stringify(k).replace(/"/g, '&quot;') + ')">' + tx + '</button>';
+  }).join('');
+}
+function fleTq(k){ var s = $('cvTq'); if(s) s.value = k; fleBotones(); }
+function fleModo(){
+  ['tbGas','tbVen','tbPre','tbCam','tbEmp'].forEach(function(id){ var b = $(id); if(b) b.className = 'oculto'; });
+  if($('lasTabs')) $('lasTabs').className = 'tabs oculto';
+  $('alertaVenc').className = 'oculto'; $('cTan').className = 'caja oculto';
+  try{ $('subT').textContent = (G.nom || '') + ' · carga de gasoil'; }catch(e){}
+  var lv = document.querySelector('label[for="cvV"]'); if(lv) lv.innerHTML = 'Tu equipo <span style="font-weight:400;color:var(--gris)">(si cargaste otro, cambialo acá)</span>';
+  var bc = $('btCom'); if(bc){ bc.style.padding = '16px'; bc.style.fontSize = '18px'; }
+}
+/* ===== LOS ULTIMOS GASTOS QUE YA ESTAN ==============================
+   [stated] "En la ventana de mantenimiento que usamos para registrar los
+   gastos, colocar un espacio en el que se pueda ver con la fecha, descripcion
+   y quien registro el ultimo gasto como para evitar duplicado en el registro".
+   La lista NO la arma el telefono: la manda la oficina en G.ug cuando publica
+   los datos, asi se ven TAMBIEN los que cargo el otro. */
+function pintarUltGastos(){
+  var d = $('gvUlt'); if(!d) return;
+  var l = (G && G.ug) || [];
+  if(!l.length){ d.innerHTML = ''; return; }
+  var h = '<div class="aviso" style="background:#eef6fc;border-color:#bcd8ef;color:#123"><b>Los \u00faltimos gastos ya registrados</b>'
+        + '<div class="nota" style="margin:2px 0 5px">Fijate que no sea el mismo, para no cargarlo dos veces.</div>'
+        + '<table><tbody>';
+  l.slice(0,6).forEach(function(g){
+    h += '<tr><td>' + esc(fcorta(g.f)) + '</td><td>' + esc(g.v || '') + '</td>'
+       + '<td><small>' + esc(String(g.d || '').slice(0,42)) + '</small></td>'
+       + '<td class="der">' + money(g.i) + '</td>'
+       + '<td><small>' + esc(g.q || '') + '</small></td></tr>';
+  });
+  d.innerHTML = h + '</tbody></table></div>';
+}
+function pintarUlt(){
+  var vid = $('cvV').value, u = ultDe(vid), v = vehDe(vid);
+  var d = $('cvUlt');
+  if(v && v.sinkm){ d.innerHTML = 'Este no lleva kilómetros (se mide en horas).'; return; }
+  d.innerHTML = u ? ('La última vez marcaba <b>' + numAR(u.km) + ' km</b>' + (u.fe ? ' el ' + fcorta(u.fe) : '') + '.')
+                  : 'No tengo un odómetro anterior de este vehículo.';
+  $('cvAviso').innerHTML = '';
+}
+function verAvisoKm(){
+  var vid = $('cvV').value, km = parseInt($('cvKm').value, 10) || 0;
+  var a = km ? avisoKm(vid, km) : '';
+  $('cvAviso').innerHTML = a ? '<div class="aviso amar">' + esc(a) + '</div>' : '';
+}
+/* ===== CAMPO (v280): presupuestos veterinarios y gastos del campo =====
+   Solo aparece si la oficina le marcó a esta persona «gastos del campo» o
+   «presupuestos» (G.cam). Viaja por la MISMA cola y el MISMO sobre que el
+   gasoil: lo nuevo va adentro, en o.x.                                    */
+var ES_CAMPO = 0;
+var CAMV = {k:'', t:'pedir', sel:{}, cant:{}, busca:'', extra:[], lim:'', nota:'', listo:'', forma:'link', ver:'', pg:0, pgNom:'', pgTxt:'', pgLe:null, emp:'', rub:''};
+var LS_CAMPO = 'castro_campo_loc', LS_RUBUSO = 'castro_campo_rubuso';
+var FOTOCAM = null;
+function camOn(){ return !!(G && G.cam && (G.cam.pre || G.cam.prm || G.cam.cam)); }
+function camPreOn(){ return !!(G && G.cam && (G.cam.pre || G.cam.prm)); }
+/* dos listas: 'v' remedios (veterinario) y 'm' materiales, repuestos y pinturas (Fredi) */
+function camKs(){ var L = []; if(G && G.cam){ if(G.cam.pre) L.push('v'); if(G.cam.prm) L.push('m'); } return L; }
+function camK(){ var L = camKs(); if(L.indexOf(CAMV.k) < 0) CAMV.k = L[0] || 'v'; return CAMV.k; }
+function camCat(k){ return (k === 'm' ? G.cam.prodM : G.cam.prod) || []; }
+function camPnDe(k){ return Number(k === 'm' ? G.cam.pnM : G.cam.pn) || 0; }
+function camSolo(){ return !!(G && G.cam && G.cam.solo); }
+function camLoc(){ try{ var o = JSON.parse(lsGet(LS_CAMPO) || '{}'); o.ped = o.ped || {}; o.resp = o.resp || {}; o.dec = o.dec || {}; return o; }catch(e){ return {ped:{}, resp:{}, dec:{}}; } }
+function camLocGuardar(o){ lsSet(LS_CAMPO, JSON.stringify(o)); }
+function camHoyMas(n){ var d = new Date(); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function camCod(){ var a = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789', s = ''; for(var i = 0; i < 5; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
+/* encolar sin llevarse la foto de otra pantalla */
+async function camEncolar(o, foto){
+  var guard = FOTO; FOTO = foto || null;
+  try{ return await encolar(o); } finally { FOTO = guard; }
+}
+/* ---- pedidos: lo de la oficina más lo que todavía no llegó ---- */
+function camPedidos(){
+  var L = [], ya = {}, loc = camLoc();
+  ((G.cam && G.cam.ped) || []).forEach(function(P){ ya[P.c] = 1; L.push(camPedArmar(P, loc)); });
+  Object.keys(loc.ped).forEach(function(c){ if(!ya[c]) L.push(camPedArmar(loc.ped[c], loc)); });
+  L.sort(function(a, b){ return String(b.f) < String(a.f) ? -1 : (String(b.f) > String(a.f) ? 1 : (String(b.c) < String(a.c) ? -1 : 1)); });
+  return L;
+}
+function camPedArmar(P, loc){
+  var r = (P.r || []).slice(), tiene = {};
+  r.forEach(function(x){ tiene[String(x.nom).toLowerCase()] = 1; });
+  (loc.resp[P.c] || []).forEach(function(x){ if(!tiene[String(x.nom).toLowerCase()]){ r.push(x); tiene[String(x.nom).toLowerCase()] = 1; } });
+  return {c:P.c, k:P.k || 'v', f:P.f, lim:P.lim || '', n:P.n || '', it:P.it, r:r, dec:P.dec || loc.dec[P.c] || null, enOf:!!(P.r)};
+}
+function camPedDe(c){ var r = null; camPedidos().forEach(function(P){ if(P.c === c) r = P; }); return r; }
+function camComp(P){
+  var R = P.r, totP = R.map(function(){ return 0; }), cot = R.map(function(){ return 0; }), mejor = [], totMejor = 0, faltan = 0;
+  P.it.forEach(function(x, i){
+    var b = -1, bv = Infinity;
+    R.forEach(function(r, j){ var v = ((r.p || [])[i] || [])[0]; if(v > 0){ totP[j] += v * x[1]; cot[j]++; var vd = v * (1 - (r.desc || 0) / 100); if(vd < bv){ bv = vd; b = j; } } });
+    mejor.push(b); if(b >= 0) totMejor += bv * x[1]; else faltan++;
+  });
+  return {totP:totP, totD:totP.map(function(t, j){ return t * (1 - (R[j].desc || 0) / 100); }), cot:cot, mejor:mejor, totMejor:totMejor, faltan:faltan};
+}
+/* ---- los mensajes para los proveedores ---- */
+function camB64url(txt){ var b = btoa(unescape(encodeURIComponent(txt))); return b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function camLink(P){
+  var k = P.k || 'v', pn = camPnDe(k), cat = camCat(k);
+  var it = P.it.map(function(x){ var k = (x[2] !== undefined && x[2] !== null) ? Number(x[2]) : -1;
+    if(k >= 0 && k < pn && cat[k] && cat[k][0] === x[0]) return [k, x[1]]; return [x[0], x[1]]; });
+  var o = {c:P.c, f:P.f, l:P.lim, n:P.n, i:it};
+  if(k === 'm') o.k = 'm';
+  return String(G.cam.link || 'https://apps.martincastroycia.com.ar/presupuesto.html') + '#p=' + camB64url(JSON.stringify(o));
+}
+function camSoy(P){ return (P.k === 'm') ? 'Hola, soy ' + (G.nom || '') + ', de Martín Castro y Cía.' : 'Hola, soy el veterinario de Martín Castro y Cía.'; }
+function camMsgLink(P){
+  return camSoy(P) + ' Les pido presupuesto de ' + P.it.length + ' producto' + (P.it.length === 1 ? '' : 's') + (P.k === 'm' ? '' : ' veterinario' + (P.it.length === 1 ? '' : 's'))
+    + (P.n ? ' (' + P.n + ')' : '') + '. Cargan los precios en este link, es un minuto:\n' + camLink(P) + (P.lim ? '\nPor favor antes del ' + fcorta(P.lim) + '.' : '') + '\nGracias.';
+}
+function camMsgLista(P){
+  var L = [camSoy(P), 'Les pido presupuesto. Pedido ' + P.c + (P.lim ? ' · contestar antes del ' + fcorta(P.lim) : '')];
+  if(P.n) L.push(P.n);
+  L.push('', 'Contado · precios unitarios sin IVA', '', 'Para contestar: copien este mensaje, pongan el precio', 'al final de cada renglón y me lo reenvían.', 'Si no lo tienen, pongan NO.', '');
+  P.it.forEach(function(x, i){ L.push((i + 1) + ') ' + x[0] + ' · ' + x[1] + ' u · $'); });
+  L.push('', 'Descuento contado: %', 'Plazo de entrega:', 'Flete:');
+  return L.join('\n');
+}
+/* ---- leer la respuesta pegada: por el NÚMERO de renglón ---- */
+function camNum(s){
+  s = String(s || '').replace(/\$/g, '').replace(/\s/g, '');
+  var m = s.match(/[\d.,]+/); if(!m) return NaN; s = m[0].replace(/[.,]$/, '');
+  if(s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+  else if(/\.\d{3}(\.|$)/.test(s)) s = s.replace(/\./g, '');
+  var v = parseFloat(s); return isNaN(v) ? NaN : v;
+}
+function camLeerResp(P, txt){
+  var out = {p:P.it.map(function(){ return null; }), desc:0, plazo:'', flete:'', malos:[]};
+  String(txt || '').split(/\r?\n/).forEach(function(l){
+    var m = l.match(/^\s*\*?(\d+)\s*[).:-]\s*(.*)$/);
+    if(m){ var i = +m[1] - 1; if(i < 0 || i >= P.it.length) return;
+      var resto = m[2], partes = resto.split('·'), ult = partes[partes.length - 1];
+      if(/\bno\b|sin stock|no tengo|no hay/i.test(ult)){ out.p[i] = [null, 1, '']; return; }
+      var tras = ult.indexOf('$') >= 0 ? ult.slice(ult.indexOf('$') + 1) : (partes.length > 2 ? ult : '');
+      var v = camNum(tras);
+      if(v > 0) out.p[i] = [Math.round(v * 100) / 100, 0, '']; else if(String(tras).trim()) out.malos.push(i);
+      return; }
+    var d = l.match(/descuento[^0-9]*([\d.,]+)/i); if(d){ out.desc = camNum(d[1]) || 0; return; }
+    var pz = l.match(/^\s*plazo[^:]*:\s*(.+)$/i); if(pz){ out.plazo = pz[1].trim(); return; }
+    var fl = l.match(/^\s*flete[^:]*:\s*(.+)$/i); if(fl){ out.flete = fl[1].trim(); return; }
+  });
+  return out;
+}
+/* ---- la pantalla de presupuestos ---- */
+function pintarPre(){
+  var d = $('cPre'); if(!d || !camPreOn()) return;
+  var K = camK(), Ks = camKs(), Ls = camPedidos().filter(function(P){ return Ks.length < 2 || (P.k || 'v') === K; });
+  var h = '';
+  if(Ks.length > 1) h += '<div class="tabs" style="margin-bottom:8px">' + Ks.map(function(k){ return '<button class="' + (K === k ? 'on' : '') + '" onclick="CAMV.k=\'' + k + '\';CAMV.sel={};CAMV.cant={};CAMV.extra=[];CAMV.ver=\'\';CAMV.listo=\'\';pintarPre()">' + (k === 'm' ? '🔧 Materiales y repuestos' : '🐄 Veterinaria') + '</button>'; }).join('') + '</div>';
+  h += '<div class="tabs" style="margin-bottom:10px"><button class="' + (CAMV.t === 'pedir' ? 'on' : '') + '" onclick="CAMV.t=\'pedir\';CAMV.listo=\'\';pintarPre()">Pedir presupuesto</button>'
+    + '<button class="' + (CAMV.t === 'mis' ? 'on' : '') + '" onclick="CAMV.t=\'mis\';CAMV.ver=\'\';pintarPre()">Mis pedidos (' + Ls.length + ')</button></div>';
+  if(CAMV.t === 'pedir') h += CAMV.listo ? camListoHtml() : camPedirHtml();
+  else h += CAMV.ver ? camVerHtml(camPedDe(CAMV.ver)) : camMisHtml(Ls);
+  d.innerHTML = h;
+}
+function camProdVisibles(){
+  var L = [];
+  camCat(camK()).forEach(function(p, i){ if(!p[2]) L.push({d:p[0], q:p[1], k:i}); });
+  CAMV.extra.forEach(function(p, j){ L.push({d:p.d, q:p.q, k:'x' + j}); });
+  return L;
+}
+function camPedirHtml(){
+  var n = Object.keys(CAMV.sel).filter(function(k){ return CAMV.sel[k]; }).length;
+  var vacia = !camCat(camK()).some(function(p){ return !p[2]; });
+  return '<div class="nota" style="margin-bottom:8px">' + (vacia ? 'Todavía no hay nada en la lista: tocá «+ Agregar un producto que no está» y escribí lo que necesitás (queda guardado para la próxima). ' : 'Tildá lo que querés cotizar y poné cuánto necesitás. ') + 'Después se arma el mensaje para los proveedores.</div>'
+    + '<input type="text" placeholder="Buscar producto…" value="' + esc(CAMV.busca) + '" oninput="CAMV.busca=this.value;camPintarLista()">'
+    + '<div class="fila" style="margin:10px 0 4px"><button class="sec chico angosto" onclick="camTodos(1)">Tildar todos</button><button class="sec chico angosto" onclick="camTodos(0)">Destildar</button><span class="nota" id="camNsel" style="text-align:right">' + n + ' tildados</span></div>'
+    + '<div id="camLista">' + camListaHtml() + '</div>'
+    + '<div style="margin-top:8px"><button class="sec chico" onclick="camAgrAbrir()">+ Agregar un producto que no está</button></div><div id="camAgr"></div>'
+    + '<label>Que contesten antes del</label><input type="date" id="camLim" value="' + esc(CAMV.lim || camHoyMas(7)) + '" onchange="CAMV.lim=this.value">'
+    + '<label>Nota para los proveedores (opcional)</label><input type="text" value="' + esc(CAMV.nota) + '" placeholder="' + (camK() === 'm' ? 'Ej.: para el galpón, color blanco' : 'Ej.: para la vacunación de diciembre') + '" oninput="CAMV.nota=this.value">'
+    + '<div id="camErr" class="nota" style="color:#a3282f;margin-top:6px"></div>'
+    + '<div style="margin-top:10px"><button class="prim" onclick="camArmar()">Armar el pedido</button></div>';
+}
+function camListaHtml(){
+  var b = CAMV.busca.trim().toUpperCase(), h = '';
+  camProdVisibles().forEach(function(p){
+    if(b && p.d.toUpperCase().indexOf(b) < 0) return;
+    var k = String(p.k), on = !!CAMV.sel[k], q = CAMV.cant[k] !== undefined ? CAMV.cant[k] : p.q;
+    h += '<div style="display:grid;grid-template-columns:30px minmax(0,1fr) 80px;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--linea)' + (on ? '' : ';color:#8a959e') + '">'
+      + '<input type="checkbox" style="width:24px;height:24px"' + (on ? ' checked' : '') + ' onchange="CAMV.sel[\'' + k + '\']=this.checked?1:0;camPintarLista()">'
+      + '<div style="font-size:15px">' + esc(p.d) + '</div>'
+      + '<input type="number" inputmode="numeric" value="' + esc(q) + '" style="padding:8px;text-align:right" oninput="CAMV.cant[\'' + k + '\']=this.value;if(!CAMV.sel[\'' + k + '\']){CAMV.sel[\'' + k + '\']=1;camPintarLista()}"></div>';
+  });
+  return h || (camProdVisibles().length ? '<div class="nota">No hay productos con ese nombre.</div>' : '');
+}
+function camPintarLista(){ var l = $('camLista'); if(l) l.innerHTML = camListaHtml(); var n = $('camNsel'); if(n) n.textContent = Object.keys(CAMV.sel).filter(function(k){ return CAMV.sel[k]; }).length + ' tildados'; }
+function camTodos(v){ camProdVisibles().forEach(function(p){ CAMV.sel[String(p.k)] = v; }); camPintarLista(); }
+function camAgrAbrir(){ $('camAgr').innerHTML = '<div class="fila" style="margin-top:8px"><input type="text" id="camNd" placeholder="Nombre y presentación"><input type="number" id="camNq" class="angosto" style="width:80px" placeholder="Cant."><button class="sec chico angosto" onclick="camAgrOk()">OK</button></div>'; $('camNd').focus(); }
+function camAgrOk(){ var d = String($('camNd').value || '').trim().toUpperCase(), q = parseFloat($('camNq').value) || 1; if(!d) return;
+  CAMV.extra.push({d:d, q:q}); CAMV.sel['x' + (CAMV.extra.length - 1)] = 1; CAMV.busca = ''; pintarPre(); }
+function camArmar(){
+  var it = [];
+  camProdVisibles().forEach(function(p){ var k = String(p.k); if(!CAMV.sel[k]) return;
+    var q = parseFloat(CAMV.cant[k] !== undefined ? CAMV.cant[k] : p.q) || 1; it.push([p.d, q, typeof p.k === 'number' ? p.k : null]); });
+  if(!it.length){ $('camErr').textContent = 'Tildá al menos un producto.'; return; }
+  var P = {c:camCod(), k:camK(), f:hoyISO(), lim:CAMV.lim || camHoyMas(7), n:String(CAMV.nota || '').trim(), it:it, r:[]};
+  var loc = camLoc(); loc.ped[P.c] = P; camLocGuardar(loc);
+  camEncolar({tipo:'ped', f:P.f, res:'Pedido de presupuesto ' + P.c + ' · ' + it.length + ' productos',
+              x:{c:P.c, k:P.k, f:P.f, lim:P.lim, nota:P.n, it:it.map(function(x){ return [x[0], x[1]]; })}});
+  CAMV.sel = {}; CAMV.cant = {}; CAMV.extra = []; CAMV.nota = ''; CAMV.lim = ''; CAMV.listo = P.c; CAMV.forma = 'link';
+  pintarPre(); try{ window.scrollTo(0, 0); }catch(e){}
+}
+function camListoHtml(){
+  var P = camPedDe(CAMV.listo); if(!P) return '';
+  return '<div class="aviso ver"><b>✔ Pedido ' + esc(P.c) + ' armado: ' + P.it.length + ' productos</b></div>' + camMandarHtml(P)
+    + '<div style="margin-top:8px"><button class="sec" style="width:100%" onclick="CAMV.t=\'mis\';CAMV.ver=\'' + P.c + '\';CAMV.listo=\'\';pintarPre()">Ver el pedido</button></div>';
+}
+function camMandarHtml(P){
+  var msg = CAMV.forma === 'lista' ? camMsgLista(P) : camMsgLink(P);
+  return '<div class="nota" style="margin:8px 0">¿Cómo se lo mandás? Podés usar las dos: a unos el link y a otros la lista. Todas las respuestas caen en el mismo pedido.</div>'
+    + '<div class="tabs"><button class="' + (CAMV.forma !== 'lista' ? 'on' : '') + '" onclick="CAMV.forma=\'link\';pintarPre()">🔗 Mandar link</button><button class="' + (CAMV.forma === 'lista' ? 'on' : '') + '" onclick="CAMV.forma=\'lista\';pintarPre()">📝 Mandar lista</button></div>'
+    + '<div class="nota">' + (CAMV.forma === 'lista' ? 'Para el que prefiere contestar con un mensaje: copia, pone los precios y te lo reenvía. Después pegás la respuesta en «Mis pedidos».' : 'Para el que lo completa en la página: toca el link y pone los precios. Te llega solo.') + '</div>'
+    + '<div style="white-space:pre-wrap;background:#e7f7e2;border:1px solid #bfe3b4;border-radius:12px;padding:10px 12px;font-size:13.5px;margin:8px 0;word-break:break-word;max-height:260px;overflow:auto">' + esc(msg) + '</div>'
+    + '<a href="https://wa.me/?text=' + encodeURIComponent(msg) + '" target="_blank" rel="noopener" style="display:block;text-align:center;background:#25d366;color:#fff;font-weight:700;border-radius:9px;padding:13px;text-decoration:none;font-size:17px">Mandar por WhatsApp</a>'
+    + '<div style="margin-top:8px"><button class="sec chico" onclick="camCopiarMsg(\'' + P.c + '\',this)">Copiar el mensaje</button></div>';
+}
+function camCopiarMsg(c, b){
+  var P = camPedDe(c); if(!P) return;
+  var t = CAMV.forma === 'lista' ? camMsgLista(P) : camMsgLink(P);
+  try{ navigator.clipboard.writeText(t).then(function(){ b.textContent = 'Copiado ✔'; }, function(){ b.textContent = 'No pude copiar'; }); }catch(e){ b.textContent = 'No pude copiar'; }
+}
+function camMisHtml(Ls){
+  if(!Ls.length) return '<div class="nota">Todavía no armaste ningún pedido.</div>';
+  return '<div class="nota" style="margin-bottom:8px">Tocá un pedido para ver quién contestó y elegir a quién comprarle.</div>'
+    + Ls.map(function(P){ return '<div style="border:1px solid var(--linea);border-radius:10px;padding:10px 12px;margin-bottom:8px;cursor:pointer" onclick="CAMV.ver=\'' + P.c + '\';CAMV.pg=0;pintarPre();window.scrollTo(0,0)">'
+      + '<b>Pedido ' + esc(P.c) + '</b> · ' + esc(fcorta(P.f)) + ' <span style="font-size:12px;font-weight:700;border-radius:7px;padding:1px 8px;' + (P.dec ? 'background:#e3f0e3;color:#1f6b3b' : 'background:#fff5d6;color:#6b5a12') + '">' + (P.dec ? 'compra decidida' : 'esperando') + '</span>'
+      + '<div class="nota">' + P.it.length + ' productos · ' + P.r.length + ' respuesta' + (P.r.length === 1 ? '' : 's') + (P.lim ? ' · hasta el ' + esc(fcorta(P.lim)) : '') + '</div></div>'; }).join('');
+}
+function camVerHtml(P){
+  if(!P) return '';
+  var K = camComp(P), R = P.r;
+  var h = '<button class="sec chico" onclick="CAMV.ver=\'\';pintarPre()">← Mis pedidos</button>'
+    + '<h3 style="margin:10px 0 2px">Pedido ' + esc(P.c) + ' · ' + esc(fcorta(P.f)) + '</h3><div class="nota">' + P.it.length + ' productos · ' + R.length + ' respuesta' + (R.length === 1 ? '' : 's') + (P.lim ? ' · hasta el ' + esc(fcorta(P.lim)) : '') + (P.n ? ' · ' + esc(P.n) : '') + '</div>'
+    + '<details style="margin:8px 0"><summary class="nota" style="cursor:pointer">Volver a mandarlo (link o lista)</summary>' + camMandarHtml(P) + '</details>';
+  h += camPegarHtml(P);
+  if(!R.length) return h + '<div class="aviso amar">Todavía no contestó nadie. Las respuestas por el link llegan solas (la oficina te las reenvía en un rato). Las de WhatsApp pegalas con el botón de arriba.</div>';
+  h += '<div style="background:#eef3f9;border-radius:10px;padding:10px 12px;margin-top:10px;font-size:14.5px"><b>Total de cada uno</b> (con su descuento contado):';
+  R.forEach(function(r, j){ h += '<div class="fila" style="margin-top:4px"><span>' + esc(r.nom) + ' <span class="nota">· ' + K.cot[j] + ' de ' + P.it.length + '</span></span><b style="text-align:right">' + money(K.totD[j]) + '</b></div>'; });
+  h += '<div class="fila" style="margin-top:6px;padding-top:6px;border-top:1px solid #c9d6e6"><span>Cada cosa al más barato</span><b style="text-align:right;color:#1f6b3b">' + money(K.totMejor) + '</b></div></div>';
+  h += '<h3 style="margin:14px 0 4px;font-size:16px">Producto por producto</h3>';
+  P.it.forEach(function(x, i){
+    h += '<div style="padding:8px 0;border-top:1px solid var(--linea)"><div style="font-size:14.5px"><b>' + esc(x[0]) + '</b> <span class="nota">· ' + x[1] + '</span></div>';
+    R.forEach(function(r, j){ var c = (r.p || [])[i] || [];
+      h += '<div class="fila" style="font-size:14px' + (K.mejor[i] === j ? ';color:#1f6b3b;font-weight:700' : '') + '"><span>' + (K.mejor[i] === j ? '✔ ' : '') + esc(r.nom) + (c[2] ? ' <span class="nota">(' + esc(c[2]) + ')</span>' : '') + '</span>'
+        + '<span style="text-align:right">' + (c[0] > 0 ? money(c[0]) + ' c/u' : '<span class="nota">' + (c[1] ? 'no tiene' : '—') + '</span>') + '</span></div>'; });
+    h += '</div>';
+  });
+  if(P.dec) h += '<div class="aviso ver"><b>✔ Compra decidida</b><br>' + esc(P.dec.txt) + '</div>';
+  else{
+    h += '<h3 style="margin:14px 0 4px;font-size:16px">¿A quién le comprás?</h3>'
+      + '<button class="prim" style="margin-top:6px;background:#1f6b3b;border-color:#1f6b3b" onclick="camDecidir(\'' + P.c + '\',-1)">Cada cosa al más barato (' + money(K.totMejor) + ')</button>';
+    R.forEach(function(r, j){ h += '<button class="sec" style="width:100%;margin-top:8px" onclick="camDecidir(\'' + P.c + '\',' + j + ')">Todo a ' + esc(r.nom) + ' (' + money(K.totD[j]) + ')</button>'; });
+    h += '<div class="nota" style="margin-top:6px">Al elegir, a la oficina le aparece la decisión en la pestaña Campo.</div>';
+  }
+  return h;
+}
+function camDecidir(c, j){
+  var P = camPedDe(c); if(!P) return;
+  var K = camComp(P), txt;
+  if(j < 0){ var por = {}; P.it.forEach(function(x, i){ var b = K.mejor[i]; if(b >= 0){ var k = P.r[b].nom; por[k] = (por[k] || 0) + 1; } });
+    txt = 'Cada cosa al más barato: ' + Object.keys(por).map(function(k){ return por[k] + ' producto' + (por[k] === 1 ? '' : 's') + ' a ' + k; }).join(', ') + '. Total ' + money(K.totMejor) + '.'; }
+  else txt = 'Todo a ' + P.r[j].nom + '. Total ' + money(K.totD[j]) + '.';
+  if(!confirm(txt + '\n\n¿Lo confirmás? Le llega a la oficina.')) return;
+  var loc = camLoc(); loc.dec[c] = {txt:txt, f:hoyISO()}; camLocGuardar(loc);
+  camEncolar({tipo:'dec', f:hoyISO(), res:'Compra decidida · pedido ' + c, x:{c:c, txt:txt}});
+  pintarPre();
+}
+function camPegarHtml(P){
+  if(CAMV.pg !== P.c) return '<button class="sec" style="width:100%;margin-top:6px" onclick="CAMV.pg=\'' + P.c + '\';CAMV.pgTxt=\'\';CAMV.pgNom=\'\';CAMV.pgLe=null;pintarPre()">📋 Pegar respuesta de WhatsApp</button>';
+  var h = '<div style="border:1px solid var(--linea);border-radius:10px;padding:10px 12px;margin-top:8px"><b>Pegar la respuesta de un proveedor</b>'
+    + '<input type="text" style="margin-top:8px" placeholder="¿De quién es? (nombre del proveedor)" value="' + esc(CAMV.pgNom) + '" oninput="CAMV.pgNom=this.value">'
+    + '<textarea rows="7" style="margin-top:6px;font-size:14px" placeholder="Pegá acá el mensaje que te mandó" oninput="CAMV.pgTxt=this.value">' + esc(CAMV.pgTxt) + '</textarea>'
+    + '<div class="fila" style="margin-top:6px"><button class="prim" onclick="CAMV.pgLe=camLeerResp(camPedDe(\'' + P.c + '\'),CAMV.pgTxt);pintarPre()">Leer</button><button class="sec" onclick="CAMV.pg=0;pintarPre()">Cancelar</button></div>';
+  if(CAMV.pgLe){ var L = CAMV.pgLe, n = L.p.filter(function(x){ return x && x[0] > 0; }).length;
+    h += '<div style="margin-top:10px;font-size:14px"><b>Entendí ' + n + ' precio' + (n === 1 ? '' : 's') + ' de ' + P.it.length + '</b>' + (L.desc ? ' · ' + L.desc + '% contado' : '') + (L.plazo ? ' · plazo ' + esc(L.plazo) : '') + (L.flete ? ' · flete ' + esc(L.flete) : '') + '</div>';
+    P.it.forEach(function(x, i){ var c = L.p[i], malo = L.malos.indexOf(i) >= 0;
+      h += '<div class="fila" style="font-size:13px;padding:3px 6px;border-radius:6px' + (malo ? ';background:#fff5d6' : '') + '"><span>' + (i + 1) + ') ' + esc(x[0]) + '</span><span style="text-align:right">' + (c && c[0] > 0 ? money(c[0]) : (c && c[1] ? 'no tiene' : (malo ? 'no entendí' : '—'))) + '</span></div>'; });
+    if(L.malos.length) h += '<div class="nota" style="color:#6b5a12">Lo amarillo no lo pude leer. Si querés, corregí el mensaje de arriba y tocá «Leer» de nuevo.</div>';
+    h += '<div id="camPgErr" class="nota" style="color:#a3282f"></div><button class="prim" style="margin-top:8px;background:#1f6b3b;border-color:#1f6b3b" onclick="camPegarOk(\'' + P.c + '\')">Está bien, guardar</button>';
+  }
+  return h + '</div>';
+}
+function camPegarOk(c){
+  var P = camPedDe(c), L = CAMV.pgLe, e = $('camPgErr');
+  var nom = String(CAMV.pgNom || '').trim();
+  if(!nom){ e.textContent = 'Poné de quién es la respuesta.'; return; }
+  if(!L.p.some(function(x){ return x && x[0] > 0; })){ e.textContent = 'No encontré ningún precio. Fijate que tenga los números de renglón (1), 2)…).'; return; }
+  var r = {nom:nom, tel:'', desc:L.desc || 0, plazo:L.plazo, flete:L.flete, por:'wa', p:L.p.map(function(x){ return x || [null, 0, '']; })};
+  var loc = camLoc(); loc.resp[c] = (loc.resp[c] || []).filter(function(x){ return String(x.nom).toLowerCase() !== nom.toLowerCase(); }); loc.resp[c].push(r); camLocGuardar(loc);
+  camEncolar({tipo:'resp', f:hoyISO(), res:'Respuesta de ' + nom + ' · pedido ' + c, x:{c:c, k:P.k, f:P.f, it:P.it.map(function(x){ return [x[0], x[1]]; }), nom:nom, desc:r.desc, plazo:r.plazo, flete:r.flete, p:r.p}});
+  CAMV.pg = 0; CAMV.pgLe = null; pintarPre();
+}
+/* ---- gastos del campo ---- */
+function camRubUso(){ try{ return JSON.parse(lsGet(LS_RUBUSO) || '{}'); }catch(e){ return {}; } }
+function pintarCam(){
+  var d = $('cCam'); if(!d || !G || !G.cam || !G.cam.cam) return;
+  var E = G.cam.emps || ['CASABLANCA', 'MARTÍN CASTRO'], U = camRubUso();
+  var rubs = (G.cam.rub || []).slice().sort(function(a, b){ return (U[b] || 0) - (U[a] || 0); });
+  if(!CAMV.emp && E.length === 1) CAMV.emp = E[0];
+  var h = '<b>Gasto del campo</b><div class="nota">Lo que se gastó en el campo: remedios, jornales, combustible, alambre, repuestos, pintura, lo que sea. Con foto del ticket si querés.</div>'
+    + '<label>¿De qué empresa?</label><div class="nota" style="margin:-2px 0 6px">Si un ticket es de las dos empresas, cargalo dos veces: uno por empresa, cada uno con su parte.</div><div class="fila">' + E.map(function(e){ return '<button class="' + (CAMV.emp === e ? 'prim' : 'sec') + '" style="padding:12px 6px" onclick="CAMV.emp=\'' + esc(e) + '\';pintarCam()">' + esc(e) + '</button>'; }).join('') + '</div>'
+    + '<label for="caRub">¿A qué corresponde?</label><select id="caRub">' + rubs.map(function(r){ return '<option' + (r === CAMV.rub ? ' selected' : '') + '>' + esc(r) + '</option>'; }).join('') + '</select>'
+    + '<label for="caF">Fecha</label><input type="date" id="caF" value="' + hoyISO() + '">'
+    + '<label for="caD">Detalle</label><input type="text" id="caD" placeholder="qué compraste o qué se pagó, dónde">'
+    + '<label for="caI">Importe</label><input type="text" id="caI" inputmode="decimal" placeholder="$" style="font-size:24px">'
+    + '<label for="caFoto">Foto del ticket (opcional)</label><input type="file" id="caFoto" accept="image/*" onchange="FOTOCAM=this.files&&this.files[0]||null;$(\'caFotoV\').innerHTML=FOTOCAM?\'<span class=nota>Foto lista · \'+Math.round(FOTOCAM.size/1024)+\' KB</span>\':\'\'"><div id="caFotoV" style="margin-top:6px"></div>'
+    + '<div style="margin-top:12px"><button class="prim" onclick="camGuardarGasto()">Guardar el gasto</button></div>';
+  var ug = G.cam.ug || [];
+  if(ug.length) h += '<div class="nota" style="margin-top:12px"><b>Lo último que ya está en la oficina:</b><br>' + ug.map(function(g){ return esc(fcorta(g[0])) + ' · ' + esc(g[2]) + (g[3] ? ' · ' + esc(g[3]) : '') + ' · ' + money(g[4]); }).join('<br>') + '</div>';
+  d.innerHTML = h;
+}
+async function camGuardarGasto(){
+  var E = G.cam.emps || [];
+  if(!CAMV.emp){ alert('Elegí de qué empresa es.'); return; }
+  var rub = $('caRub').value, f = $('caF').value || hoyISO(), d = String($('caD').value || '').trim();
+  var i = plataApp($('caI').value);
+  if(!(i > 0)){ alert('Poné el importe.'); return; }
+  if(!FOTOCAM && !confirm('Vas a guardar el gasto SIN foto del ticket.\n\n¿Lo guardo igual?')) return;
+  CAMV.rub = rub;
+  var U = camRubUso(); U[rub] = (U[rub] || 0) + 1; lsSet(LS_RUBUSO, JSON.stringify(U));
+  var ok = await camEncolar({tipo:'gcam', f:f, i:Math.round(i * 100) / 100, cat:rub, res:'Campo · ' + rub + ' · ' + CAMV.emp,
+                             x:{f:f, emp:CAMV.emp, rub:rub, d:d, i:Math.round(i * 100) / 100}}, FOTOCAM);
+  if(!ok) return;
+  FOTOCAM = null; pintarCam();
+  alert('Listo, guardado. Sale para la oficina apenas haya señal.');
+}
+
+
+/* ---- v287: gastos del edificio y de seguridad (pintura, arreglos, matafuegos…) ----
+   [stated] 20/11/2026: lo del edificio y la seguridad va en esta app; el 308 carga solo lo de las acciones.
+   Viaja como tipo 'gemp' con la foto de la boleta, igual que un gasto del campo, y en la oficina entra solo a
+   «Costos y margen → Gastos», rubro «Edilicio y mantenimiento» o «Seguridad e higiene». */
+var FOTOEMP = null, EMPV = {rub:'edi', que:'', don:'', f:'', d:'', pv:'', i:''};
+var EMP_QUE = {edi:['Pintura', 'Electricidad', 'Plomería', 'Albañilería', 'Techo', 'Limpieza', 'Cerrajería', 'Otro'],
+               seg:['Matafuegos', 'Botiquín', 'Señalización', 'Ropa y protección', 'Cámaras y alarma', 'Fumigación', 'Otro']};
+var EMP_DON = ['Depósito', 'Oficina', 'Playón', 'Otro'];
+function pintarEmp(){
+  var d = $('cEmp'); if(!d) return;
+  var Q = EMP_QUE[EMPV.rub] || EMP_QUE.edi;
+  function chips(L, k){ return '<div class="fila" style="flex-wrap:wrap">' + L.map(function(q){ return '<button class="' + (EMPV[k] === q ? 'prim' : 'sec') + ' chico" style="margin:2px;flex:0 0 auto" onclick="EMPV.' + k + '=\'' + esc(q) + '\';pintarEmp()">' + esc(q) + '</button>'; }).join('') + '</div>'; }
+  var h = '<b>Gasto del edificio o de seguridad</b><div class="nota">Pintura, arreglos, electricidad, matafuegos… lo que se gasta en el depósito o la oficina, no en los vehículos. Con foto de la boleta.</div>'
+    + '<label>¿De qué es?</label><div class="fila">' + [['edi', '🏢 Edificio y mantenimiento'], ['seg', '🧯 Seguridad e higiene']].map(function(r){ return '<button class="' + (EMPV.rub === r[0] ? 'prim' : 'sec') + '" style="padding:12px 6px" onclick="EMPV.rub=\'' + r[0] + '\';EMPV.que=\'\';pintarEmp()">' + r[1] + '</button>'; }).join('') + '</div>'
+    + '<label>¿Qué fue?</label>' + chips(Q, 'que')
+    + '<label>¿Dónde?</label>' + chips(EMP_DON, 'don')
+    + '<label for="emF">Fecha</label><input type="date" id="emF" value="' + esc(EMPV.f || hoyISO()) + '" onchange="EMPV.f=this.value">'
+    + '<label for="emD">Detalle</label><input type="text" id="emD" value="' + esc(EMPV.d) + '" oninput="EMPV.d=this.value" placeholder="qué se hizo o qué se compró">'
+    + '<label for="emP">Proveedor (opcional)</label><input type="text" id="emP" value="' + esc(EMPV.pv) + '" oninput="EMPV.pv=this.value" placeholder="dónde se compró o quién lo hizo">'
+    + '<label for="emI">Importe</label><input type="text" id="emI" inputmode="decimal" value="' + esc(EMPV.i) + '" oninput="EMPV.i=this.value" placeholder="$" style="font-size:24px">'
+    + '<label for="emFoto">Foto de la boleta</label><input type="file" id="emFoto" accept="image/*" onchange="FOTOEMP=this.files&&this.files[0]||null;$(\'emFotoV\').innerHTML=FOTOEMP?\'<span class=nota>Foto lista · \'+Math.round(FOTOEMP.size/1024)+\' KB</span>\':\'\'"><div id="emFotoV" style="margin-top:6px">' + (FOTOEMP ? '<span class="nota">Foto lista · ' + Math.round(FOTOEMP.size / 1024) + ' KB</span>' : '') + '</div>'
+    + '<div style="margin-top:12px"><button class="prim" onclick="empGuardar()">Guardar el gasto</button></div>';
+  var ue = (G && G.ue) || [];
+  if(ue.length) h += '<div class="nota" style="margin-top:12px"><b>Lo último que ya está en la oficina:</b><br>' + ue.map(function(g){ return esc(fcorta(g.f)) + ' · ' + esc(g.d) + ' · ' + money(g.i); }).join('<br>') + '</div>';
+  d.innerHTML = h;
+}
+async function empGuardar(){
+  if(!EMPV.que){ alert('Elegí qué fue.'); return; }
+  if(!EMPV.don){ alert('Elegí dónde fue.'); return; }
+  var i = plataApp(EMPV.i);
+  if(!(i > 0)){ alert('Poné el importe.'); return; }
+  if(!FOTOEMP && !confirm('Vas a guardar el gasto SIN foto de la boleta.\n\n¿Lo guardo igual?')) return;
+  var f = EMPV.f || hoyISO(), rt = EMPV.rub === 'seg' ? 'Seguridad e higiene' : 'Edificio y mantenimiento';
+  var x = {f:f, rub:EMPV.rub, que:EMPV.que, don:EMPV.don, d:String(EMPV.d || '').trim().slice(0, 200), pv:String(EMPV.pv || '').trim().slice(0, 80), i:Math.round(i * 100) / 100};
+  var ok = await camEncolar({tipo:'gemp', f:f, i:x.i, cat:rt, res:rt + ' · ' + EMPV.que + ' · ' + EMPV.don, x:x}, FOTOEMP);
+  if(!ok) return;
+  FOTOEMP = null; EMPV = {rub:EMPV.rub, que:'', don:'', f:'', d:'', pv:'', i:''}; pintarEmp();
+  alert('Listo, guardado. Sale para la oficina apenas haya señal.');
+}
+function camPintarTodo(){ if(TAB === 'pre') pintarPre(); if(TAB === 'cam') pintarCam(); }
+
+function irTab(t){
+  /* v280: tambien las solapas del campo; «solo lo del campo» esconde los vehiculos */
+  var so = camSolo(), hp = camPreOn(), hc = !!(G && G.cam && G.cam.cam);
+  if(t !== 'pre' && t !== 'cam' && !(t === 'emp' && !so && !SOLOVER)){
+    if(so) t = hp ? 'pre' : 'cam';
+    else if(SOLOVER) t = 'ven';
+  }
+  if(esFle()) t = 'com';
+  TAB = t;
+  function bt(id, k, vis){ var b = $(id); if(!b) return; b.className = !vis ? 'oculto' : (t === k ? 'on' : ''); }
+  bt('tbCom', 'com', !so && !SOLOVER); bt('tbGas', 'gas', !so && !SOLOVER); bt('tbVen', 'ven', !so);
+  bt('tbPre', 'pre', hp); bt('tbCam', 'cam', hc); bt('tbEmp', 'emp', !so && !SOLOVER);
+  [['com','cCom'],['gas','cGas'],['ven','cVen'],['pre','cPre'],['cam','cCam'],['emp','cEmp']].forEach(function(z){ var c = $(z[1]); if(c) c.className = 'caja' + (t === z[0] ? '' : ' oculto'); });
+  if(esFle()){ ['tbGas','tbVen','tbPre','tbCam','tbEmp'].forEach(function(id){ var b = $(id); if(b) b.className = 'oculto'; }); }
+  if(t === 'ven') pintarVenc();
+  if(t === 'pre') pintarPre();
+  if(t === 'cam') pintarCam();
+  if(t === 'emp') pintarEmp();
+  try{ window.scrollTo(0,0); }catch(e){}
+}
+
+/* ---- los tanques (v191) ----
+   [stated] 27/10/2026: «que los dos supervisores que tienen el telefono…
+   controlen los litros de los tanques… los viernes que les salte… se pone
+   exacto los litros como figura en el tanque, pasan el cambio y queda
+   registrado en el sistema». Dos tanques: Euro y Comun. */
+var LS_TQ = 'flota_tq_ult', LS_TQC = 'flota_tq_ctl';
+function tqLista(){ return (G && G.tqN && G.tqN.length) ? G.tqN : [['euro','Euro'],['comun','Común']]; }
+function tqNom(k){ var n = k; tqLista().forEach(function(x){ if(x[0] === k) n = x[1]; }); return n; }
+function llenarTanques(){
+  var s = $('cvTq'); if(!s) return;
+  var ult = lsGet(LS_TQ) || '';
+  s.innerHTML = '<option value="">elegí el tanque</option>' + tqLista().map(function(x){
+    return '<option value="' + esc(x[0]) + '"' + (x[0] === ult ? ' selected' : '') + '>' + esc(x[1]) + '</option>'; }).join('');
+  /* el fletero lo elige cada vez: no queda marcado el de la vez anterior */
+  if(esFle()){ s.value = ''; fleBotones(); }
+}
+/* el ultimo viernes (hoy, si hoy es viernes) */
+function tqViernes(){
+  var d = new Date(); d.setHours(12,0,0,0);
+  var back = (d.getDay() - 5 + 7) % 7;
+  d.setDate(d.getDate() - back);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+/* el ultimo control que se sabe: el que mando este telefono o el que dice la oficina */
+function tqUltimo(){
+  var f = lsGet(LS_TQC) || '';
+  var U = (G && G.tqU) || {};
+  Object.keys(U).forEach(function(k){ if(U[k] && U[k].f && U[k].f > f) f = U[k].f; });
+  return f;
+}
+function tqToca(){ return tqUltimo() < tqViernes(); }
+function pintarTanques(){
+  var d = $('cTan'); if(!d) return;
+  if(!G || !G.tq || SOLOVER){ d.className = 'caja oculto'; d.innerHTML = ''; return; }
+  var U = G.tqU || {}, toca = tqToca();
+  var h = '<b>🛢 Control de los tanques</b>';
+  if(toca) h += '<div class="aviso amar" style="margin:8px 0"><b>' + (tqViernes() === hoyISO() ? 'Es viernes: controlá los tanques.' : 'Quedó pendiente el control del viernes ' + fcorta(tqViernes()) + '.')
+              + '</b> Poné los litros que marca cada uno y mandalo. El programa arranca la cuenta de ese número.</div>';
+  var ul = tqLista().map(function(x){ var u = U[x[0]]; return u ? x[1] + ' ' + numAR(u.l) + ' L el ' + fcorta(u.f) + (u.q ? ' (' + u.q + ')' : '') : ''; })
+                    .filter(function(s){ return s; });
+  h += '<div class="nota" style="margin:4px 0">' + (ul.length ? 'Último control: ' + esc(ul.join(' · ')) : 'Todavía no hay ningún control.') + '</div>';
+  if(!toca && !TQABIERTO){
+    d.className = 'caja';
+    d.innerHTML = h + '<button class="sec chico" onclick="TQABIERTO=1;pintarTanques()">Controlar ahora</button>';
+    return;
+  }
+  h += '<label for="tqF">Fecha</label><input type="date" id="tqF" value="' + hoyISO() + '">';
+  tqLista().forEach(function(x){
+    h += '<label for="tq_' + esc(x[0]) + '">Tanque ' + esc(x[1]) + ': litros que marca</label>'
+       + '<input type="number" id="tq_' + esc(x[0]) + '" inputmode="decimal" step="1" placeholder="por ejemplo 1850">';
+  });
+  h += '<label for="tqD">Nota (opcional)</label><input type="text" id="tqD" placeholder="algo que haya que saber">'
+     + '<div style="margin-top:12px"><button class="prim" onclick="guardarTanques()">Mandar el control</button></div>';
+  d.className = 'caja'; d.innerHTML = h;
+}
+var TQABIERTO = 0;
+async function guardarTanques(){
+  var f = ($('tqF')||{}).value || hoyISO(), t = {}, hay = 0, txt = [];
+  tqLista().forEach(function(x){
+    var v = String((($('tq_' + x[0])||{}).value) || '').replace(',', '.').trim();
+    if(v === '') return;
+    var n = parseFloat(v);
+    if(!(n >= 0)) return;
+    t[x[0]] = Math.round(n); hay = 1; txt.push(x[1] + ': ' + numAR(Math.round(n)) + ' L');
+  });
+  if(!hay){ alert('Poné los litros de al menos un tanque.'); return; }
+  if(!confirm('Mandar el control del ' + fcorta(f) + '\n\n' + txt.join('\n') + '\n\n¿Está bien?')) return;
+  FOTO = null;
+  if(!(await encolar({tipo:'tan', f:f, t:t, d:String(($('tqD')||{}).value || '')}))) return;
+  lsSet(LS_TQC, f);
+  TQABIERTO = 0;
+  pintarTanques();
+  alert('Listo, el control salió para la oficina.');
+}
+
+/* ---- guardar ---- */
+async function encolar(o){
+  o.id = nuevoId();
+  if(FOTO){
+    try{ o.foto = await achicarFoto(FOTO); }catch(e){ o.foto = FOTO; }
+  }
+  try{ await colaGuardar(o); }
+  catch(e){
+    /* algunos teléfonos no aceptan guardar el Blob: va como texto */
+    if(o.foto){
+      try{
+        var dat = await new Promise(function(res,rej){ var fr=new FileReader(); fr.onload=function(){res(fr.result);}; fr.onerror=rej; fr.readAsDataURL(o.foto); });
+        delete o.foto; o.fotoTxt = dat;
+        await colaGuardar(o);
+      }catch(e2){ alert('No pude guardar la carga en el teléfono: ' + (e2.message||e2)); return false; }
+    } else { alert('No pude guardar la carga en el teléfono: ' + (e.message||e)); return false; }
+  }
+  await colaLeer(); pintarCola(); pintarHist();
+  flush();
+  return true;
+}
+async function guardarCombustible(){
+  var vid = $('cvV').value, f = $('cvF').value || hoyISO();
+  var km = parseInt($('cvKm').value, 10) || 0;
+  var l = parseFloat(String($('cvL').value).replace(',','.')) || 0;
+  if(!vid){ alert('Elegí el vehículo.'); return; }
+  var tq = ($('cvTq')||{}).value || '';
+  if(!tq){ alert('Elegí de qué tanque salió.'); return; }
+  if(!(l > 0)){ alert('Poné cuántos litros le cargaste.'); return; }
+  var a = avisoKm(vid, km);
+  if(a && !confirm(a + '\n\n¿Lo guardo igual?')) return;
+  FOTO = null;
+  if(!(await encolar({tipo:'com', veh:vid, f:f, km:km, l:Math.round(l*100)/100, tq:tq}))) return;
+  lsSet(LS_TQ, tq);
+  if(km > 0) ultPoner(vid, km, f);
+  $('cvKm').value = ''; $('cvL').value = ''; $('cvAviso').innerHTML = '';
+  if(esFle()){ fleVehDefecto(); var s2 = $('cvTq'); if(s2) s2.value = ''; fleBotones(); alert('✅ Carga guardada.'); }
+  pintarUlt();
+}
+/* ---- una compra para VARIOS vehiculos ----
+   Se tildan, se reparte en partes iguales y se puede tocar el de cada uno.
+   Se manda un gasto POR VEHICULO con el mismo gr, asi el costo por kilometro
+   de cada uno sale bien y la oficina igual sabe que fue una sola factura. */
+var VSEL = {}, VIMP = {}, VMANO = {};
+function variosOn(){ var e = $('gvVarios'); return !!(e && e.checked); }
+function pintarVarios(){
+  var caja = $('gvVariosCaja');
+  if(!caja) return;
+  caja.className = variosOn() ? '' : 'oculto';
+  var lab = $('gvV'); if(lab) lab.disabled = variosOn();
+  if(!variosOn()){ $('gvSuma').innerHTML = ''; return; }
+  var l = (G && G.veh || []);
+  $('gvLista').innerHTML = l.map(function(v){
+    var on = !!VSEL[v.id];
+    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef1f4">'
+         + '<input type="checkbox" style="width:auto"' + (on ? ' checked' : '') + ' onchange="vTildar(' + JSON.stringify(String(v.id)) + ', this.checked)">'
+         + '<div style="flex:1;font-size:14.5px">' + esc(v.nom) + (v.pat ? ' · ' + esc(v.pat) : '') + '</div>'
+         + (on ? '<input type="number" inputmode="decimal" step="0.01" style="width:110px;text-align:right;padding:6px" value="'
+                 + (Number(VIMP[v.id])||0) + '" onchange="vImp(' + JSON.stringify(String(v.id)) + ', this.value)">' : '')
+         + '</div>';
+  }).join('');
+  vSuma();
+}
+function vTildar(id, on){
+  if(on) VSEL[id] = 1; else { delete VSEL[id]; delete VIMP[id]; delete VMANO[id]; }
+  vRepartir();
+}
+/* al fijar uno a mano se reparte el resto entre los demas, si no la suma
+   deja de dar el importe de la factura sin que se note */
+function vImp(id, t){ VIMP[id] = parseFloat(String(t).replace(',','.')) || 0; VMANO[id] = 1; vRepartir(); }
+function vIguales(){ VMANO = {}; vRepartir(); }
+function vRepartir(){
+  var tot = parseFloat(String($('gvI').value).replace(',','.')) || 0;
+  var ids = Object.keys(VSEL), fijo = 0, libres = [];
+  ids.forEach(function(id){ if(VMANO[id]) fijo += Number(VIMP[id])||0; else libres.push(id); });
+  var resto = tot - fijo;
+  if(libres.length){
+    var c = Math.round((resto/libres.length)*100)/100;
+    libres.forEach(function(id, k){
+      VIMP[id] = (k === libres.length-1) ? Math.round((resto - c*(libres.length-1))*100)/100 : c;
+    });
+  }
+  pintarVarios();
+}
+function vSuma(){
+  var tot = parseFloat(String($('gvI').value).replace(',','.')) || 0;
+  var s = 0; Object.keys(VSEL).forEach(function(id){ s += Number(VIMP[id])||0; });
+  s = Math.round(s*100)/100;
+  var dif = Math.round((tot - s)*100)/100, n = Object.keys(VSEL).length;
+  var e = $('gvSuma');
+  if(!e) return;
+  e.innerHTML = n
+    ? (n + ' vehículo(s) · reparte <b>$ ' + numAR(s) + '</b> de $ ' + numAR(tot)
+       + (Math.abs(dif) > 0.009 ? ' <b style="color:#a3282f">(' + (dif>0?'faltan':'sobran') + ' $ ' + numAR(Math.abs(dif)) + ')</b>'
+                                : ' <b style="color:#1f6b3b">cierra</b>')
+       + (Object.keys(VMANO).length ? ' · <a href="#" onclick="vIguales();return false">volver a partes iguales</a>' : ''))
+    : 'Todavía no tildaste ninguno.';
+}
+async function guardarGasto(){
+  var vid = $('gvV').value, f = $('gvF').value || hoyISO();
+  var cat = $('gvC').value, d = String($('gvD').value||'').trim();
+  var i = parseFloat(String($('gvI').value).replace(',','.')) || 0;
+  var km = parseInt($('gvKm').value, 10) || 0;
+  if(!(i > 0)){ alert('Poné el importe.'); return; }
+  if(variosOn()){
+    var ids = Object.keys(VSEL);
+    if(!ids.length){ alert('Tildá los vehículos que entran en esta compra.'); return; }
+    var s = 0; ids.forEach(function(id){ s += Number(VIMP[id])||0; });
+    s = Math.round(s*100)/100;
+    if(Math.abs(i - s) > 0.009 && !confirm('Lo repartido no da el importe: $ ' + numAR(s) + ' contra $ ' + numAR(i) + '.\n\n¿Lo mando igual?')) return;
+    if(!FOTO && !confirm('Vas a guardar el gasto SIN foto del ticket.\n\n¿Lo guardo igual?')) return;
+    var gr = 'g' + Date.now().toString(36);
+    var puestos = 0;
+    for(var k = 0; k < ids.length; k++){
+      var im = Math.round((Number(VIMP[ids[k]])||0)*100)/100;
+      if(!(im > 0)) continue;
+      /* la foto va con el primero nomas: es una sola factura */
+      if(puestos > 0) FOTO = null;
+      if(!(await encolar({tipo:'gas', veh:ids[k], f:f, cat:cat, d:d, i:im, km:0, gr:gr, grn:ids.length, grt:Math.round(i*100)/100}))) return;
+      puestos++;
+    }
+    VSEL = {}; VIMP = {}; VMANO = {};
+    $('gvVarios').checked = false;
+    $('gvD').value = ''; $('gvI').value = ''; $('gvKm').value = ''; $('gvFoto').value = ''; $('gvFotoV').innerHTML = ''; FOTO = null;
+    pintarVarios();
+    alert('Listo. Se mandaron ' + puestos + ' gastos de la misma factura.');
+    return;
+  }
+  if(!vid){ alert('Elegí el vehículo.'); return; }
+  if(gastoPideKm() && !km && !confirm('No pusiste el odómetro.\n\nSin eso la oficina no puede saber para cuándo es el próximo service.\n\n¿Lo guardo igual?')) return;
+  if(!FOTO && !confirm('Vas a guardar el gasto SIN foto del ticket.\n\n¿Lo guardo igual?')) return;
+  if(!(await encolar({tipo:'gas', veh:vid, f:f, cat:cat, d:d, i:Math.round(i*100)/100, km:km}))) return;
+  if(km > 0 && vid !== '__DEP__') ultPoner(vid, km, f);
+  $('gvD').value = ''; $('gvI').value = ''; $('gvKm').value = ''; $('gvFoto').value = ''; $('gvFotoV').innerHTML = ''; FOTO = null;
+}
+
+/* ---- probar la conexión ---- */
+async function probar(){
+  var d = $('diag'); d.innerHTML = 'Probando…';
+  var l = [];
+  function ok(t){ l.push('✔ ' + t); }
+  function mal(t,e){ l.push('✘ <b>' + t + '</b>' + (e ? ' — ' + esc(String(e.message||e)) : '')); }
+  try{
+    (location.protocol === 'https:') ? ok('abierta por el link') : mal('NO está abierta por el link (por eso puede fallar todo)');
+    (typeof indexedDB !== 'undefined') ? ok('el teléfono deja guardar') : mal('el teléfono no deja guardar');
+    (crypto && crypto.subtle) ? ok('puede cifrar') : mal('no puede cifrar');
+    (typeof firebase !== 'undefined') ? ok('cargaron los programas de Google') : mal('no cargaron los programas de Google');
+    if(!conectarFB()) mal('no conecta con la oficina');
+    else{
+      ok('conecta con la oficina');
+      /* La app MANDA, no lee. Las reglas de Firebase le dan permiso para
+         escribir y se lo NIEGAN para leer, a proposito: si el telefono se
+         pierde, el que lo encuentre no puede sacar nada. Por eso probar la
+         lectura daba «Missing or insufficient permissions» y parecia roto
+         cuando en realidad estaba bien. Ahora se prueba lo que importa. */
+      try{ await conTope(sesion(), 15000, 'entrar'); ok('entró'); }catch(e){ mal('no pudo entrar', e); }
+      l.push('&nbsp;&nbsp;<span style="color:#65726b;font-size:13px">La app manda pero no lee: es a propósito. '
+           + 'Si probás la lectura, Google contesta que no tiene permiso — y eso está bien.</span>');
+      if(COLA.length) l.push('&nbsp;&nbsp;<span style="color:#8a6d1a">Hay ' + COLA.length
+           + (COLA.length === 1 ? ' carga esperando salir.' : ' cargas esperando salir.') + '</span>');
+      else l.push('&nbsp;&nbsp;<span style="color:#1f6b3b">No quedó nada esperando: salió todo.</span>');
+    }
+  }catch(e){ mal('error general', e); }
+  if(ULTERR) l.push('<span style="color:#a3282f">Último error al mandar: ' + esc(ULTERR) + '</span>');
+  d.innerHTML = l.join('<br>');
+}
+
+/* ===== VENCIMIENTOS Y MANTENIMIENTO ================================
+   Ya no es solo mirar: acá se renuevan fechas, se carga el service que
+   se hizo y se cambian cubiertas. Cada cambio sale por el mismo sobre
+   cifrado que una carga de gasoil y la oficina lo acepta en el buzón.
+   Lo que NO viaja: DNI ni número de trámite. Eso se queda en la oficina. */
+var VE_CAMPOS = [
+  {k:'rt',        lab:'Revisión técnica', ab:'RTO',       ren:12},
+  {k:'senasa',    lab:'SENASA',           ab:'SENASA',    ren:12},
+  {k:'seguro',    lab:'Seguro',           ab:'SEGURO',    ren:12},
+  {k:'habctes',   lab:'Hab. Corrientes',  ab:'HAB CTES',  ren:12},
+  {k:'matafuego', lab:'Matafuego',        ab:'MATAFUEGO', ren:12},
+  {k:'servFecha', lab:'Service',          ab:'SERVICE',   ren:6},
+  {k:'flotillero',lab:'Descuento flotillero', ab:'FLOT',  ren:12}
+];
+var VE_DOCS = [
+  {k:'carnet',  lab:'Carnet de conductor', ab:'CARNET',      ren:60},
+  {k:'libreta', lab:'Libreta sanitaria',   ab:'LIBRETA',     ren:24},
+  {k:'psico',   lab:'Psicofísico',         ab:'PSICOFÍSICO', ren:12},
+  {k:'curso',   lab:'Curso',               ab:'CURSO',       ren:12},
+  {k:'linti',   lab:'LINTI',               ab:'LINTI',       ren:12}
+];
+var VE_TIPOS = {
+  reparto:{campos:['rt','senasa','seguro','habctes','matafuego','servFecha'], un:'km'},
+  camion:{campos:['rt','senasa','seguro','matafuego','servFecha'], un:'km'},
+  acoplado:{campos:['rt','senasa','seguro','matafuego'], un:''},
+  camioneta:{campos:['rt','seguro','matafuego','servFecha'], un:'km'},
+  autoelevador:{campos:['matafuego'], un:'hs'},
+  otro:{campos:['matafuego','servFecha','flotillero'], un:''}
+};
+var VE_POS = {
+  camioneta:[['DI','Del. izq.'],['DD','Del. der.'],['TI','Tras. izq.'],['TD','Tras. der.'],['AUX','Auxilio']],
+  reparto:[['DI','Del. izq.'],['DD','Del. der.'],['TIA','Tras. izq. afuera'],['TII','Tras. izq. adentro'],['TDI','Tras. der. adentro'],['TDA','Tras. der. afuera'],['AUX','Auxilio']],
+  camion:[['DI','Del. izq.'],['DD','Del. der.'],['TIA','Tras. izq. afuera'],['TII','Tras. izq. adentro'],['TDI','Tras. der. adentro'],['TDA','Tras. der. afuera'],['AUX','Auxilio']],
+  acoplado:[['1IA','Eje 1 izq. af.'],['1II','Eje 1 izq. ad.'],['1DI','Eje 1 der. ad.'],['1DA','Eje 1 der. af.'],
+            ['2IA','Eje 2 izq. af.'],['2II','Eje 2 izq. ad.'],['2DI','Eje 2 der. ad.'],['2DA','Eje 2 der. af.'],['AUX','Auxilio']],
+  autoelevador:[], otro:[]
+};
+var VENSUB = 'fechas', VENQ = '';
+var VE_ROLES = ['Empleado','Dueño','Chofer','Depósito','Otro'];
+function vnRol(e){ return String((e && e.rol) || 'Empleado'); }
+var VE_ROLES_PL = {'Empleado':'Empleados','Dueño':'Dueños','Chofer':'Choferes','Depósito':'Depósito','Otro':'Otros'};
+function vnRolPl(r){ return VE_ROLES_PL[r] || r; }
+
+function ven(){ return (G && G.ven) || {vehiculos:[], empleados:[], servicios:[], cfg:{urg:7,prox:30,cubKm:60000,cubAnios:5}}; }
+function vnCfg(){ return ven().cfg || {urg:7,prox:30,cubKm:60000,cubAnios:5}; }
+function vnDias(f){
+  var h = new Date(hoyISO() + 'T00:00:00'), d = new Date(String(f) + 'T00:00:00');
+  return Math.round((d - h) / 86400000);
+}
+function vnEstado(n){ var c = vnCfg(); return n < 0 ? 'roj' : n <= c.urg ? 'roj' : n <= c.prox ? 'amar' : ''; }
+function vnTxt(n){
+  if(n < 0){ var a = -n; if(a >= 365){ var y = Math.floor(a/365); return 'hace ' + y + (y===1?' año':' años'); } return 'VENCIDO hace ' + a + (a===1?' día':' días'); }
+  if(n === 0) return 'VENCE HOY';
+  if(n === 1) return 'vence mañana';
+  if(n >= 365){ var z = Math.floor(n/365); return 'en ' + z + (z===1?' año':' años'); }
+  return 'en ' + n + (n===1?' día':' días');
+}
+function vnSuma(s,m){
+  var d = s ? new Date(s + 'T00:00:00') : new Date(hoyISO() + 'T00:00:00');
+  var n = new Date(d.getFullYear(), d.getMonth()+m, d.getDate());
+  return n.getFullYear() + '-' + ('0'+(n.getMonth()+1)).slice(-2) + '-' + ('0'+n.getDate()).slice(-2);
+}
+function vnNomVeh(v){ return (v.den ? v.den + ' ' : '') + (v.veh || ''); }
+function vnTipo(v){ return VE_TIPOS[v.tipo] || VE_TIPOS.otro; }
+function vnPos(v){ return VE_POS[v.tipo] || []; }
+function vnLabPos(v,k){ var l = k; vnPos(v).forEach(function(p){ if(p[0] === k) l = p[1]; }); return l; }
+function vnObj(t,id){
+  var l = t === 'veh' ? ven().vehiculos : ven().empleados;
+  for(var i=0;i<l.length;i++) if(String(l[i].id) === String(id)) return l[i];
+  return null;
+}
+function vnDef(t,k){
+  var l = t === 'veh' ? VE_CAMPOS : VE_DOCS;
+  for(var i=0;i<l.length;i++) if(l[i].k === k) return l[i];
+  return null;
+}
+/* lo que hay que mirar, ordenado por el que vence primero */
+function vnItems(){
+  var V = ven(), l = [];
+  (V.vehiculos||[]).forEach(function(v){
+    if(v.activo === false) return;
+    vnTipo(v).campos.forEach(function(k){
+      if(v.sinAviso && v.sinAviso[k]) return;
+      if(!v[k]) return;
+      var d = vnDef('veh',k);
+      l.push({t:'veh', id:v.id, campo:k, lab:d?d.lab:k, quien:vnNomVeh(v), sub:v.pat||'', f:v[k], n:vnDias(v[k])});
+    });
+  });
+  (V.empleados||[]).forEach(function(e){
+    if(e.activo === false) return;
+    VE_DOCS.forEach(function(c){
+      if(e.sinAviso && e.sinAviso[c.k]) return;
+      if(!e[c.k]) return;
+      l.push({t:'emp', id:e.id, campo:c.k, lab:c.lab, quien:e.nombre, sub:'Personal', f:e[c.k], n:vnDias(e[c.k])});
+    });
+  });
+  l.sort(function(a,b){ return a.n - b.n; });
+  return l;
+}
+
+/* ---- mandar un cambio ---- */
+async function vnMandar(cambios, resumen){
+  if(SOLOVER){ alert('Vos entrás para mirar. Los cambios los carga el encargado.'); return false; }
+  var ok = await encolar({tipo:'venc', f:hoyISO(), cambios:cambios, res:resumen||''});
+  if(ok) vnMarcar(resumen);
+  return ok;
+}
+function vnMarcar(txt){
+  var d = $('vnMsg');
+  if(d){ d.innerHTML = '<div class="aviso ver">✔ ' + esc(txt||'Guardado') + '. Se lo mando a la oficina.</div>';
+         setTimeout(function(){ if($('vnMsg')) $('vnMsg').innerHTML = ''; }, 6000); }
+}
+
+/* ---- pantalla ---- */
+function vnSub(s){ VENSUB = s; pintarVenc(); try{ window.scrollTo(0,0); }catch(e){} }
+function vnBuscar(t){ VENQ = String(t||'').toLowerCase(); pintarVenc(); }
+function pintarVenc(){
+  var d = $('vnLista'); if(!d) return;
+  var h = '<div class="tabs" style="margin-bottom:10px">'
+        + [['fechas','Fechas'],['avisar','Avisar'],['veh','Vehículos'],['pers','Personal'],['serv','Services'],['cub','Cubiertas']].map(function(x){
+            return '<button class="' + (VENSUB===x[0]?'on':'') + '" onclick="vnSub(\'' + x[0] + '\')">' + x[1] + '</button>';
+          }).join('') + '</div><div id="vnMsg"></div>';
+  if(VENSUB === 'fechas') h += vnHtmlFechas();
+  if(VENSUB === 'avisar') h += vnHtmlAvisar();
+  if(VENSUB === 'pers')   h += vnHtmlPersonal();
+  if(VENSUB === 'veh')    h += vnHtmlVehiculos();
+  if(VENSUB === 'serv')   h += vnHtmlServ();
+  if(VENSUB === 'cub')    h += vnHtmlCub();
+  d.innerHTML = h;
+}
+function vnHtmlFechas(){
+  var tope = parseInt(($('vnFiltro')||{}).value || '60', 10);
+  var l = vnItems().filter(function(x){
+    if(tope === 0) return x.n < 0;
+    if(tope < 9999 && x.n > tope) return false;
+    if(VENQ && (x.quien + ' ' + x.sub + ' ' + x.lab).toLowerCase().indexOf(VENQ) < 0) return false;
+    return true;
+  });
+  if(!l.length) return '<div class="nota">No hay nada en ese plazo.</div>';
+  var h = '';
+  l.forEach(function(x){
+    var cl = vnEstado(x.n);
+    h += '<div class="aviso ' + cl + '" style="margin:6px 0">'
+       + '<div><b>' + (x.t === 'emp' ? '👤 ' : '🚚 ') + esc(x.quien) + '</b>'
+       + (x.sub ? ' <span class="nota">' + esc(x.sub) + '</span>' : '') + '</div>'
+       + '<div>' + esc(x.lab) + ' — ' + fcorta(x.f) + ' · <b>' + vnTxt(x.n) + '</b></div>'
+       + '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">'
+       + (SOLOVER ? '' : '<button class="sec chico" onclick="vnAbrir(\'' + x.t + '\',' + JSON.stringify(String(x.id)).replace(/"/g,'&quot;') + ',\'' + x.campo + '\')">Renové esto</button>')
+       + vnBotonAviso(x)
+       + '</div></div>';
+  });
+  return h;
+}
+/* el editor de una fecha: los plazos suman SOBRE LA FECHA DE ARRIBA */
+/* a quien le aviso de ESTE vencimiento: si es de una persona, a ella; si es de
+   un vehiculo, al que lo maneja — salvo que figure a nombre de CAMPO o DEPOSITO,
+   que son lugares y no le llegan a nadie. */
+function vnBotonAviso(x){
+  var nom = '';
+  if(x.t === 'emp') nom = x.quien;
+  else {
+    var v = vnObj('veh', x.id);
+    if(v && v.chofer && !vnEsLugar(v.chofer)) nom = String(v.chofer).trim().toUpperCase();
+  }
+  if(!nom) return '';
+  var msg = 'Hola ' + nom + ', te aviso que se vence ' + x.lab.toLowerCase()
+          + (x.t === 'emp' ? '' : ' de ' + x.quien + (x.sub ? ' ' + x.sub : ''))
+          + ' el ' + fcorta(x.f) + '. Hay que renovarlo.';
+  return '<button class="sec chico" onclick="vnAvisar(' + JSON.stringify(msg).replace(/"/g,'&quot;')
+       + ',' + JSON.stringify(vnTel(nom)).replace(/"/g,'&quot;') + ')">Avisarle a ' + esc(nom) + '</button>';
+}
+function vnAbrir(t,id,campo){
+  var o = vnObj(t,id); if(!o) return;
+  var def = vnDef(t,campo), nom = t === 'veh' ? vnNomVeh(o) : o.nombre;
+  var val = o[campo] || '';
+  var h = '<div class="caja" style="margin:0">'
+        + '<b>' + esc(def?def.lab:campo) + ' · ' + esc(nom) + '</b>'
+        + '<label for="vnF">Nueva fecha de vencimiento</label>'
+        + '<input type="date" id="vnF" value="' + esc(val) + '">'
+        + '<div style="margin:10px 0 4px;display:flex;gap:6px;flex-wrap:wrap">'
+        + [[3,'+3 m'],[6,'+6 m'],[12,'+1 año'],[24,'+2 años'],[60,'+5 años']].map(function(x){
+            return '<button class="sec chico" onclick="vnMas(' + x[0] + ')">' + x[1] + '</button>'; }).join('')
+        + '<button class="sec chico" onclick="vnHoy()">Hoy</button></div>'
+        + '<div class="nota">Suma sobre la fecha de arriba. Si arrancás de cero, apretá «Hoy» y después el plazo.</div>'
+        + '<div style="margin-top:12px;display:flex;gap:8px">'
+        + '<button class="prim" style="flex:1" onclick="vnGuardar(\'' + t + '\',' + JSON.stringify(String(id)).replace(/"/g,'&quot;') + ',\'' + campo + '\')">Guardar</button>'
+        + '<button class="sec" onclick="pintarVenc()">Cancelar</button></div></div>';
+  $('vnLista').innerHTML = h;
+  try{ window.scrollTo(0,0); }catch(e){}
+}
+function vnMas(m){ var e = $('vnF'); if(e) e.value = vnSuma(e.value || '', m); }
+function vnHoy(){ var e = $('vnF'); if(e) e.value = hoyISO(); }
+async function vnGuardar(t,id,campo){
+  var e = $('vnF'), val = (e && e.value) || null;
+  var o = vnObj(t,id); if(!o) return;
+  var antes = o[campo] || null;
+  if(antes === val){ pintarVenc(); return; }
+  var def = vnDef(t,campo), nom = t === 'veh' ? vnNomVeh(o) : o.nombre;
+  var ok = await vnMandar([{tabla:(t === 'veh' ? 'veh' : 'emp'), id:String(id), campo:campo, valor:val}],
+                          (def?def.lab:campo) + ' de ' + nom + ' al ' + (val ? fcorta(val) : 'vacío'));
+  if(ok){ o[campo] = val; }   /* que lo vea cambiado ya, sin esperar a la oficina */
+  pintarVenc(); pintarAlerta();
+}
+
+/* ---- services ---- */
+function vnHtmlServ(){
+  var V = ven();
+  var h = '<div class="caja" style="margin:0 0 10px">'
+        + '<b>Cargar un service que hiciste</b>'
+        + '<label for="svV">Vehículo</label><select id="svV">'
+        + (V.vehiculos||[]).map(function(v){ return '<option value="' + esc(v.id) + '">' + esc(vnNomVeh(v)) + (v.pat?' · '+esc(v.pat):'') + '</option>'; }).join('')
+        + '</select>'
+        + '<label for="svF">Cuándo</label><input type="date" id="svF" value="' + hoyISO() + '">'
+        + '<label for="svKm">Con cuántos km</label><input type="number" id="svKm" inputmode="numeric" placeholder="por ejemplo 52000">'
+        + '<label for="svIt">Qué le hiciste</label><input type="text" id="svIt" placeholder="aceite, filtros, correa…">'
+        + '<label for="svPK">Próximo service a los (km)</label><input type="number" id="svPK" inputmode="numeric" placeholder="se calcula solo si lo dejás vacío">'
+        + '<label for="svOb">Nota</label><input type="text" id="svOb" placeholder="opcional">'
+        + '<label for="svI">Cuánto salió (opcional)</label>'
+        + '<input type="text" id="svI" inputmode="decimal" placeholder="$ — si no lo sabés, dejalo vacío">'
+        + '<div class="nota" style="margin-top:3px">Si lo ponés, en la oficina le queda el monto propuesto para confirmar y se carga como gasto del vehículo.</div>'
+        + '<label for="svFoto">Foto de la factura (opcional)</label>'
+        + '<input type="file" id="svFoto" accept="image/*" onchange="svFotoElegida(this)">'
+        + '<div id="svFotoV" style="margin-top:8px"></div>'
+        + '<div style="margin-top:12px"><button class="prim" onclick="vnGuardarServ()">Guardar el service</button></div></div>';
+  var l = (V.servicios||[]).slice().sort(function(a,b){ return String(b.fecha||'') < String(a.fecha||'') ? -1 : 1; });
+  /* [stated] 18/9/2026: "que le figure quien cargo y hizo el ultimo cambio
+     tambien porque son dos o tres que cargan para que no repitan la carga".
+     El quien viene de la oficina adentro de cada service (s.q), asi que aca
+     se ven TAMBIEN los que cargo el otro, que es justo para lo que sirve. */
+  h += '<b>Los últimos services cargados</b>'
+     + '<div class="nota" style="margin:2px 0 4px">Mirá que no sea el mismo, para no cargarlo dos veces.</div>'
+     + '<table style="margin-top:6px"><tbody>';
+  l.slice(0,15).forEach(function(s){
+    h += '<tr><td>' + (s.fecha ? fcorta(s.fecha) : '—') + '</td><td>' + esc(s.pat || s.veh || '') + '</td>'
+       + '<td>' + (s.km == null ? '' : numAR(s.km) + ' km') + '</td>'
+       + '<td><small>' + esc((s.items||[]).join(', ').slice(0,34)) + '</small></td>'
+       + '<td class="der"><small>' + (Number(s.monto) > 0 ? money(s.monto)
+           : Number(s.monto_prop) > 0 ? '<span style="color:#8a6d1a">' + money(s.monto_prop) + ' a confirmar</span>' : '') + '</small></td>'
+       + '<td><small>' + esc(s.q || '') + '</small></td></tr>';
+  });
+  return h + '</tbody></table>';
+}
+async function vnGuardarServ(){
+  var id = $('svV').value, v = vnObj('veh', id);
+  if(!v){ alert('Elegí el vehículo.'); return; }
+  var f = $('svF').value || hoyISO();
+  var km = parseInt($('svKm').value, 10) || null;
+  var it = String($('svIt').value||'').split(/[,;]+/).map(function(x){ return x.trim(); }).filter(function(x){ return x; });
+  var pk = parseInt($('svPK').value, 10) || null;
+  if(!km && !confirm('No pusiste los kilómetros.\n\nSin eso la oficina no puede saber para cuándo cae el próximo.\n\n¿Lo guardo igual?')) return;
+  if(!pk && km) pk = km + (vnTipo(v).un === 'hs' ? 300 : v.tipo === 'camion' ? 20000 : 10000);
+  var mo = plataApp($('svI') ? $('svI').value : '');
+  /* el vid va SIEMPRE: la oficina lo necesita para saber a que vehiculo de
+     «Vehiculos y gastos» cargarle el gasto. Sin esto tiene que adivinarlo por
+     patente, porque veh es la MARCA (Iveco Tector), no el numero interno. */
+  var cambios = [{tabla:'serv', veh:v.veh || vnNomVeh(v), pat:v.pat || '', f:f, km:km, items:it,
+                  obs:String($('svOb').value||'').trim(), vid:String(v.id), monto:mo > 0 ? mo : 0}];
+  if(km) cambios.push({tabla:'veh', id:String(v.id), campo:'km', valor:km});
+  if(pk) cambios.push({tabla:'veh', id:String(v.id), campo:'servKm', valor:pk});
+  /* la foto viaja por el mismo camino que la del ticket de un gasto (la global
+     FOTO, que encolar() engancha). Se guarda y se repone la que hubiera para no
+     robarle la foto a un gasto a medio cargar en la otra pestana. */
+  var guardada = FOTO;
+  FOTO = FOTOSV || null;
+  var ok = false;
+  try{ ok = await vnMandar(cambios, 'Service de ' + vnNomVeh(v) + (mo > 0 ? ' · ' + money(mo) : '')); }
+  finally{ FOTO = guardada; }
+  if(ok){
+    (ven().servicios || (ven().servicios = [])).push({id:nuevoId(), veh:v.veh, pat:v.pat, fecha:f, km:km,
+      proxKm:pk, items:it, obs:'', monto_prop:mo > 0 ? mo : 0, q:(G && G.nom) ? G.nom : ''});
+    if(km) v.km = km;
+    if(pk) v.servKm = pk;
+    if(km > 0) ultPoner(String(v.id), km, f);
+    FOTOSV = null;
+    if($('svI')) $('svI').value = '';
+    if($('svFoto')) $('svFoto').value = '';
+    if($('svFotoV')) $('svFotoV').innerHTML = '';
+  }
+  pintarVenc();
+}
+
+/* ---- cubiertas ---- */
+function vnGastoCub(v,c){
+  if(!c) return null;
+  var C = vnCfg();
+  var km = (v.km && c.km != null) ? Math.max(0, v.km - c.km) : null;
+  var d  = c.f ? -vnDias(c.f) : null;
+  var p = Math.max(km != null ? km/(C.cubKm||60000) : 0, d != null ? (d/365)/(C.cubAnios||5) : 0);
+  return {km:km, pct:p, st: p >= 1 ? 'roj' : p >= 0.85 ? 'amar' : ''};
+}
+function vnHtmlCub(){
+  var V = ven();
+  var h = '<div class="nota" style="margin-bottom:8px">Tocá una posición para anotar la cubierta que pusiste.</div>';
+  (V.vehiculos||[]).forEach(function(v){
+    if(!vnPos(v).length) return;
+    if(VENQ && (vnNomVeh(v) + ' ' + (v.pat||'')).toLowerCase().indexOf(VENQ) < 0) return;
+    h += '<div class="caja" style="margin:0 0 8px;padding:10px">'
+       + '<b>' + esc(vnNomVeh(v)) + '</b> <span class="nota">' + esc(v.pat||'') + '</span>'
+       + '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">';
+    vnPos(v).forEach(function(p){
+      var c = (v.cubiertas||{})[p[0]], g = c ? vnGastoCub(v,c) : null;
+      var col = g && g.st === 'roj' ? '#fbe4e4' : g && g.st === 'amar' ? '#fff5d6' : '#fff';
+      h += '<button class="sec chico" style="background:' + col + '" onclick="vnAbrirCub(' + JSON.stringify(String(v.id)).replace(/"/g,'&quot;') + ',\'' + p[0] + '\')">'
+         + p[0] + '<br><small>' + (c && c.f ? fcorta(c.f) : c && c.km != null ? numAR(c.km) : '+') + (g ? ' · ' + Math.round(g.pct*100) + '%' : '') + '</small></button>';
+    });
+    h += '</div></div>';
+  });
+  return h;
+}
+function vnAbrirCub(id,pos){
+  var v = vnObj('veh', id); if(!v) return;
+  var c = (v.cubiertas || {})[pos] || {};
+  var h = '<div class="caja" style="margin:0"><b>' + esc(vnLabPos(v,pos)) + ' · ' + esc(vnNomVeh(v)) + '</b>'
+        + '<label for="cbF">Cuándo la pusiste</label><input type="date" id="cbF" value="' + esc(c.f||'') + '">'
+        + '<label for="cbKm">Con cuántos km</label><input type="number" id="cbKm" inputmode="numeric" value="' + esc(c.km == null ? '' : c.km) + '">'
+        + '<label for="cbMar">Marca</label><input type="text" id="cbMar" value="' + esc(c.marca||'') + '">'
+        + '<label for="cbMed">Medida</label><input type="text" id="cbMed" value="' + esc(c.med||'') + '">'
+        + '<div style="margin-top:12px;display:flex;gap:8px">'
+        + '<button class="prim" style="flex:1" onclick="vnGuardarCub(' + JSON.stringify(String(id)).replace(/"/g,'&quot;') + ',\'' + pos + '\')">Guardar</button>'
+        + '<button class="sec" onclick="pintarVenc()">Cancelar</button></div></div>';
+  $('vnLista').innerHTML = h;
+  try{ window.scrollTo(0,0); }catch(e){}
+}
+async function vnGuardarCub(id,pos){
+  var v = vnObj('veh', id); if(!v) return;
+  var f = $('cbF').value || null;
+  var km = parseInt($('cbKm').value, 10);
+  if(isNaN(km)) km = null;
+  var mar = String($('cbMar').value||'').trim(), med = String($('cbMed').value||'').trim();
+  var ok = await vnMandar([{tabla:'cub', id:String(id), pos:pos, f:f, km:km, marca:mar, med:med}],
+                          'Cubierta ' + vnLabPos(v,pos) + ' de ' + vnNomVeh(v));
+  if(ok){
+    if(!v.cubiertas) v.cubiertas = {};
+    v.cubiertas[pos] = {f:f, km:km, marca:mar, med:med, nota:''};
+  }
+  pintarVenc();
+}
+
+/* ---- a quién avisarle ----
+   Los nombres de chofer de los vehículos no coinciden con la lista de
+   personal, así que no se adivina: la libreta va por nombre tal como está,
+   y el teléfono lo carga la oficina una vez. */
+var VE_LUGARES = ['CAMPO','DEPOSITO','DEPOSITO 1','DEPOSITO 2'];
+function vnEsLugar(n){ return VE_LUGARES.indexOf(String(n||'').trim().toUpperCase()) > -1; }
+function vnTel(nom){ return (ven().tel || {})[String(nom||'').trim().toUpperCase()] || ''; }
+function vnGente(){
+  var V = ven(), m = {};
+  (V.empleados||[]).forEach(function(e){
+    if(e.activo === false) return;
+    var k = String(e.nombre||'').trim().toUpperCase();
+    if(k) m[k] = m[k] || {nom:k, emp:e, veh:[]};
+  });
+  (V.vehiculos||[]).forEach(function(v){
+    if(v.activo === false || !v.chofer) return;
+    var k = String(v.chofer).trim().toUpperCase();
+    if(!k || vnEsLugar(k)) return;
+    m[k] = m[k] || {nom:k, emp:null, veh:[]};
+    m[k].veh.push(v);
+  });
+  return Object.keys(m).sort().map(function(k){ return m[k]; });
+}
+function vnDeQuien(g, tope){
+  var t = tope == null ? vnCfg().prox : tope, l = [];
+  if(g.emp){
+    VE_DOCS.forEach(function(c){
+      if(g.emp.sinAviso && g.emp.sinAviso[c.k]) return;
+      var f = g.emp[c.k]; if(!f) return;
+      var n = vnDias(f);
+      if(n <= t) l.push({que:c.lab, f:f, n:n, de:''});
+    });
+  }
+  g.veh.forEach(function(v){
+    vnTipo(v).campos.forEach(function(k){
+      if(v.sinAviso && v.sinAviso[k]) return;
+      var f = v[k]; if(!f) return;
+      var n = vnDias(f);
+      if(n <= t){ var d = vnDef('veh',k); l.push({que:d?d.lab:k, f:f, n:n, de:vnNomVeh(v) + (v.pat?' '+v.pat:'')}); }
+    });
+  });
+  l.sort(function(a,b){ return a.n - b.n; });
+  return l;
+}
+function vnMensaje(g, tope){
+  var l = vnDeQuien(g, tope);
+  if(!l.length) return '';
+  var m = 'Hola ' + g.nom + ', te paso lo que se te vence:\n';
+  l.forEach(function(x){
+    m += '\n• ' + x.que + (x.de ? ' de ' + x.de : '') + ': ' + fcorta(x.f)
+       + ' (' + (x.n < 0 ? 'vencido' : x.n === 0 ? 'vence hoy' : vnTxt(x.n)) + ')';
+  });
+  return m + '\n\nHay que ir renovando. Cualquier cosa avisame.';
+}
+var VNTOPE = 30;
+function vnTope(v){ VNTOPE = Number(v) || 30; pintarVenc(); }
+function vnHtmlAvisar(){
+  var g = vnGente(), h = '';
+  h += '<div class="nota" style="margin-bottom:8px">Un mensaje por persona con todo lo suyo junto: lo de él y lo del vehículo que maneja.</div>'
+     + '<div class="fila" style="margin-bottom:8px"><select onchange="vnTope(this.value)" style="flex:1">'
+     + [7,15,30,60,90].map(function(n){ return '<option value="' + n + '"' + (VNTOPE===n?' selected':'') + '>Lo que vence dentro de ' + n + ' días</option>'; }).join('')
+     + '</select></div>';
+  var hubo = 0;
+  g.forEach(function(x){
+    var l = vnDeQuien(x, VNTOPE);
+    if(!l.length) return;
+    if(VENQ && x.nom.toLowerCase().indexOf(VENQ) < 0) return;
+    hubo++;
+    var urg = l[0].n <= vnCfg().urg;
+    h += '<div class="aviso ' + (urg ? 'roj' : 'amar') + '" style="margin:6px 0">'
+       + '<div><b>👤 ' + esc(x.nom) + '</b>' + (vnTel(x.nom) ? '' : ' <span class="nota">sin teléfono cargado</span>') + '</div>'
+       + l.map(function(y){ return '<div>' + esc(y.que) + (y.de ? ' <span class="nota">' + esc(y.de) + '</span>' : '')
+              + ' — ' + fcorta(y.f) + ' · <b>' + vnTxt(y.n) + '</b></div>'; }).join('')
+       + '<div style="margin-top:6px"><button class="sec chico" onclick="vnAvisarA(' + JSON.stringify(x.nom).replace(/"/g,'&quot;') + ')">'
+       + 'Avisarle por WhatsApp</button></div></div>';
+  });
+  if(!hubo) h += '<div class="nota">A nadie se le vence nada en ese plazo.</div>';
+  return h;
+}
+/* ---- personal: dar de alta, cambiar el nombre y dar de baja ----
+   El que se va se DA DE BAJA, no se borra: deja de contar en los avisos pero
+   sus fechas quedan por si vuelve. Borrar del todo es solo en la oficina. */
+/* ---- vehículos: agregar y corregir desde el teléfono ----
+   Los que tienen vencimientos pero no son vehículos (los matafuegos del
+   depósito, el descuento flotillero) no se tocan desde acá. */
+var VE_TIPOS_LAB = [['reparto','Reparto'],['camion','Camión'],['acoplado','Acoplado'],
+                    ['camioneta','Camioneta'],['autoelevador','Autoelevador']];
+/* Quien puede figurar manejando: los empleados, los que ya manejan aunque no
+   esten en personal (CHACHI, CABEZA...), y las bases (CAMPO, DEPOSITO), que no
+   son personas pero son donde para el vehiculo. Se elige de la lista o se
+   deja vacio; escribir a mano es la ultima opcion, no la primera. */
+function vnQuienesManejan(){
+  var V = ven(), por = {}, sueltos = [], bases = [], vistos = {};
+  (V.empleados||[]).forEach(function(e){
+    if(e.activo === false) return;
+    var n = String(e.nombre||'').trim().toUpperCase();
+    if(!n || vistos[n]) return;
+    vistos[n] = 1;
+    (por[vnRol(e)] || (por[vnRol(e)] = [])).push(n);
+  });
+  (V.vehiculos||[]).forEach(function(v){
+    var n = String(v.chofer||'').trim().toUpperCase();
+    if(!n || vistos[n]) return;
+    vistos[n] = 1;
+    if(vnEsLugar(n)) bases.push(n); else sueltos.push(n);
+  });
+  VE_LUGARES.forEach(function(n){ if(bases.indexOf(n) < 0) bases.push(n); });
+  return {por:por, sueltos:sueltos.sort(), bases:bases.sort()};
+}
+function vnSelChofer(v){
+  var q = vnQuienesManejan(), act = String(v.chofer||'').trim().toUpperCase();
+  function ops(l){
+    return l.slice().sort().map(function(n){
+      return '<option value="' + esc(n) + '"' + (act === n ? ' selected' : '') + '>' + esc(n) + '</option>';
+    }).join('');
+  }
+  var h = '<select onchange="vnSetChofer(' + JSON.stringify(String(v.id)).replace(/"/g,'&quot;') + ', this.value)">'
+        + '<option value=""' + (act ? '' : ' selected') + '>— sin asignar —</option>';
+  VE_ROLES.forEach(function(r){
+    if(q.por[r] && q.por[r].length) h += '<optgroup label="' + vnRolPl(r) + '">' + ops(q.por[r]) + '</optgroup>';
+  });
+  if(q.sueltos.length) h += '<optgroup label="Sin ocupación cargada">' + ops(q.sueltos) + '</optgroup>';
+  if(q.bases.length)   h += '<optgroup label="Bases">' + ops(q.bases) + '</optgroup>';
+  return h + '<option value="__otro__">+ Agregar una persona nueva…</option></select>';
+}
+async function vnSetChofer(id, val){
+  var v = vnObj('veh', id); if(!v) return;
+  if(val === '__otro__'){
+    var n = prompt('Nombre de la persona:', '');
+    if(n === null){ pintarVenc(); return; }
+    val = String(n).trim().toUpperCase();
+    if(val && !(ven().empleados||[]).filter(function(e){ return String(e.nombre||'').toUpperCase() === val; }).length){
+      var nid = nuevoId();
+      await vnMandar([{tabla:'empNuevo', id:nid, nombre:val, rol:'Chofer'}], 'Persona nueva: ' + val);
+      (ven().empleados || (ven().empleados = [])).push({id:nid, nombre:val, rol:'Chofer', carnet:null,
+        libreta:null, psico:null, curso:null, linti:null, activo:true, sinAviso:{}});
+    }
+  }
+  var antes = String(v.chofer||'');
+  if(String(val||'') === antes){ pintarVenc(); return; }
+  var ok = await vnMandar([{tabla:'veh', id:String(id), campo:'chofer', valor:val||''}],
+                          'Quién maneja ' + vnNomVeh(v) + ': ' + (antes || 'sin asignar') + ' → ' + (val || 'sin asignar'));
+  if(ok) v.chofer = val || '';
+  pintarVenc(); pintarAlerta();
+}
+async function vnBajaVeh(id){
+  var v = vnObj('veh', id); if(!v) return;
+  if(!confirm('¿Dar de baja ' + vnNomVeh(v) + '?\n\nDesaparece de la lista para cargarle gasoil y deja de avisar sus vencimientos. No se borra: se puede volver a activar.')) return;
+  var ok = await vnMandar([{tabla:'veh', id:String(id), campo:'activo', valor:0}], vnNomVeh(v) + ' dado de baja');
+  if(ok) v.activo = false;
+  pintarVenc(); pintarAlerta(); llenarVehiculos();
+}
+async function vnAltaVeh(id){
+  var v = vnObj('veh', id); if(!v) return;
+  var ok = await vnMandar([{tabla:'veh', id:String(id), campo:'activo', valor:1}], vnNomVeh(v) + ' reactivado');
+  if(ok) v.activo = true;
+  pintarVenc(); pintarAlerta(); llenarVehiculos();
+}
+function vnHtmlVehiculos(){
+  var V = ven();
+  var todos = (V.vehiculos||[]).filter(function(v){ return v.tipo !== 'otro'; });
+  var l = todos.filter(function(v){ return v.activo !== false; });
+  var baj = todos.filter(function(v){ return v.activo === false; });
+  var h = '<div class="nota" style="margin-bottom:8px">Si le cambiás el nombre, la patente o quién lo maneja, se corrige también donde cargás el gasoil.</div>';
+  h += '<div class="caja" style="margin:0 0 10px;padding:10px">'
+     + '<b>Agregar un vehículo</b>'
+     + '<label for="vhN">Cómo le dicen</label><input type="text" id="vhN" placeholder="C11, Tector 4…">'
+     + '<label for="vhP">Patente</label><input type="text" id="vhP" placeholder="AB123CD" style="text-transform:uppercase">'
+     + '<label for="vhM">Qué es</label><input type="text" id="vhM" placeholder="IVECO DAILY, HILUX…">'
+     + '<label for="vhT">Tipo</label><select id="vhT">'
+     + VE_TIPOS_LAB.map(function(t){ return '<option value="' + t[0] + '">' + t[1] + '</option>'; }).join('')
+     + '</select>'
+     + '<div style="margin-top:12px"><button class="prim" onclick="vnNuevoVeh()">Agregar</button></div></div>';
+  h += '<b>' + l.length + ' vehículos</b>';
+  if(VENQ) l = l.filter(function(v){ return (vnNomVeh(v) + ' ' + (v.pat||'')).toLowerCase().indexOf(VENQ) >= 0; });
+  l.forEach(function(v){
+    var un = vnTipo(v).un === 'hs' ? 'horas' : 'km';
+    var jid = JSON.stringify(String(v.id)).replace(/"/g,'&quot;');
+    h += '<div class="caja" style="margin:6px 0;padding:10px">'
+       + '<div class="fila"><input type="text" value="' + esc(v.den || v.id) + '" onchange="vnSetVeh(' + jid + ',\'den\', this.value)" placeholder="nombre">'
+       + '<input type="text" value="' + esc(v.pat || '') + '" style="text-transform:uppercase" onchange="vnSetVeh(' + jid + ',\'pat\', this.value)" placeholder="patente"></div>'
+       + '<label style="margin-top:8px">Quién lo maneja</label>' + vnSelChofer(v)
+       + '<div class="nota" style="margin-top:6px">' + esc(v.veh || '') + (v.km ? ' · ' + numAR(v.km) + ' ' + un : ' · sin ' + un) + '</div>'
+       + '<div style="margin-top:8px"><button class="sec chico" onclick="vnBajaVeh(' + jid + ')">Dar de baja</button></div>'
+       + '</div>';
+  });
+  if(baj.length){
+    h += '<b style="display:block;margin-top:12px">Dados de baja · ' + baj.length + '</b>';
+    baj.forEach(function(v){
+      h += '<div class="caja" style="margin:6px 0;padding:10px;opacity:.75">' + esc(vnNomVeh(v)) + ' ' + esc(v.pat||'')
+         + '<div style="margin-top:6px"><button class="sec chico" onclick="vnAltaVeh(' + JSON.stringify(String(v.id)).replace(/"/g,'&quot;') + ')">Volver a activar</button></div></div>';
+    });
+  }
+  return h;
+}
+async function vnNuevoVeh(){
+  var n = String(($('vhN')||{}).value || '').trim().toUpperCase();
+  if(!n){ alert('Poné cómo le dicen.'); return; }
+  if(vnObj('veh', n)){ alert('Ya hay uno con ese nombre.'); return; }
+  var pat = String(($('vhP')||{}).value || '').trim().toUpperCase();
+  var mar = String(($('vhM')||{}).value || '').trim();
+  var tipo = ($('vhT')||{}).value || 'reparto';
+  var ok = await vnMandar([{tabla:'vehNuevo', nom:n, pat:pat, mar:mar, tipo:tipo}], 'Vehículo nuevo: ' + n);
+  if(ok){
+    (ven().vehiculos || (ven().vehiculos = [])).push({id:n, den:n, veh:mar, pat:pat, chofer:'', tipo:tipo,
+      rt:null, senasa:null, seguro:null, habctes:null, matafuego:null, servFecha:null,
+      km:null, servKm:null, activo:true, sinAviso:{}, cubiertas:{}});
+    if($('vhN')) $('vhN').value = '';
+    if($('vhP')) $('vhP').value = '';
+    if($('vhM')) $('vhM').value = '';
+  }
+  pintarVenc();
+}
+async function vnSetVeh(id, campo, txt){
+  var v = vnObj('veh', id); if(!v) return;
+  var nv = String(txt||'').trim();
+  if(campo === 'den' || campo === 'pat') nv = nv.toUpperCase();
+  if(nv === String(v[campo]||'')){ return; }
+  var lab = campo === 'den' ? 'Nombre' : campo === 'pat' ? 'Patente' : 'Marca';
+  var ok = await vnMandar([{tabla:'veh', id:String(id), campo:campo, valor:nv}],
+                          lab + ' de ' + vnNomVeh(v) + ': ' + (v[campo] || 'vacío') + ' → ' + (nv || 'vacío'));
+  if(ok) v[campo] = nv;
+  pintarVenc();
+}
+function vnHtmlPersonal(){
+  var V = ven();
+  var act = (V.empleados||[]).filter(function(e){ return e.activo !== false; });
+  var baj = (V.empleados||[]).filter(function(e){ return e.activo === false; });
+  var h = '<div class="nota" style="margin-bottom:8px">El que se va se da de baja: deja de aparecer en los avisos, pero sus fechas quedan guardadas por si vuelve.</div>';
+  h += '<div class="caja" style="margin:0 0 10px;padding:10px">'
+     + '<label for="peNuevo">Agregar una persona</label>'
+     + '<input type="text" id="peNuevo" placeholder="Nombre y apellido">'
+     + '<label for="peRol">Ocupación</label>'
+     + '<select id="peRol">' + VE_ROLES.map(function(r){ return '<option>' + r + '</option>'; }).join('') + '</select>'
+     + '<div style="margin-top:10px"><button class="prim" onclick="vnNuevoEmp()">Agregar</button></div></div>';
+  act.sort(function(a,b){
+    var ra = VE_ROLES.indexOf(vnRol(a)), rb = VE_ROLES.indexOf(vnRol(b));
+    if(ra !== rb) return (ra < 0 ? 9 : ra) - (rb < 0 ? 9 : rb);
+    return String(a.nombre||'') < String(b.nombre||'') ? -1 : 1;
+  });
+  h += '<b>' + act.length + (act.length === 1 ? ' persona' : ' personas') + '</b>';
+  act.forEach(function(e){
+    var l = VE_DOCS.filter(function(c){ return e[c.k]; }).length;
+    var jid = JSON.stringify(String(e.id)).replace(/"/g,'&quot;');
+    h += '<div class="caja" style="margin:6px 0;padding:10px">'
+       + '<input type="text" value="' + esc(e.nombre) + '" onchange="vnRenombrar(' + jid + ', this.value)">'
+       + '<label style="margin-top:8px">Ocupación</label>'
+       + '<select onchange="vnSetRol(' + jid + ', this.value)">'
+       + VE_ROLES.map(function(r){ return '<option' + (vnRol(e) === r ? ' selected' : '') + '>' + r + '</option>'; }).join('')
+       + '</select>'
+       + '<div class="nota" style="margin-top:6px">' + l + ' de ' + VE_DOCS.length + ' fechas cargadas'
+       + (vnTel(e.nombre) ? '' : ' · sin teléfono') + '</div>'
+       + '<div style="margin-top:8px"><button class="sec chico" onclick="vnBajaEmp(' + jid + ')">Se fue · dar de baja</button></div>'
+       + '</div>';
+  });
+  if(baj.length){
+    h += '<b style="display:block;margin-top:12px">Dados de baja · ' + baj.length + '</b>';
+    baj.forEach(function(e){
+      h += '<div class="caja" style="margin:6px 0;padding:10px;opacity:.75">' + esc(e.nombre)
+         + '<div style="margin-top:6px"><button class="sec chico" onclick="vnAltaEmp(' + JSON.stringify(String(e.id)).replace(/"/g,'&quot;') + ')">Volvió · reactivar</button></div></div>';
+    });
+  }
+  return h;
+}
+async function vnNuevoEmp(){
+  var e = $('peNuevo'), nom = String((e && e.value) || '').trim().toUpperCase();
+  if(!nom){ alert('Poné el nombre.'); return; }
+  var rep = (ven().empleados||[]).filter(function(x){ return String(x.nombre||'').toUpperCase() === nom; })[0];
+  if(rep && rep.activo !== false){ alert('Ya está cargado.'); return; }
+  var id = nuevoId();
+  var rol = ($('peRol')||{}).value || 'Empleado';
+  var ok = await vnMandar([{tabla:'empNuevo', id:id, nombre:nom, rol:rol}], 'Persona nueva: ' + nom + ' (' + rol + ')');
+  if(ok){
+    if(rep) rep.activo = true;
+    else (ven().empleados || (ven().empleados = [])).push({id:id, nombre:nom, rol:rol, carnet:null, libreta:null,
+            psico:null, curso:null, linti:null, activo:true, sinAviso:{}});
+    if(e) e.value = '';
+  }
+  pintarVenc();
+}
+async function vnSetRol(id, r){
+  var o = vnObj('emp', id); if(!o) return;
+  if(vnRol(o) === r){ return; }
+  var ok = await vnMandar([{tabla:'emp', id:String(id), campo:'rol', valor:r}],
+                          'Ocupación de ' + o.nombre + ': ' + vnRol(o) + ' → ' + r);
+  if(ok) o.rol = r;
+  pintarVenc();
+}
+async function vnRenombrar(id, txt){
+  var o = vnObj('emp', id); if(!o) return;
+  var nv = String(txt||'').trim().toUpperCase();
+  if(!nv || nv === String(o.nombre||'').toUpperCase()){ pintarVenc(); return; }
+  var antes = o.nombre;
+  var ok = await vnMandar([{tabla:'emp', id:String(id), campo:'nombre', valor:nv}], 'Nombre: ' + antes + ' → ' + nv);
+  if(ok) o.nombre = nv;
+  pintarVenc(); pintarAlerta();
+}
+async function vnBajaEmp(id){
+  var o = vnObj('emp', id); if(!o) return;
+  if(!confirm('¿Dar de baja a ' + o.nombre + '?\n\nDeja de aparecer en los avisos, pero sus fechas quedan por si vuelve.')) return;
+  var ok = await vnMandar([{tabla:'emp', id:String(id), campo:'activo', valor:0}], o.nombre + ' dado de baja');
+  if(ok) o.activo = false;
+  pintarVenc(); pintarAlerta();
+}
+async function vnAltaEmp(id){
+  var o = vnObj('emp', id); if(!o) return;
+  var ok = await vnMandar([{tabla:'emp', id:String(id), campo:'activo', valor:1}], o.nombre + ' reactivado');
+  if(ok) o.activo = true;
+  pintarVenc(); pintarAlerta();
+}
+function vnAvisarA(nom){
+  var g = null;
+  vnGente().forEach(function(x){ if(x.nom === nom) g = x; });
+  if(!g) return;
+  var m = vnMensaje(g, VNTOPE);
+  if(!m){ alert('A ' + nom + ' no se le vence nada en ese plazo.'); return; }
+  vnAvisar(m, vnTel(nom));
+}
+function vnAvisar(msg, tel){
+  var t = String(tel||'').replace(/[^0-9]/g,'');
+  try{ window.open('https://wa.me/' + t + '?text=' + encodeURIComponent(msg), '_blank'); }
+  catch(e){ alert(msg); }
+}
+/* el cartel de arriba: lo primero que ve al abrir */
+function pintarAlerta(){
+  var d = $('alertaVenc'); if(!d) return;
+  var c = vnCfg(), l = vnItems().filter(function(x){ return x.n <= c.urg; });
+  if(!l.length){ d.innerHTML = ''; return; }
+  var venc = l.filter(function(x){ return x.n < 0; }).length;
+  var t = l.slice(0, 4).map(function(x){ return x.quien + ' · ' + x.lab; }).join(' — ');
+  d.innerHTML = '<div class="aviso roj"><b>⚠️ ' + l.length
+    + (l.length === 1 ? ' vencimiento' : ' vencimientos') + ' para esta semana'
+    + (venc ? ' (' + venc + ' ya vencido' + (venc === 1 ? '' : 's') + ')' : '') + '</b>'
+    + '<div style="margin-top:4px">' + esc(t) + (l.length > 4 ? ' y ' + (l.length - 4) + ' más' : '') + '</div>'
+    + '<div style="margin-top:6px"><button class="sec chico" onclick="irTab(\'ven\')">Verlos</button></div></div>';
+}
+
+/* ---- entrar con el código ---- */
+async function abrirCon(cod){
+  cod = String(cod||'').trim().toUpperCase();
+  var id = idDeCodigo(cod);
+  if(!id) throw new Error('formato');
+  var bl = null;
+  for(var i=0;i<BLOQUES.length;i++){ if(String(BLOQUES[i].v) === String(id)) bl = BLOQUES[i]; }
+  if(!bl) throw new Error('no figura');
+  var txt = await descifrar(b64bytes(bl.b), cod, String(id));
+  var g = JSON.parse(txt);
+  CODIGO = cod; VNUM = String(id); G = g;
+  return g;
+}
+/* Hay gente que solo mira: ve los vencimientos y nada más.
+   No carga combustible ni gastos, así que le saco esas pestañas. */
+function acomodarSegunQuien(){
+  SOLOVER = !!(G && G.soloVer);
+  if(esFle()){ SOLOVER = false; fleModo(); return; }
+  /* v280: lo del campo */
+  if($('tbPre')) $('tbPre').className = camPreOn() ? '' : 'oculto';
+  if($('tbCam')) $('tbCam').className = (G && G.cam && G.cam.cam) ? '' : 'oculto';
+  if(camSolo() || ES_CAMPO){ try{ document.querySelector('header b').textContent = 'Campo \u2014 Mart\u00edn Castro y C\u00eda.'; document.title = 'Campo \u2014 Mart\u00edn Castro y C\u00eda.'; }catch(e){} }
+  if(camSolo()){
+    $('tbCom').className = 'oculto'; $('tbGas').className = 'oculto'; $('tbVen').className = 'oculto'; if($('tbEmp')) $('tbEmp').className = 'oculto';
+    $('alertaVenc').className = 'oculto'; $('cTan').className = 'caja oculto';
+    return;
+  }
+  if(!SOLOVER) return;
+  $('tbCom').className = 'oculto';
+  $('tbGas').className = 'oculto';
+  if($('tbEmp')) $('tbEmp').className = 'oculto';
+  $('cHist').className = 'caja oculto';
+  var tv = $('tbVen'); if(tv) tv.textContent = '\u26a0\ufe0f Vencimientos';
+}
+function arrancarApp(){
+  lsSet(LS_COD, CODIGO);
+  /* si la oficina ya me mando datos alguna vez, esos mandan sobre los que
+     venian adentro del archivo: son mas nuevos */
+  try{
+    var gg = datosGuardados();
+    if(gg && Number(gg.ver||0) >= Number((G&&G.ver)||0)) G = gg;
+  }catch(e){}
+  ULT = ultLeer();
+  $('pAlta').className = 'caja oculto';
+  $('pApp').className = '';
+  var cuantos = (G && G.veh || []).length;
+  $('subT').textContent = (G && G.nom ? G.nom : 'Depósito') + (camSolo() ? '' : ' · ' + cuantos + ' vehículos');
+  llenarVehiculos(); llenarTanques();
+  $('cvF').value = hoyISO(); $('gvF').value = hoyISO();
+  acomodarSegunQuien();
+  pintarTanques();
+  verKmGasto();
+  pintarUlt(); pintarHist(); pintarAlerta(); pintarUltGastos();
+  irTab(camSolo() ? (camPreOn() ? 'pre' : 'cam') : (SOLOVER ? 'ven' : 'com'));
+  if(!SOLOVER || camOn()) colaLeer().then(function(){ pintarCola(); flush(); });
+  /* y de paso: fijarse si hay algo mas nuevo en la oficina */
+  setTimeout(function(){
+    bajarDatos().then(function(hubo){
+      if(!hubo) return;
+      acomodarSegunQuien();
+      try{ camPintarTodo(); }catch(e){}
+      llenarVehiculos(); llenarTanques();
+      pintarUlt(); pintarAlerta(); pintarVenc(); pintarUltGastos(); pintarTanques();
+      var d = $('colaCartel');
+      if(d) d.innerHTML = '<div class="aviso ver">\u2714 La oficina actualiz\u00f3 los datos.</div>' + d.innerHTML;
+      setTimeout(function(){ pintarCola(); }, 5000);
+    });
+  }, 900);
+}
+async function entrar(){
+  var a = $('avAlta'); a.innerHTML = 'Comprobando…';
+  try{
+    await abrirCon($('inCod').value);
+    a.innerHTML = '';
+    arrancarApp();
+  }catch(e){
+    var m = String(e.message||e);
+    a.innerHTML = '<span style="color:#a3282f">' +
+      (m === 'formato' ? 'Ese código no tiene la forma correcta. Es como 900-XXXXXXXX.'
+       : m === 'no figura' ? 'Ese código no figura. Fijate que esté bien copiado.'
+       : 'El código no abre los datos. Pedile uno nuevo a Mariano.') + '</span>';
+  }
+}
+
+/* ---- arranque ---- */
+document.addEventListener('DOMContentLoaded', function(){
+  if(abiertaMal()){
+    var d = $('malAbierta');
+    $('malLink').textContent = LINK_APP;
+    d.style.display = 'flex';
+    $('malCopiar').onclick = function(){
+      var b = this;
+      try{ navigator.clipboard.writeText(LINK_APP).then(function(){ b.textContent = '✔ Copiado — pegalo en Chrome'; }, function(){}); }catch(e){}
+    };
+    $('malSeguir').onclick = function(){ d.style.display = 'none'; };
+  }
+  $('btEntrar').onclick = entrar;
+  $('inCod').addEventListener('keydown', function(e){ if(e.key === 'Enter') entrar(); });
+  $('tbCom').onclick = function(){ irTab('com'); };
+  $('tbGas').onclick = function(){ irTab('gas'); };
+  $('tbVen').onclick = function(){ irTab('ven'); };
+  $('tbPre').onclick = function(){ irTab('pre'); };
+  $('tbCam').onclick = function(){ irTab('cam'); };
+  $('tbEmp').onclick = function(){ irTab('emp'); };
+  $('vnFiltro').onchange = pintarVenc;
+  $('vnQ').addEventListener('input', function(){ vnBuscar(this.value); });
+  $('cvV').onchange = pintarUlt;
+  $('cvKm').addEventListener('input', verAvisoKm);
+  $('gvC').onchange = verKmGasto;
+  $('gvVarios').onchange = function(){ if(this.checked) vRepartir(); else pintarVarios(); };
+  $('gvI').addEventListener('input', function(){ if(variosOn()) vRepartir(); });
+  $('btCom').onclick = guardarCombustible;
+  $('btGas').onclick = guardarGasto;
+  $('btProbar').onclick = probar;
+  $('btSalir').onclick = function(){
+    if(!confirm('¿Salir? Te va a volver a pedir el código.')) return;
+    lsDel(LS_COD); location.reload();
+  };
+  $('gvFoto').onchange = function(){
+    var f = this.files && this.files[0];
+    if(!f){ FOTO = null; $('gvFotoV').innerHTML = ''; return; }
+    if(!/^image\//.test(f.type||'')){ alert('Eso no parece una foto.'); this.value=''; return; }
+    FOTO = f;
+    var kb = Math.round(f.size/1024);
+    var url = URL.createObjectURL(f);
+    $('gvFotoV').innerHTML = '<img src="' + url + '" class="mini"> <span class="nota">' + kb + ' KB</span> '
+      + '<button class="sec chico" onclick="FOTO=null;document.getElementById(\'gvFoto\').value=\'\';document.getElementById(\'gvFotoV\').innerHTML=\'\';">✕ Sacar</button>';
+  };
+  var guardado = lsGet(LS_COD);
+  if(guardado){
+    abrirCon(guardado).then(arrancarApp, function(){ lsDel(LS_COD); });
+  }
+  window.addEventListener('online', function(){ flush(); });
+  setInterval(function(){ if(CODIGO && !SOLOVER) flush(); }, 30000);
+});
+
+</script>
+<script>
+
+/* ===== v290: «❓ Cómo se usa» — la misma ayuda en todas las apps =====
+   Un botón que abre una capa con temas que se despliegan, cada uno con pasos
+   numerados. Cada tema trae su condición (si): a cada persona le salen solo los
+   temas de lo que tiene en su app. La capa va colgada del <html> y no del <body>,
+   porque varias apps redibujan el body entero y la cerrarían. */
+var AYD_T = [];
+function aydCss(){
+  if(document.getElementById('aydCss')) return;
+  var s = document.createElement('style'); s.id = 'aydCss';
+  s.textContent = '.aydBt{display:inline-flex;align-items:center;gap:6px;background:#fff;color:#0e3b60;border:1.5px solid #0e3b60;border-radius:22px;padding:7px 14px;font:700 15px -apple-system,Segoe UI,Roboto,Arial,sans-serif;cursor:pointer}'
+   + '.aydMini{background:#fff;color:#0e3b60;border:1.5px solid #c9d3dc;border-radius:50%;width:34px;height:34px;font-size:17px;padding:0;cursor:pointer;flex:none}'
+   + '#aydCapa{position:fixed;left:0;top:0;right:0;bottom:0;z-index:2147483000;background:#eef1f5;overflow:auto;-webkit-overflow-scrolling:touch;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#16243a}'
+   + '#aydCapa .aydTop{position:sticky;top:0;display:flex;align-items:center;justify-content:space-between;gap:10px;background:#0f1f3a;color:#fff;padding:14px 16px}'
+   + '#aydCapa .aydTop b{font-size:21px}'
+   + '#aydCapa .aydTop button{background:#fff;color:#0f1f3a;border:0;border-radius:12px;padding:9px 14px;font-weight:800;font-size:16px}'
+   + '#aydCapa .aydCont{padding:12px 12px 40px;max-width:760px;margin:0 auto}'
+   + '#aydCapa .aydMu{color:#5d6b7c;font-size:15px;margin:2px 4px 10px}'
+   + '#aydCapa details{background:#fff;border:1.5px solid #d5dce4;border-radius:16px;margin:0 0 10px;padding:12px 14px}'
+   + '#aydCapa summary{font-weight:800;font-size:18px;cursor:pointer;line-height:1.3}'
+   + '#aydCapa ol{margin:10px 0 2px;padding-left:24px;font-size:16.5px;line-height:1.5}'
+   + '#aydCapa li{margin:6px 0}'
+   + '#aydCapa .aydN{margin-top:8px;background:#fff7e3;border:1px solid #ecd796;border-radius:10px;padding:8px 10px;font-size:15px;line-height:1.45;color:#5c4a12}'
+   + '#aydCapa .aydFin{display:block;width:100%;margin-top:8px;padding:12px;border-radius:12px;border:1.5px solid #0e3b60;background:#fff;color:#0e3b60;font-weight:800;font-size:16px}';
+  (document.head || document.documentElement).appendChild(s);
+}
+function aydBoton(estilo){ aydCss(); return '<button class="aydBt" onclick="aydAbrir()"' + (estilo ? ' style="' + estilo + '"' : '') + '>❓ Cómo se usa</button>'; }
+function aydMini(){ aydCss(); return '<button class="aydMini" title="Cómo se usa" onclick="aydAbrir()">❓</button>'; }
+function aydVer(t){ try{ return !t.si || !!t.si(); }catch(e){ return false; } }
+function aydAbrir(){
+  aydCss(); aydCerrar();
+  var L = AYD_T.filter(aydVer);
+  var d = document.createElement('div'); d.id = 'aydCapa';
+  d.innerHTML = '<div class="aydTop"><b>❓ Cómo se usa la app</b><button onclick="aydCerrar()">✕ Cerrar</button></div>'
+    + '<div class="aydCont"><div class="aydMu">Tocá cada tema para abrirlo.</div>'
+    + L.map(function(t){ return '<details><summary>' + t.i + ' ' + t.t + '</summary>'
+        + (t.p && t.p.length ? '<ol>' + t.p.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ol>' : '')
+        + (t.n ? '<div class="aydN">' + t.n + '</div>' : '') + '</details>'; }).join('')
+    + '<button class="aydFin" onclick="aydCerrar()">Cerrar</button></div>';
+  (document.documentElement || document.body).appendChild(d);
+  try{ d.scrollTop = 0; }catch(e){}
+}
+function aydCerrar(){ var d = document.getElementById('aydCapa'); if(d && d.parentNode) d.parentNode.removeChild(d); }
+function aydVis(id){ var e = document.getElementById(id); return !!(e && !/\boculto\b/.test(e.className || '')); }
+
+AYD_T = [
+{i:"🔐", t:"Entrar a la app", si:function(){ return true; }, p:["Abrí el link que te pasó la oficina con <b>Chrome</b>.", "Poné <b>tu código</b> (900-…). Se pide una sola vez en ese teléfono.", "Tocá el menú del navegador y elegí <b>«Agregar a pantalla de inicio»</b>."]},
+{i:"⛽", t:"Cargar el gasoil", si:function(){ return typeof esFle === "function" && esFle(); }, p:["Fijate que arriba esté <b>tu equipo</b>. Si cargaste otro vehículo, cambialo en la lista.", "Poné el <b>odómetro</b> (los kilómetros que marca). Abajo te dice cuánto marcaba la última vez.", "Tocá el tanque del que cargaste: <b>EURO</b> o <b>COMÚN</b> (el que dice DIÉSEL).", "Poné los <b>litros</b> y tocá <b>«Guardar la carga»</b>."]},
+{i:"⛽", t:"Cargar combustible", si:function(){ return aydVis("tbCom") && !(typeof esFle === "function" && esFle()); }, p:["Tocá <b>⛽ Combustible</b>.", "Elegí el <b>vehículo</b>. Abajo te muestra la última carga.", "Poné la <b>fecha</b>, el <b>odómetro</b> (los kilómetros que marca), <b>de qué tanque</b> y los <b>litros</b>.", "Tocá <b>«Guardar la carga»</b>."]},
+{i:"🛢", t:"El control de los tanques", si:function(){ return aydVis("cTan"); }, p:["Arriba te aparece el control de los tanques; los viernes te lo recuerda.", "Tocá <b>«Controlar ahora»</b>.", "Poné los litros que marca cada tanque y, si querés, una nota.", "Guardá. Arriba queda el último control."]},
+{i:"🔧", t:"Gasto de un vehículo", si:function(){ return aydVis("tbGas"); }, p:["Tocá <b>🔧 Mantenimiento</b>.", "Elegí <b>de qué vehículo es</b>. Si es una compra para varios, tildá <b>«Es una compra para VARIOS vehículos»</b>: el importe se reparte y podés cambiar el de cada uno.", "Poné la fecha, qué fue, el odómetro (si te lo pide), el detalle y el importe.", "Si tenés el ticket, sacale una foto.", "Tocá <b>«Guardar el gasto»</b>."]},
+{i:"⚠️", t:"Vencimientos", si:function(){ return aydVis("tbVen"); }, p:["Tocá <b>⚠️ Vencimientos</b>.", "<b>Fechas:</b> lo que vence. Elegí el plazo (60 días, 30, solo los vencidos o todos). Cuando lo renovás, tocá <b>«Renové esto»</b> y poné la fecha nueva.", "<b>Avisar:</b> arma un mensaje por persona con todo lo suyo; <b>«Avisarle por WhatsApp»</b>.", "<b>Vehículos</b> y <b>Personal:</b> dar de alta, cambiar el nombre, la patente o quién lo maneja, y dar de baja.", "<b>Services:</b> <b>«Cargar un service que hiciste»</b> con los km y el próximo service.", "<b>Cubiertas:</b> tocá la posición para anotar la cubierta que pusiste."], n:"Si solo podés mirar, ves las fechas pero no se pueden cambiar."},
+{i:"🏢", t:"Gasto del edificio o de seguridad", si:function(){ return aydVis("tbEmp"); }, p:["Tocá <b>🏢 Edificio</b>.", "Elegí si es <b>Edificio y mantenimiento</b> o <b>Seguridad e higiene</b>.", "Tocá qué fue (pintura, electricidad, matafuegos…) y dónde (depósito, oficina, playón).", "Poné la fecha, el detalle, el proveedor si querés y el importe.", "Sacale la foto a la boleta y tocá <b>«Guardar el gasto»</b>."], n:"Entra solo a los gastos de la oficina, con la foto."},
+{i:"🧾", t:"Pedir presupuestos", si:function(){ return aydVis("tbPre"); }, p:["Tocá <b>🧾 Presupuestos</b> → <b>«Pedir presupuesto»</b>.", "Tildá lo que querés cotizar y poné cuánto necesitás. Si no está, <b>«+ Agregar un producto que no está»</b>.", "Poné hasta qué día tienen que contestar y una nota para los proveedores.", "Armá el pedido y mandalo: <b>🔗 Mandar link</b> o <b>📝 Mandar lista</b>, por WhatsApp.", "Tocá el pedido para ver quién contestó y elegir a quién comprarle."]},
+{i:"🌾", t:"Gasto del campo", si:function(){ return aydVis("tbCam"); }, p:["Tocá <b>🌾 Campo</b>.", "Elegí de qué empresa es y a qué corresponde.", "Poné la fecha, el detalle y el importe; sacale foto al ticket.", "Tocá <b>«Guardar el gasto»</b>."]},
+{i:"📋", t:"Cómo sé si llegó a la oficina", si:function(){ return true; }, p:["Abajo, en lo que cargaste, cada cosa dice <b>✔ mandado</b> o <b>⏳ esperando</b>.", "Si arriba aparece <b>⏳ … esperando señal</b>, tocá <b>«Reintentar ahora»</b> cuando tengas señal.", "Cuando el aviso desaparece, ya está en la oficina."]},
+{i:"📶", t:"Si no hay señal o algo falla", si:function(){ return true; }, p:["Podés cargar sin señal: queda guardado y sale solo cuando vuelve.", "La app tiene que abrirse desde el link con Chrome, no como archivo.", "Si algo no carga, cerrala del todo y abrila de nuevo."]},
+];
+(function(){ try{ var hd = document.querySelector('header'); if(hd && !document.getElementById('aydHd')){ hd.style.position = 'relative';
+  var w = document.createElement('div'); w.id = 'aydHd'; w.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%)';
+  w.innerHTML = aydBoton('padding:5px 11px;font-size:14px'); hd.appendChild(w); } }catch(e){} })();
+
+</script>
+</body></html>

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Martín Castro y Cía · Pedido de presupuesto</title>
+<meta name="description" content="Cargue el precio de cada producto y toque Enviar. No hace falta registrarse.">
+<meta property="og:title" content="Martín Castro y Cía · Pedido de presupuesto">
+<meta property="og:description" content="Cargue el precio de cada producto y toque Enviar. No hace falta registrarse.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://apps.martincastroycia.com.ar/rutas/icono-512.png">
+<meta name="theme-color" content="#0E5A9B">
+<link rel="icon" type="image/png" href="rutas/icono-192.png">
+<style>
+:root{--marca:#0E5A9B;--tinta:#0D1F3A;--gris:#5d6b7a;--linea:#dfe5ea;--fondo:#f4f6f8}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.45 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--tinta);background:var(--fondo)}
+header{background:var(--marca);color:#fff;padding:12px 14px}
+header b{font-size:17px}
+header div{font-size:13px;opacity:.85}
+main{max-width:620px;margin:0 auto;padding:12px 12px 60px}
+.caja{background:#fff;border:1px solid var(--linea);border-radius:12px;padding:14px;margin-bottom:12px}
+.cond{background:#eef3f9;border-radius:10px;padding:9px 11px;font-size:14px}
+input{width:100%;padding:11px 12px;font-size:17px;border:1px solid #c4ccd6;border-radius:9px;background:#fff;color:var(--tinta)}
+.it{display:grid;grid-template-columns:minmax(0,1fr) 108px;gap:8px;align-items:center;padding:10px 0;border-top:1px solid var(--linea)}
+.it .p{text-align:right}
+.nota{font-size:13px;color:var(--gris)}
+.chip{font-size:12.5px;padding:3px 9px;border-radius:7px;border:1px solid #c4ccd6;background:#fff;color:var(--gris);font-weight:600}
+.chip.on{background:#fff5d6;border-color:#e3c26a;color:#6b5a12}
+button.env{width:100%;font:inherit;font-size:18px;font-weight:700;border:0;border-radius:10px;background:var(--marca);color:#fff;padding:14px;margin-top:10px;cursor:pointer}
+button.env:disabled{opacity:.6}
+.ok{background:#e3f0e3;border:1px solid #a9c9a9;color:#1f6b3b;border-radius:10px;padding:14px;font-size:17px;font-weight:700}
+.mal{color:#a3282f;font-size:14px;margin-top:8px}
+.fila2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+</style></head><body>
+<header><b>Martín Castro y Cía.</b><div id="hdSub">Pedido de presupuesto</div></header>
+<main id="app"><div class="caja">Cargando el pedido…</div></main>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script>
+/* La página que abren los proveedores con el link del veterinario. No piden
+   código ni cuenta: el pedido viene ADENTRO del link (después del #) y la
+   respuesta va al buzón de la oficina (castro-flota, colección flota, v 980),
+   sin cifrar: son precios de una cotización. */
+var firebaseConfig = {
+  apiKey:"AIzaSyBNR7UHiHHoqa-iIRGQrqfycvGyLSR0F-I",
+  authDomain:"castro-flota.firebaseapp.com",
+  projectId:"castro-flota",
+  storageBucket:"castro-flota.firebasestorage.app",
+  messagingSenderId:"670179222916",
+  appId:"1:670179222916:web:fa1a9241bbc35a824029d1"
+};
+var CAT = ["A4 ZOOVET X 5 LTS.","ACECOR Fcos.x 10 cc.","ACECOR Fcos.x 50 cc.","ACIENDEL PLUS x 2.5 Lts.","ADEVET x 500 cc.","AGITA 10 WG x 400 Grs.","AGUJA HIPO DESC 25X08 X 100 UN","AGUJA HIPO DESC 40X12 X 100 UN","AGUJAS HIPODERMICAS CAJA x12u","ANTITOXICO R.J. x 20 Ml.","ASPERSIN x 5 LTS.","ATB 5 X AMPOLLA (POLVO+DILU)","AXILUR PI INY.x 1 Lt.","BACTROVET PLATA AMx440 G(AER.)","BASKEN DOBLE 60 x 3 Comp.","BENZOATO DE ESTRADIOL x 100cc","BICHOLUZ CURABICHERA RJ x 1 Lt","BIOABORTOGEN H Fcos.x 50 Ds.","BIOCLOSTRIGEN J5 2 CC x 60 Ds.","BLOCK REPRODUCTIVA x 50 Ds","BRAVECTO 1400 MG (40 A 56 KG.)","CACIQUE PASTA x 950 Grs.","CARAV. GRANDE ALLFLEX S/Nº","CARAVANA ALLFLEX R.530/25 BINOMIO","CARBUNCLO CDV x 125Ds.","CARBUNCLO CDV x 50 Ds.","CATIOBAC CU MAX x 500 C.C.","CHUPETES LATEX","CREMA 6 A POMO x 30 Grs.","CUMETYL DUO X 100 C.C.","DECTOMAX Fcos. x 250 cc.","DECTOMAX Fcos. x 50 cc.","DECTOMAX Fcos. x 500 cc.","DEXTROGENOL x 50 cc","DIAFIN N x 20 cc.","DUVAMICINA x 5.000.000","ECEGON 20.000 UI","ECEGON RTU 5.000","ESTREPTOPENDIBEN x 5 MILLONES","EXZOLT 5% POUR ON X 1 LT.","FERAPPEASE SPOT ON X 300 CC","FLUMEG X 100 C.C.","FLUNIXIN Fcos.x 100 cc.","GENTAMICINA 40 R.J.INY.x100Ml.","GUANTE LATEX DES \"M\" X 100 UN","GUANTES DESC.\"SUPER FLEX\"x100u","IMIDO-VETADINE x 100 cc.","IMIDOVER X 100 C.C.","IODOHORMONE(ACTINOMIC)x 500Ml","JERINGA LIDER DIAL PLAS * 50cc","JERINGA NEOJECT S/A X 10 C.C.","JERINGA NEOJECT S/A X 20 C.C.","JERINGA NEOJECT S/A X 5 C.C.","JERINGA NEOJECT S/A X 60 C.C.","JUEGO GOMAS X 50CC FIX/FIX MAS","KETOPROFENO X 100 C.C.","KIT ADAPTADOR MIN-VIT x 500cc.","KURAMICINA L.A.SOL.INY.x 250cc","KURAMICINA L.A.SOL.INY.x 500cc","LAPIZ MARCADOR ALLFLEX","METAXONA x 100 cc.","NORCILINA 5000000 Fco x 16ml","OVACEL 5000 UI","OXILEN Fcos. x 250 cc.","PACK DISPOCELL 0.6 X 100 TRAT.","PANIC RATICIDA BLOQUES x 100 G","PASTA TATUAJE 140 GRS. KETCHUM","PINZA ALLFLEX CON FLIP-PIN","PLUVIOMETRO PLASTICO","POVIZUR 10% x 1 Lt.","REVIVON X 600 C.C.","STAND UP Fcos.x 100 cc.","SULFAPRIM x 100 cc.","SYNECT CURABI POLVO X 1 KG.","TETRAELMER x 100 Cap.","TIAMINA CLORHIDRATO x 50 Ml.","TILCOSAN X 100 C.C.","TILCOSAN X 250 C.C.","TILMICOSIN 300 x 100 cc.","TRIFECT FORTE X 50 C.C.","VAINA UNIVERSAL x 50 U.","VEDEVAX BLOCK x 40 Ds.","VEDEVAX BLOCK x 80 Ds.","VETRIBAC PIG DOSER X 250 C.C."];
+var CATM = [];  /* materiales, repuestos y pinturas (los pedidos con k:"m") */
+var PED = null, F = {}, ENV = 0;
+function $(id){ return document.getElementById(id); }
+function esc(t){ return String(t == null ? '' : t).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function fc(iso){ if(!iso) return ''; return iso.slice(8,10) + '/' + iso.slice(5,7) + '/' + iso.slice(2,4); }
+function money(n){ return '$ ' + Math.round(Number(n) || 0).toLocaleString('es-AR'); }
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+function num(s){
+  s = String(s || '').replace(/\$/g, '').replace(/\s/g, '');
+  var m = s.match(/[\d.,]+/); if(!m) return NaN; s = m[0].replace(/[.,]$/, '');
+  if(s.indexOf(',') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+  else if(/\.\d{3}(\.|$)/.test(s)) s = s.replace(/\./g, '');
+  var v = parseFloat(s); return isNaN(v) ? NaN : v;
+}
+function leerPedido(){
+  try{
+    var h = String(location.hash || '').replace(/^#/, ''), m = h.match(/(?:^|&)p=([A-Za-z0-9_-]+)/);
+    if(!m) return null;
+    var b = m[1].replace(/-/g, '+').replace(/_/g, '/'); while(b.length % 4) b += '=';
+    var o = JSON.parse(decodeURIComponent(escape(atob(b))));
+    if(!o || !o.c || !o.i || !o.i.length) return null;
+    var k = o.k === 'm' ? 'm' : 'v', cat = k === 'm' ? CATM : CAT;
+    var it = o.i.map(function(x){ var d = typeof x[0] === 'number' ? cat[x[0]] : x[0]; return d ? [String(d), Number(x[1]) || 0] : null; });
+    if(it.some(function(x){ return !x; })) return {roto:1};
+    return {k:k, c:String(o.c).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12), f:String(o.f || ''), l:String(o.l || ''), n:String(o.n || ''), it:it};
+  }catch(e){ return null; }
+}
+function guardarBorrador(){ if(PED) lsSet('presup_' + PED.c, JSON.stringify(F)); }
+function pintar(){
+  var a = $('app');
+  if(!PED){ a.innerHTML = '<div class="caja"><b>Este link no trae ningún pedido.</b><div class="nota" style="margin-top:6px">Puede que se haya cortado al copiarlo. Pedile a quien te lo mandó que te lo reenvíe.</div></div>'; return; }
+  if(PED.roto){ a.innerHTML = '<div class="caja"><b>Este pedido es de una lista más nueva que esta página.</b><div class="nota" style="margin-top:6px">Esperá unos minutos y volvé a abrir el link: la página se actualiza sola. Si sigue igual, avisale a quien te lo mandó.</div></div>'; return; }
+  if(ENV === 2){ a.innerHTML = '<div class="caja"><div class="ok">✔ Listo, le llegó a Martín Castro y Cía. ¡Gracias!</div>'
+    + '<div class="nota" style="margin-top:10px">Si tiene que corregir algo, vuelva a abrir el mismo link y mándelo de nuevo: vale el último.</div>'
+    + '<button class="env" style="background:#fff;color:var(--marca);border:1px solid var(--marca)" onclick="ENV=0;pintar()">Corregir algo</button></div>'; return; }
+  var vencido = PED.l && PED.l < hoy();
+  var h = '<div class="caja"><div class="nota">Pedido ' + esc(PED.c) + (PED.f ? ' · ' + esc(fc(PED.f)) : '') + '</div>'
+    + '<div style="font-size:19px;font-weight:700;margin:2px 0 8px">' + (PED.k === 'm' ? 'Presupuesto de materiales y repuestos' : 'Presupuesto de productos veterinarios') + '</div>'
+    + '<div class="cond">Contado · precios unitarios <b>sin IVA</b> · entrega a coordinar' + (PED.k === 'm' ? '' : ' con el veterinario')
+    + (PED.l ? ' · contestar antes del <b>' + esc(fc(PED.l)) + '</b>' : '') + (PED.n ? '<br>' + esc(PED.n) : '') + '</div>'
+    + (vencido ? '<div class="nota" style="color:#8a6d1a;margin-top:6px">La fecha pedida ya pasó, pero igual puede mandarlo.</div>' : '')
+    + '<input style="margin-top:12px" placeholder="' + (PED.k === 'm' ? 'Nombre de su comercio o distribuidora *' : 'Nombre de su veterinaria o distribuidora *') + '" value="' + esc(F.nom || '') + '" oninput="F.nom=this.value;guardarBorrador()">'
+    + '<input style="margin-top:6px" placeholder="Teléfono o contacto" value="' + esc(F.tel || '') + '" oninput="F.tel=this.value;guardarBorrador()">'
+    + '<div class="nota" style="margin-top:12px">Ponga el precio unitario de cada uno. Si no lo tiene, toque «no tengo». Si tiene otra marca, anótela.</div>';
+  PED.it.forEach(function(x, i){ var s = F.it[i];
+    h += '<div class="it"><div><div style="font-size:15px">' + esc(x[0]) + '</div><div class="nota">' + x[1] + ' unidades · '
+      + '<button class="chip' + (s.no ? ' on' : '') + '" onclick="F.it[' + i + '].no=F.it[' + i + '].no?0:1;if(F.it[' + i + '].no)F.it[' + i + '].p=\'\';guardarBorrador();pintar()">' + (s.no ? 'no tengo ✔' : 'no tengo') + '</button> '
+      + '<button class="chip" onclick="otra(' + i + ')">' + (s.alt ? 'otra: ' + esc(s.alt) : 'otra marca') + '</button></div><div id="alt' + i + '"></div></div>'
+      + '<input class="p" inputmode="decimal" placeholder="$ c/u" value="' + esc(s.p) + '"' + (s.no ? ' disabled' : '') + ' oninput="F.it[' + i + '].p=this.value;guardarBorrador();calc()"></div>';
+  });
+  h += '<div class="fila2"><input placeholder="Desc. contado %" inputmode="decimal" value="' + esc(F.desc || '') + '" oninput="F.desc=this.value;guardarBorrador();calc()"><input placeholder="Plazo de entrega" value="' + esc(F.plazo || '') + '" oninput="F.plazo=this.value;guardarBorrador()"></div>'
+    + '<input style="margin-top:8px" placeholder="Flete (incluido / a cargo / costo)" value="' + esc(F.flete || '') + '" oninput="F.flete=this.value;guardarBorrador()">'
+    + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:12px"><span class="nota" id="nq"></span><b style="font-size:21px" id="tot"></b></div>'
+    + '<div class="nota" style="text-align:right">total sin IVA, con su descuento</div>'
+    + '<div class="mal" id="err"></div>'
+    + '<button class="env" id="btEnv" onclick="enviar()"' + (ENV === 1 ? ' disabled' : '') + '>' + (ENV === 1 ? 'Mandando…' : 'Enviar presupuesto') + '</button>'
+    + '<div class="nota" style="margin-top:8px">No hace falta registrarse. Lo que manda le llega solo a Martín Castro y Cía.</div></div>';
+  a.innerHTML = h; calc();
+}
+function otra(i){ var d = $('alt' + i); if(!d) return; d.innerHTML = '<input style="padding:6px 8px;font-size:14px;margin-top:4px" placeholder="¿Qué marca o producto ofrece?" value="' + esc(F.it[i].alt || '') + '" onchange="F.it[' + i + '].alt=this.value;guardarBorrador();pintar()">'; d.querySelector('input').focus(); }
+function hoy(){ var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function calc(){
+  var n = 0, t = 0;
+  PED.it.forEach(function(x, i){ var v = num(F.it[i].p); if(v > 0){ n++; t += v * x[1]; } });
+  var d = num(F.desc) || 0;
+  if($('nq')) $('nq').textContent = n + ' de ' + PED.it.length + ' cotizados';
+  if($('tot')) $('tot').textContent = money(t * (1 - Math.min(Math.max(d, 0), 100) / 100));
+}
+async function enviar(){
+  var e = $('err'); e.textContent = '';
+  if(!String(F.nom || '').trim()){ e.textContent = PED.k === 'm' ? 'Ponga el nombre de su comercio o distribuidora.' : 'Ponga el nombre de su veterinaria o distribuidora.'; return; }
+  var p = PED.it.map(function(x, i){ var s = F.it[i], v = num(s.p); return [v > 0 ? Math.round(v * 100) / 100 : null, s.no ? 1 : 0, String(s.alt || '').slice(0, 80)]; });
+  if(!p.some(function(x){ return x[0] > 0; })){ e.textContent = 'Ponga el precio de al menos un producto.'; return; }
+  var o = {tipo:'prov', k:PED.k, c:PED.c, f:PED.f, l:PED.l, n:PED.n, it:PED.it, nom:String(F.nom).trim().slice(0, 80), tel:String(F.tel || '').slice(0, 40),
+           desc:num(F.desc) || 0, plazo:String(F.plazo || '').slice(0, 60), flete:String(F.flete || '').slice(0, 60), p:p, ts:new Date().toISOString()};
+  var b = btoa(unescape(encodeURIComponent(JSON.stringify(o))));
+  if(b.length > 49000){ e.textContent = 'El presupuesto quedó demasiado largo. Acorte las marcas alternativas.'; return; }
+  ENV = 1; pintar();
+  try{
+    if(typeof firebase === 'undefined') throw new Error('no cargaron los programas de Google: fíjese que tenga internet');
+    try{ firebase.app(); }catch(e1){ firebase.initializeApp(firebaseConfig); }
+    var db = firebase.firestore();
+    if(!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
+    var id = 'pv-' + PED.c + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    await Promise.race([
+      db.collection('flota').doc(id).set({v:'980', b:b, nf:0, fotoURL:null, fotoPath:null, estado:'nuevo',
+        ts:firebase.firestore.FieldValue.serverTimestamp(), fecha_carga:new Date().toISOString()}),
+      new Promise(function(_, rej){ setTimeout(function(){ rej(new Error('tardó demasiado: fíjese la señal y pruebe de nuevo')); }, 30000); })
+    ]);
+    ENV = 2; lsSet('presup_env_' + PED.c, new Date().toISOString()); pintar();
+  }catch(err){
+    ENV = 0; pintar();
+    var e2 = $('err'); if(e2) e2.textContent = 'No salió: ' + String((err && (err.message || err.code)) || err) + '. Lo que cargó queda guardado en este teléfono; pruebe de nuevo en un rato.';
+  }
+}
+PED = leerPedido();
+if(PED && !PED.roto){
+  try{ $('hdSub').textContent = 'Pedido de presupuesto · ' + (PED.k === 'm' ? 'materiales y repuestos' : 'productos veterinarios'); }catch(e){}
+  try{ F = JSON.parse(lsGet('presup_' + PED.c) || '{}') || {}; }catch(e){ F = {}; }
+  if(!F.it || F.it.length !== PED.it.length) F.it = PED.it.map(function(){ return {p:'', no:0, alt:''}; });
+}
+pintar();
+</script>
+</body></html>
